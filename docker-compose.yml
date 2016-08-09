@@ -1,0 +1,15 @@
+version: '2'
+
+services:
+  test-data:
+    build: 
+      context: portal-api
+    volumes:
+    - "/var/portal-api/static"
+
+  portal-api:
+    env_file: variables.env  
+    image: haufelexware/wicked.portal-api:dev
+    volumes_from:
+    - "test-data"
+    restart: never
