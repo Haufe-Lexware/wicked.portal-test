@@ -8,7 +8,7 @@ var async = require('async');
 var baseUrl = consts.BASE_URL;
 
 var HOOK_PORT = 3003;
-var HOOK_URL = 'http://test-data:' + HOOK_PORT;
+var HOOK_URL = 'http://api-test-data:' + HOOK_PORT;
 
 var __server = null;
 

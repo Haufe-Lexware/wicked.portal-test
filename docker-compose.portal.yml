@@ -1,0 +1,28 @@
+version: '2'
+
+services:
+  test-base:
+    build:
+      context: base
+    command: "/bin/true"
+    
+  portal-test-data:
+    env_file: variables.env  
+    build: 
+      context: portal
+    volumes:
+    - "/var/portal-api/static"
+    depends_on:
+    - "test-base"
+
+  portal-api:
+    env_file: variables.env  
+    image: haufelexware/wicked.portal-api:dev
+    volumes_from:
+    - "portal-test-data"
+    restart: never
+
+  portal:
+    env_file: variables.env
+    image: haufelexware/wicked.portal:dev
+    restart: never

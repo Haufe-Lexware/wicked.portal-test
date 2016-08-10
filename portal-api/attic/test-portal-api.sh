@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo Do not use this. It is outdated.
+exit 1
+
 export TMP_TEST=`mktemp -d -t portalapi.XXXXX`
 cp -R test/test-config/* $TMP_TEST
 
