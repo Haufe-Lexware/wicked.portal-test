@@ -1,3 +1,0 @@
-FROM haufelexware/wicked.portal-env:dev-onbuild
-
-RUN npm install -g mocha
