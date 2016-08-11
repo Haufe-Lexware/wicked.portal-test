@@ -2,6 +2,17 @@
 
 This repository contains the integration testing code for the API Portal docker containers.
 
+### Preparing `Dockerfile` for testing base image
+
+Depending on your build setup, you may want to choose different base images for your testing scenarios. The `Dockerfile` in the `base` directory is a template in which the `FROM` statement is templated with an environment variable. This is unfortunately not supported by docker, so that you need to do a search and replace yourself, e.g. using a `perl` statement like the following:
+
+```
+$ export DOCKER_PREFIX=haufelexware/wicked.
+$ perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' base/Dockerfile.template > base/Dockerfile
+```
+
+These two commands will create a `Dockerfile` which uses the official base image for testing. If you have your own builds, you may replace it with something else here.
+
 ### Testing `portal-api`
 
 To run the integration tests of the `haufelexware/wicked.portal-api:dev` container, do this:
