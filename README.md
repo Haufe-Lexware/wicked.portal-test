@@ -46,3 +46,23 @@ A set of environment variables specific to the test cases are referenced via the
 The tests are created as integration tests, which makes calculating code coverage impossible. The point with these tests is that the actual docker images which are used for production are tested in a real scenario (deployment via `docker-compose`). If you wanted to calculate code coverage of the integration tests, you would have to instrument the images with e.g. `istanbul`, but you would not want to have that in your production images.
 
 A possible way of circumventing this would be to have special testing containers which allow instrumenting the containers with `istanbul` in addition to the "real" images for production use. You could then run both kinds of tests: First the integration tests on the production containers, then an instrumented test on the testing containers. Other ideas are welcome as well. 
+
+## Running the tests locally
+
+It's also possibly to run the tests on your local docker host. The only prerequisite is that you have aligned your `wicked` repositories alongside of each other.
+
+```
+wicked
+  |
+  +-- wicked.portal
+  |
+  +-- wicked.portal-api
+  |
+  +-- wicked.portal-test
+  |
+     ...
+```
+
+You may then use the bash scripts `local-run-api-tests.sh` (for the API integration tests) and `local-run-portal-tests.sh` (for the portal integration tests).
+
+Once the base images have been built, it should be fairly fast to run the tests (around 20 seconds per run).

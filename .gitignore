@@ -2,3 +2,4 @@ node_modules
 *.log
 test_results
 .DS_Store
+local-compose-*.yml
