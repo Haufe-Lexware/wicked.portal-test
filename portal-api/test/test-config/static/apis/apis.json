@@ -65,6 +65,18 @@
             "requiredGroup": "superdev",
             "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
             "tags": []
+        },
+        {
+            "name": "Mobile API",
+            "id": "mobile",
+            "plans": [
+                "basic",
+                "unlimited"
+            ],
+            "desc": "This is an OAuth2 Implicit Flow secured API",
+            "tags": [],
+            "authServer": "auth-server",
+            "auth": "oauth2-implicit"
         }
     ],
     "_links": {

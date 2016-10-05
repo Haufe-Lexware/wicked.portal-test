@@ -100,14 +100,23 @@ utils.setGroups = function (userId, groups, callback) {
     });
 };
 
-utils.createApplication = function(appId, appName, userId, callback) {
+utils.createApplication = function(appId, appInfo, userId, callback) {
+    var appName = appInfo;
+    var redirectUri = null;
+    if (typeof(appInfo) === 'object') {
+        if (appInfo.name)
+            appName = appInfo.name;
+        if (appInfo.redirectUri)
+            redirectUri = appInfo.redirectUri;
+    }
     request.post(
         {
             url: consts.BASE_URL + 'applications',
             headers: utils.makeHeaders(userId),
             json: true,
             body: { id: appId,
-                    name: appName }
+                    name: appName,
+                    redirectUri: redirectUri }
         },
         function(err, res, body) {
             if (201 != res.statusCode)
@@ -178,7 +187,7 @@ utils.addSubscription = function(appId, userId, apiId, plan, apikey, callback) {
         function(err, res, body) {
             if (201 != res.statusCode)
                 throw Error("Could not add subscription: " + utils.getText(body));
-            callback();
+            callback(null, utils.getJson(body));
         });
 };
 
@@ -193,6 +202,19 @@ utils.deleteSubscription = function(appId, userId, apiId, callback) {
                 throw Error("Could not delete subscription: " + utils.getText(body));
             callback();
         });
+};
+
+utils.approveSubscription = function (appId, apiId, adminUserId, callback) {
+    request.patch({
+        url: consts.BASE_URL + 'applications/' + appId + '/subscriptions/' + apiId,
+        headers: { 'X-UserId': adminUserId },
+        json: true,
+        body: { approved: true }
+    }, function (err, res, body) {
+        if (err || 200 != res.statusCode)
+            throw new Error("Could not approve subscription for app " + appId + " to API " + apiId);
+        callback();
+    });
 };
 
 utils.createListener = function(listenerId, listenerUrl, callback) {
