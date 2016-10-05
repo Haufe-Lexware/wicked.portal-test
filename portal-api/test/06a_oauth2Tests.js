@@ -198,6 +198,24 @@ describe('operations on OAuth2 APIs', function () {
             });
         });
 
+        it('must be forbidden to create an app with only https:// as redirectUri', function (done) {
+            request.post({
+                url: baseUrl + 'applications',
+                headers: { 'X-UserId': devUserId },
+                json: true,
+                body: {
+                    id: 'someid',
+                    name: 'Some Name',
+                    redirectUri: 'https://'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 400);
+                var jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.message, 'redirectUri must be a https URI');
+                done();
+            });
+        });
     });
 
     describe('Getting subscriptions by clientId', function () {

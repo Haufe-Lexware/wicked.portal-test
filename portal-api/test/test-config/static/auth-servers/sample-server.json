@@ -1,0 +1,5 @@
+{
+    "name": "sample-server",
+    "desc": "A Sample Authorization Server",
+    "url": "https://${LOCAL_IP}/auth-server/{{apiId}}"
+}
