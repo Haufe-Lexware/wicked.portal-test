@@ -48,7 +48,7 @@ describe('operations on OAuth2 APIs', function () {
 
     afterEach(function (done) {
         utils.deleteApplication(appId, devUserId, function () {
-            utils.deleteApplication(badAppId, devUserId, function() {
+            utils.deleteApplication(badAppId, devUserId, function () {
                 done();
             });
         });
@@ -198,6 +198,25 @@ describe('operations on OAuth2 APIs', function () {
             });
         });
 
+        it('should still be possible to use http://localhost as redirect URI for testing purposes', function (done) {
+            request.post({
+                url: baseUrl + 'applications',
+                headers: { 'X-UserId': devUserId },
+                json: true,
+                body: {
+                    id: 'someid',
+                    name: 'Some Name',
+                    redirectUri: 'http://localhost:40000/callback'
+                }
+            }, function (err, res, body) {
+                utils.deleteApplication('someid', devUserId, function () {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 201);
+                    done();
+                });
+            });
+        });
+
         it('must be forbidden to create an app with only https:// as redirectUri', function (done) {
             request.post({
                 url: baseUrl + 'applications',
@@ -224,7 +243,6 @@ describe('operations on OAuth2 APIs', function () {
             utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function (err, subsInfo) {
                 assert.isNotOk(err);
                 assert.isOk(subsInfo.clientId);
-                console.log('clientId: ' + subsInfo.clientId);
                 request.get({
                     url: baseUrl + 'subscriptions/' + subsInfo.clientId,
                     headers: { 'X-UserId': adminUserId }
@@ -335,6 +353,6 @@ describe('operations on OAuth2 APIs', function () {
                     });
                 });
             });
-        });        
+        });
     });
 });
