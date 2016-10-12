@@ -1,0 +1,12 @@
+FROM wickedportaltest_test-base
+
+COPY . /usr/src/app
+
+RUN rm -rf /var/portal-api \
+    && cp -R /usr/src/app/test/test-config /var/portal-api
+
+WORKDIR /usr/src/app
+
+CMD ["bash", "-c", "/usr/src/app/test.sh"]
+
+EXPOSE 3003

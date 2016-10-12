@@ -1,0 +1,109 @@
+{
+    "apis": [
+        {
+            "name": "Brilliant API",
+            "id": "brilliant",
+            "plans": [
+                "basic",
+                "unlimited"
+            ],
+            "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
+            "tags": ["Content"],
+            "auth": "key-auth"
+        },
+        {
+            "name": "Super duper API",
+            "id": "superduper",
+            "plans": [
+                "basic",
+                "unlimited",
+                "godlike"
+            ],
+            "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
+            "tags": ["Super"],
+            "auth": "oauth2",
+            "settings": {
+                "token_expiration": 1800                
+            }
+        },
+        {
+            "name": "User Management API",
+            "id": "users",
+            "plans": [
+                "basic",
+                "unlimited"
+            ],
+            "requiredGroup": "dev",
+            "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
+            "tags": ["Super"]
+        },
+        {
+            "name": "Partner API",
+            "id": "partner",
+            "plans": [
+                "basic",
+                "unlimited"
+            ],
+            "requiredGroup": "dev",
+            "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
+            "tags": ["Super", "Content"],
+            "auth": "oauth2-implicit",
+            "settings": {
+                "scopes": [
+                    "some_scope",
+                    "other_scope"
+                ],
+                "mandatory_scope": true
+            }
+        },
+        {
+            "name": "Ordering API",
+            "id": "orders",
+            "plans": [
+                "restricted_basic",
+                "restricted_unlimited"
+            ],
+            "requiredGroup": "dev",
+            "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
+            "tags": ["Invoice", "Content"]
+        },
+        {
+            "name": "Very Restricted",
+            "id": "restricted",
+            "plans": [
+                "restricted_basic"
+            ],
+            "requiredGroup": "superdev",
+            "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
+            "tags": []
+        },
+        {
+            "name": "Mobile API",
+            "id": "mobile",
+            "plans": [
+                "basic",
+                "unlimited"
+            ],
+            "desc": "This is an OAuth2 Implicit Flow secured API",
+            "tags": [],
+            "authServer": "sample-server",
+            "auth": "oauth2-implicit",
+            "settings": {
+                "scopes": [
+                    "some_scope",
+                    "other_scope"
+                ],
+                "mandatory_scope": false,
+                "token_expiration": 3600
+            }
+        }
+    ],
+    "_links": {
+        "self": {
+            "href": "/apis"
+        },
+        "plans": {
+            "href": "/plans"
+        }
+    }
+}

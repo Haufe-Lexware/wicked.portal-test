@@ -1,0 +1,56 @@
+version: '2'
+
+services:
+#  test-base:
+#    build:
+#      context: base
+#    command: "/bin/true"
+    
+  kong-adapter-test-data:
+    env_file: variables.env  
+    build: 
+      context: portal-kong-adapter
+    volumes:
+    - "/var/portal-api/static"
+#    depends_on:
+#    - "test-base"
+
+  portal-api:
+    env_file: variables.env  
+    image: ${DOCKER_PREFIX}portal-api:${DOCKER_TAG}
+    volumes_from:
+    - "kong-adapter-test-data"
+    environment:
+    - "PORTAL_API_HOOK_INTERVAL=1000"
+    restart: never
+
+  portal-kong-adapter:
+    env_file: variables.env
+    image: ${DOCKER_PREFIX}portal-kong-adapter:${DOCKER_TAG}
+    depends_on:
+    - portal-api
+    - kong
+    restart: never
+  
+  kong-database:
+    image: postgres:9.4
+    environment:
+    - "POSTGRES_USER=kong"
+    - "POSTGRES_PASSWORD=kong"
+    restart: never
+
+  kong:
+    image: ${DOCKER_PREFIX}kong:${DOCKER_TAG}
+    depends_on:
+    - "kong-database"
+    links:
+    - kong-database:kong-database
+    security_opt:
+    - seccomp:unconfined
+#    ports:
+#    - "8000:8000"
+#    - "8443:8443"
+#    - "8001:8001"
+    command: "dockerize -timeout 30s -wait tcp://kong-database:5432 kong start"
+    restart: never
+  
