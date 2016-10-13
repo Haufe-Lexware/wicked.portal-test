@@ -43,7 +43,7 @@ perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;su
 
 echo Building Test containers...
 pushd base
-docker build -t wickedportaltest_test-base .
+docker build -t wickedportaltest_test-base . >> $thisPath/docker-kong-adapter.log
 popd
 
 docker-compose -f local-compose-kong-adapter.yml build >> $thisPath/docker-kong-adapter.log

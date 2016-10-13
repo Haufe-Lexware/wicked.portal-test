@@ -263,6 +263,42 @@ describe('/webhooks', function () {
 
         });
 
+        it('should return expected events (delete application, including subscriptions)', function (done) {
+            hookServer(function () {
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                    function (err, apiResponse, apiBody) {
+                        utils.deleteListener(LISTENER, function () {
+
+                            assert.isNotOk(err);
+                            assert.equal(200, apiResponse.statusCode);
+                            var jsonBody = utils.getJson(apiBody);
+                            var wh = findEvent(jsonBody, 'delete', 'application');
+                            assert.isOk(wh);
+                            assert.equal('delete', wh.action);
+                            assert.equal('application', wh.entity);
+                            assert.isOk(wh.data);
+                            assert.equal(devUserId, wh.data.userId);
+                            assert.equal('dvolla', wh.data.applicationId);
+                            assert.isOk(wh.data.subscriptions, 'delete webhook did not pass subscriptions');
+                            assert.equal(wh.data.subscriptions.length, 1, 'subscriptions length was not 1');
+                            assert.equal(wh.data.subscriptions[0].api, 'brilliant', 'subscription to faulty API was returned');
+                            assert.equal(wh.data.subscriptions[0].application, 'dvolla', 'subscription application not correct');
+                            done();
+                        });
+                    });
+            }, function () {
+                async.series([
+                    callback => utils.createApplication('dvolla', 'Dvolla App', devUserId, callback),
+                    callback => utils.addSubscription('dvolla', devUserId, 'brilliant', 'basic', null, callback),
+                    callback => utils.createListener(LISTENER, HOOK_URL, callback),
+                    callback => utils.deleteApplication('dvolla', devUserId, callback)
+                ], function (err, results) {
+                    // We don't need to do anything here.
+                });
+            });
+
+        });
+
         it('should return expected events (create subscription)', function (done) {
             hookServer(function () {
                 request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
