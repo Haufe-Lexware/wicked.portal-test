@@ -55,6 +55,16 @@ describe('After initialization,', function () {
             });
         });
 
+        it('should have an API called sample-server (the auth server)', function (done) {
+            request.get({
+                url: kongUrl + 'apis/sample-server'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                done();
+            });
+        });
+
         it('should have three plugins for the brilliant API', function (done) {
             request.get({
                 url: kongUrl + 'apis/brilliant/plugins'
