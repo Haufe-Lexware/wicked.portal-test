@@ -120,7 +120,7 @@ describe('After initialization,', function () {
                 assert.isOk(oauth2, 'mobile did not have valid oauth2 plugin');
                 assert.equal(3600, oauth2.config.token_expiration, 'token_expiration not set to 1800 (see config)');
                 assert.isOk(oauth2.config.scopes, 'api does not have specified scopes');
-                assert.equal(2, oauth2.config.scopes.length, 'scope count does not match');
+                assert.equal(5002, oauth2.config.scopes.length, 'scope count does not match'); // Yes, we have 5002 scopes.
                 assert.equal(false, oauth2.config.mandatory_scope, 'mandatory_scope does not match');
                 done();
             });

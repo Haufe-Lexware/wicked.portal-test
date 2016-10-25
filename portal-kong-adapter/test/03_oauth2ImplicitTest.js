@@ -55,20 +55,26 @@ function closeServer(callback) {
     }
 }
 
-function getAccessToken(email, custom_id, api_id, client_id, scope, callback) {
+function getAccessToken(authenticated_userid, api_id, client_id, scope, callback) {
     if (typeof (scope) === 'function' && !callback)
         callback = scope;
     var registerUrl = adapterUrl + 'oauth2/register';
-    var headers = {
-        'X-Internal-Id': 'ABCDEF',
-        'X-More-Headers': '123456'
-    };
+
+    var correlationId = utils.createRandomId();
+    console.log('getAccessToken, correlation id=' + correlationId);
+
+//    var headers = {
+//        'X-Internal-Id': 'ABCDEF',
+//        'X-More-Headers': '123456'
+//    };
     var reqBody = {
-        email: email,
-        custom_id: custom_id,
+        authenticated_userid: authenticated_userid,
         api_id: api_id,
         client_id: client_id,
-        headers: headers,
+        headers: {
+            'Correlation-Id': correlationId
+        }
+//        headers: headers,
     };
     if (scope)
         reqBody.scope = scope;
@@ -169,13 +175,16 @@ describe('With oauth2-implicit APIs,', function () {
                 assert.isNotOk(err);
                 clientId = subsInfo.clientId;
                 assert.isOk(clientId);
-                done();
+                utils.awaitEmptyQueue(adapterQueue, adminUserId, done);
             });
         });
 
         afterEach(function (done) {
             if (clientId) {
-                utils.deleteSubscription(appId, devUserId, oauth2Api, done);
+                utils.deleteSubscription(appId, devUserId, oauth2Api, function (err) {
+                    assert.isNotOk(err);
+                    utils.awaitEmptyQueue(adapterQueue, adminUserId, done);
+                });
             } else {
                 done();
             }
@@ -188,8 +197,7 @@ describe('With oauth2-implicit APIs,', function () {
                 url: registerUrl,
                 json: true,
                 body: {
-                    email: 'test@test.com',
-                    custom_id: '12345',
+                    authenticated_userid: '12345',
                     api_id: oauth2Api,
                     client_id: clientId
                 }
@@ -210,8 +218,7 @@ describe('With oauth2-implicit APIs,', function () {
                 url: registerUrl,
                 json: true,
                 body: {
-                    email: 'test@test.com',
-                    custom_id: '12345',
+                    authenticated_userid: '12345',
                     api_id: oauth2Api,
                     client_id: 'invalidclientid'
                 }
@@ -225,10 +232,10 @@ describe('With oauth2-implicit APIs,', function () {
         });
 
         it('should be possible to get an access token twice with the same user', function (done) {
-            getAccessToken('test@test.com', '12345', oauth2Api, clientId, function (err, accessToken) {
+            getAccessToken('12345', oauth2Api, clientId, function (err, accessToken) {
                 assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
                 assert.isOk(accessToken);
-                getAccessToken('test@test.com', '12345', oauth2Api, clientId, function (err, accessToken) {
+                getAccessToken('12345', oauth2Api, clientId, function (err, accessToken) {
                     assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
                     assert.isOk(accessToken);
                     done();
@@ -283,7 +290,8 @@ describe('With oauth2-implicit APIs,', function () {
                 assert.isNotOk(err);
                 clientId = subsInfo.clientId;
                 assert.isOk(clientId);
-                done();
+
+                utils.awaitEmptyQueue(adapterQueue, adminUserId, done);
             });
         });
 
@@ -291,7 +299,10 @@ describe('With oauth2-implicit APIs,', function () {
             // Remove reqHandler after each test
             __reqHandler = null;
             if (clientId) {
-                utils.deleteSubscription(appId, devUserId, oauth2Api, done);
+                utils.deleteSubscription(appId, devUserId, oauth2Api, function (err) {
+                    assert.isNotOk(err);
+                    utils.awaitEmptyQueue(adapterQueue, adminUserId, done);
+                });
             } else {
                 done();
             }
@@ -320,7 +331,7 @@ describe('With oauth2-implicit APIs,', function () {
         });
 
         it('it should be possible to access the API with an access token', function (done) {
-            getAccessToken('test5@test.com', '123456', oauth2Api, clientId, function (err, accessToken) {
+            getAccessToken('123456', oauth2Api, clientId, function (err, accessToken) {
                 assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
                 assert.isOk(accessToken);
                 request.get({
@@ -335,7 +346,7 @@ describe('With oauth2-implicit APIs,', function () {
         });
 
         it('Kong should pass in its standard OAuth2 headers', function (done) {
-            getAccessToken('test2@test.com', '12346', oauth2Api, clientId, function (err, accessToken) {
+            getAccessToken('12346', oauth2Api, clientId, function (err, accessToken) {
                 assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
                 //console.log('Access Token: ' + accessToken);
                 // This is called from the embedded server, before the call returns
@@ -352,9 +363,8 @@ describe('With oauth2-implicit APIs,', function () {
                     assert.equal(200, res.statusCode);
                     assert.isOk(headers, 'headers must have been collected');
                     assert.isOk(headers['x-consumer-custom-id'], 'x-consumer-custom-id must be present');
-                    assert.equal('12346', headers['x-consumer-custom-id'], 'x-consumer-custom-id must match');
                     assert.isOk(headers['x-consumer-username'], 'x-consumer-username must be present');
-                    assert.equal('test2@test.com$mobile', headers['x-consumer-username'], 'x-consumer-username must match');
+                    //assert.equal('test2@test.com$mobile', headers['x-consumer-username'], 'x-consumer-username must match');
                     assert.isOk(headers['x-authenticated-userid']);
                     assert.equal('12346', headers['x-authenticated-userid'], 'x-authenticated-userid must match');
                     assert.isOk(headers['correlation-id'], 'must have a correlation id');
@@ -363,77 +373,81 @@ describe('With oauth2-implicit APIs,', function () {
             });
         });
 
-        it('Kong should return the desired additional headers', function (done) {
-            getAccessToken('test3@test.com', '12347', oauth2Api, clientId, function (err, accessToken) {
-                assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
-                //console.log('Access Token: ' + accessToken);
-                // This is called from the embedded server, before the call returns
-                var headers = null;
-                useReqHandler(function (req) {
-                    headers = req.headers;
-                });
-                request.get({
-                    url: gatewayUrl + 'mobile/',
-                    headers: { 'Authorization': 'Bearer ' + accessToken }
-                }, function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(200, res.statusCode);
-                    // 'X-Internal-Id': 'ABCDEF',
-                    // 'X-More-Headers': '123456'
-                    assert.isOk(headers, 'headers must have been collected');
-                    assert.isOk(headers['x-internal-id'], 'x-internal-id must be present');
-                    assert.equal(headers['x-internal-id'], 'ABCDEF', 'x-internal-id must match input');
-                    assert.isOk(headers['x-more-headers'], 'x-more-headers must be present');
-                    assert.equal(headers['x-more-headers'], '123456', 'x-more-headers must match input');
-                    done();
-                });
-            });
-        });
-
-        it('Kong should have been configured with correct plugins for consumer', function (done) {
-            getAccessToken('test4@test.com', '12348', oauth2Api, clientId, function (err, accessToken) {
-                assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
-                assert.isOk(accessToken);
-                // 1. get consumer id from kong for custom_id
-                // 2. get plugins for this consumer and API
-                // 3. check that they are correct (see also plans.json, this is what goes in there)
-                async.waterfall([
-                    function (callback) {
+        /*
+                it('Kong should return the desired additional headers', function (done) {
+                    getAccessToken('12347', oauth2Api, clientId, function (err, accessToken) {
+                        assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
+                        //console.log('Access Token: ' + accessToken);
+                        // This is called from the embedded server, before the call returns
+                        var headers = null;
+                        useReqHandler(function (req) {
+                            headers = req.headers;
+                        });
                         request.get({
-                            url: kongUrl + 'consumers?custom_id=12348'
+                            url: gatewayUrl + 'mobile/',
+                            headers: { 'Authorization': 'Bearer ' + accessToken }
                         }, function (err, res, body) {
                             assert.isNotOk(err);
                             assert.equal(200, res.statusCode);
-                            var consumers = utils.getJson(body);
-                            assert.equal(1, consumers.total);
-                            var consumerId = consumers.data[0].id;
-                            return callback(null, consumerId);
+                            // 'X-Internal-Id': 'ABCDEF',
+                            // 'X-More-Headers': '123456'
+                            assert.isOk(headers, 'headers must have been collected');
+                            assert.isOk(headers['x-internal-id'], 'x-internal-id must be present');
+                            assert.equal(headers['x-internal-id'], 'ABCDEF', 'x-internal-id must match input');
+                            assert.isOk(headers['x-more-headers'], 'x-more-headers must be present');
+                            assert.equal(headers['x-more-headers'], '123456', 'x-more-headers must match input');
+                            done();
                         });
-                    },
-                    function (consumerId, callback) {
-                        request.get({
-                            url: kongUrl + 'apis/' + oauth2Api + '/plugins?consumer_id=' + consumerId
-                        }, function (err, res, body) {
-                            assert.isNotOk(err, 'getting consumer API plugins failed');
-                            assert.equal(200, res.statusCode, 'status code was not 200');
-                            var plugins = utils.getJson(body);
-                            assert.isOk(plugins.data, 'plugin data was returned');
-                            //assert.equal(2, plugins.total, 'plugin count for consumer has to be 2 (rate-limiting and request-transformer)');
-                            return callback(null, plugins.data);
-                        });
-                    }
-                ], function (err, consumerPlugins) {
-                    assert.isNotOk(err); // This is somewhat superfluous
-                    // This was defined in plans.json for basic plan, which is what the clientId
-                    // subscription is for.    
-                    var rateLimit = utils.findWithName(consumerPlugins, 'rate-limiting');
-                    assert.isOk(rateLimit, 'rate-limiting plugin was not found');
-                    var reqTransformer = utils.findWithName(consumerPlugins, 'request-transformer');
-                    assert.isOk(reqTransformer, 'request-transformer plugin was not found');
-                    done();
+                    });
                 });
-            });
-        });
+        */
+
+        /*
+                it('Kong should have been configured with correct plugins for consumer', function (done) {
+                    getAccessToken('test4@test.com', '12348', oauth2Api, clientId, function (err, accessToken) {
+                        assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
+                        assert.isOk(accessToken);
+                        // 1. get consumer id from kong for custom_id
+                        // 2. get plugins for this consumer and API
+                        // 3. check that they are correct (see also plans.json, this is what goes in there)
+                        async.waterfall([
+                            function (callback) {
+                                request.get({
+                                    url: kongUrl + 'consumers?custom_id=12348'
+                                }, function (err, res, body) {
+                                    assert.isNotOk(err);
+                                    assert.equal(200, res.statusCode);
+                                    var consumers = utils.getJson(body);
+                                    assert.equal(1, consumers.total);
+                                    var consumerId = consumers.data[0].id;
+                                    return callback(null, consumerId);
+                                });
+                            },
+                            function (consumerId, callback) {
+                                request.get({
+                                    url: kongUrl + 'apis/' + oauth2Api + '/plugins?consumer_id=' + consumerId
+                                }, function (err, res, body) {
+                                    assert.isNotOk(err, 'getting consumer API plugins failed');
+                                    assert.equal(200, res.statusCode, 'status code was not 200');
+                                    var plugins = utils.getJson(body);
+                                    assert.isOk(plugins.data, 'plugin data was returned');
+                                    //assert.equal(2, plugins.total, 'plugin count for consumer has to be 2 (rate-limiting and request-transformer)');
+                                    return callback(null, plugins.data);
+                                });
+                            }
+                        ], function (err, consumerPlugins) {
+                            assert.isNotOk(err); // This is somewhat superfluous
+                            // This was defined in plans.json for basic plan, which is what the clientId
+                            // subscription is for.    
+                            var rateLimit = utils.findWithName(consumerPlugins, 'rate-limiting');
+                            assert.isOk(rateLimit, 'rate-limiting plugin was not found');
+                            var reqTransformer = utils.findWithName(consumerPlugins, 'request-transformer');
+                            assert.isOk(reqTransformer, 'request-transformer plugin was not found');
+                            done();
+                        });
+                    });
+                });
+        */
     });
 
     describe('when dealing with scopes,', function () {
@@ -465,7 +479,8 @@ describe('With oauth2-implicit APIs,', function () {
                 partnerClientId = results.partner;
                 assert.isOk(mobileClientId);
                 assert.isOk(partnerClientId);
-                done();
+
+                utils.awaitEmptyQueue(adapterQueue, adminUserId, done);
             });
         });
 
@@ -487,12 +502,13 @@ describe('With oauth2-implicit APIs,', function () {
                 }
             ], function (err, results) {
                 assert.isNotOk(err);
-                done();
+
+                utils.awaitEmptyQueue(adapterQueue, adminUserId, done);
             });
         });
 
         it('should be impossible to get a token without a scope (if defined so)', function (done) {
-            getAccessToken('woo@woo.fake', '23456', 'partner', partnerClientId, null, function (err, accessToken) {
+            getAccessToken('23456', 'partner', partnerClientId, null, function (err, accessToken) {
                 assert.isOk(err, 'things did not go wrong getting an access token, wtf?');
                 assert.isNotOk(accessToken, 'there should be no access token here');
                 done();
@@ -500,7 +516,7 @@ describe('With oauth2-implicit APIs,', function () {
         });
 
         it('should be possible to get a token with a sub scope', function (done) {
-            getAccessToken('wii@woo.fake', '34567', 'partner', partnerClientId, ['some_scope'], function (err, accessToken) {
+            getAccessToken('34567', 'partner', partnerClientId, ['some_scope'], function (err, accessToken) {
                 assert.isNotOk(err, 'an access token could not be retrieved');
                 assert.isOk(accessToken, 'an access token could not be retrieved');
                 done();
@@ -508,7 +524,7 @@ describe('With oauth2-implicit APIs,', function () {
         });
 
         it('should be possible to get a token without a scope (if defined so)', function (done) {
-            getAccessToken('wee@woo.fake', '45678', 'mobile', mobileClientId, null, function (err, accessToken) {
+            getAccessToken('45678', 'mobile', mobileClientId, null, function (err, accessToken) {
                 assert.isNotOk(err, 'an access token could not be retrieved');
                 assert.isOk(accessToken, 'an access token could not be retrieved');
                 done();
@@ -516,11 +532,59 @@ describe('With oauth2-implicit APIs,', function () {
         });
 
         it('should be possible to get a token with full scope as a string', function (done) {
-            getAccessToken('wuu@woo.fake', '56789', 'partner', partnerClientId, 'some_scope other_scope', function (err, accessToken) {
+            getAccessToken('56789', 'partner', partnerClientId, 'some_scope other_scope', function (err, accessToken) {
                 assert.isNotOk(err, 'an access token could not be retrieved');
                 assert.isOk(accessToken, 'an access token could not be retrieved');
                 done();
             });
         });
+
+        it('should be possible to get a token with scopes as a huge array (500 scopes)', function (done) {
+            var manyScopes = [];
+            for (var i=0; i<500; ++i)
+                manyScopes.push('scope_' + i);
+            getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
+                assert.isNotOk(err, 'an access token could not be retrieved');
+                assert.isOk(accessToken, 'an access token could not be retrieved');
+                done();
+            });
+        });
+
+        it('should be possible to get a token with scopes as a huge array (1000 scopes)', function (done) {
+            var manyScopes = [];
+            for (var i=0; i<1000; ++i)
+                manyScopes.push('scope_' + i);
+            getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
+                assert.isNotOk(err, 'an access token could not be retrieved');
+                assert.isOk(accessToken, 'an access token could not be retrieved');
+                done();
+            });
+        });
+
+
+        // Re-enable this when Bug 
+        /*
+        it('should be possible to get a token with scopes as a huge array (2500 scopes)', function (done) {
+            var manyScopes = [];
+            for (var i=0; i<2500; ++i)
+                manyScopes.push('scope_' + i);
+            getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
+                assert.isNotOk(err, 'an access token could not be retrieved');
+                assert.isOk(accessToken, 'an access token could not be retrieved');
+                done();
+            });
+        });
+
+        it('should be possible to get a token with scopes as a huge array (5000 scopes)', function (done) {
+            var manyScopes = [];
+            for (var i=0; i<5000; ++i)
+                manyScopes.push('scope_' + i);
+            getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
+                assert.isNotOk(err, 'an access token could not be retrieved');
+                assert.isOk(accessToken, 'an access token could not be retrieved');
+                done();
+            });
+        });
+        */
     });
 });

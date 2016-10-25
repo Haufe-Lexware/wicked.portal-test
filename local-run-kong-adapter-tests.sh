@@ -51,6 +51,11 @@ echo Running Kong Adapter test containers...
 docker-compose -f local-compose-kong-adapter.yml up --abort-on-container-exit > kong-test.log
 echo Copying test results...
 docker cp wickedportaltest_kong-adapter-test-data_1:/usr/src/app/test_results .
+echo Copying Kong logs
+mkdir -p test_results/kong_logs
+docker cp wickedportaltest_kong_1:/usr/local/kong/logs/error.log test_results/kong_logs 
+docker cp wickedportaltest_kong_1:/usr/local/kong/logs/access.log test_results/kong_logs 
+docker cp wickedportaltest_kong_1:/usr/local/kong/logs/serf.log test_results/kong_logs 
 
 echo Taking down Test containers...
 docker-compose -f local-compose-kong-adapter.yml down >> $thisPath/docker-kong-adapter.log
