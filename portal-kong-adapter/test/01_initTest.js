@@ -143,14 +143,14 @@ describe('After initialization,', function () {
         });
 
         describe('consumers', function () {
-            it('should have been inserted (four)', function (done) { // see globals.json
+            it('should have been inserted (five)', function (done) { // see globals.json
                 request.get({
                     url: kongUrl + 'consumers'
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     var consumers = utils.getJson(body);
-                    assert.equal(4, consumers.total);
+                    assert.equal(5, consumers.total);
                     done();
                 });
             });
