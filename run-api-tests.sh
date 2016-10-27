@@ -63,7 +63,7 @@ perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;su
 
 if [ -z "$buildLocal" ]; then 
     echo Using prebuilt images: Pulling images...
-    docker-compose -f api-tests-compose.yml pull
+    docker-compose -p wickedportaltest -f api-tests-compose.yml pull
     docker pull ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild
 fi
 
@@ -73,13 +73,13 @@ docker build -t wickedportaltest_test-base . >> $thisPath/docker-api.log
 popd
 
 echo Building Test container...
-docker-compose -f api-tests-compose.yml build >> $thisPath/docker-api.log
+docker-compose -p wickedportaltest -f api-tests-compose.yml build >> $thisPath/docker-api.log
 echo Running API test containers...
-docker-compose -f api-tests-compose.yml up --abort-on-container-exit > api-test.log
+docker-compose -p wickedportaltest -f api-tests-compose.yml up --abort-on-container-exit > api-test.log
 echo Copying test results...
 docker cp wickedportaltest_api-test-data_1:/usr/src/app/test_results .
 echo Taking down Test containers...
-docker-compose -f api-tests-compose.yml down >> $thisPath/docker-api.log
+docker-compose -p wickedportaltest -f api-tests-compose.yml down >> $thisPath/docker-api.log
 
 cat test_results/api-test.log
 
