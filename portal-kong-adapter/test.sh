@@ -8,7 +8,7 @@ node node_modules/portal-env/await.js http://portal-kong-adapter:3002/ping
 echo Ping returned 200 for portal-kong-adapter
 
 mkdir test_results
-mocha > test_results/kong-test.log || echo Integration tests failed. See log. > test_results/KONG_FAILED 
+mocha > test_results/kong-adapter-test.log || echo Integration tests failed. See log. > test_results/KONG_FAILED 
 
 echo Trying to kill portal-kong-adapter...
 
