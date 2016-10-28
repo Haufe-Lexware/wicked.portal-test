@@ -262,10 +262,10 @@ utils.findWithName = function (someArray, name) {
 };
 
 utils.awaitEmptyQueue = function (queueName, userId, callback) {
-    var maxCount = 50;
-    var timeOut = 500;
+    var maxCount = 20;
+    var timeOut = 200;
     var _awaitEmptyQueue = function (tryCount) {
-        //console.log('_awaitEmptyQueue(), try ' + tryCount + ': ' + queueName);
+        // console.log('_awaitEmptyQueue(), try ' + tryCount + ': ' + queueName);
         if (tryCount >= maxCount)
             return callback(new Error('awaitEmptyQueue: Max count of ' + maxCount + ' was reached: ' + tryCount));
         request.get({
@@ -278,14 +278,17 @@ utils.awaitEmptyQueue = function (queueName, userId, callback) {
                 return callback(new Error('awaitEmptyQueue: GET of events for ' + queueName + ' returns status code ' + res.statusCode));
             var queue = utils.getJson(body);
             //console.log(queue);
-            if (queue.length === 0)
+            if (queue.length === 0) {
+                if (tryCount > 4)
+                    console.log('INFO: awaitEmptyQueue needed ' + tryCount + ' tries.');
                 return callback(null);
+            }
             setTimeout(_awaitEmptyQueue, timeOut, tryCount + 1);
         });
     };
 
     // Let the queue build up first before hammering the API.
-    setTimeout(_awaitEmptyQueue, 500, 0);
+    setTimeout(_awaitEmptyQueue, 500, 1);
 };
 
 utils.kongGet = function (url, expectedStatusCode, callback) {

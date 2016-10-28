@@ -54,7 +54,7 @@ describe('operations on OAuth2 APIs', function () {
         });
     });
 
-    var oauth2Api = 'mobile'; // this is oauth2-implicit
+    var oauth2Api = 'mobile'; // this is oauth2 with implicit grant
 
     var subscriptionClientId = null;
 
@@ -104,7 +104,7 @@ describe('operations on OAuth2 APIs', function () {
             });
         });
 
-        it('must be forbidden to add a subscription to an oauth2-implicit API for an app without redirectUri', function (done) {
+        it('must be forbidden to add a subscription to an oauth2 implicit grant API for an app without redirectUri', function (done) {
             request.post({
                 url: baseUrl + 'applications/' + badAppId + '/subscriptions',
                 headers: { 'X-UserId': devUserId },
@@ -253,7 +253,7 @@ describe('operations on OAuth2 APIs', function () {
                     assert.isOk(jsonBody.subscription);
                     assert.equal(jsonBody.subscription.api, oauth2Api);
                     assert.equal(jsonBody.subscription.application, appId);
-                    assert.equal(jsonBody.subscription.auth, 'oauth2-implicit');
+                    assert.equal(jsonBody.subscription.auth, 'oauth2');
                     assert.isOk(jsonBody.application);
                     assert.equal(jsonBody.application.id, appId);
                     done();

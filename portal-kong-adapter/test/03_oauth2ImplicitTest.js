@@ -58,31 +58,25 @@ function closeServer(callback) {
 function getAccessToken(authenticated_userid, api_id, client_id, scope, callback) {
     if (typeof (scope) === 'function' && !callback)
         callback = scope;
-    var registerUrl = adapterUrl + 'oauth2/register';
+    var registerUrl = adapterUrl + 'oauth2/token/implicit';
 
     var correlationId = utils.createRandomId();
     console.log('getAccessToken, correlation id=' + correlationId);
 
-//    var headers = {
-//        'X-Internal-Id': 'ABCDEF',
-//        'X-More-Headers': '123456'
-//    };
     var reqBody = {
         authenticated_userid: authenticated_userid,
         api_id: api_id,
-        client_id: client_id,
-        headers: {
-            'Correlation-Id': correlationId
-        }
-//        headers: headers,
+        client_id: client_id
     };
     if (scope)
         reqBody.scope = scope;
-    //console.log(registerUrl);
     request.post({
         url: registerUrl,
         json: true,
-        body: reqBody
+        body: reqBody,
+        headers: {
+            'Correlation-Id': correlationId
+        }
     }, function (err, res, body) {
         // We expect something like this back:
         // https://good.uri#access_token=239239827389729837298372983&expires_in=3600&token_type=bearer
@@ -90,13 +84,13 @@ function getAccessToken(authenticated_userid, api_id, client_id, scope, callback
             return callback(err);
         //assert.isNotOk(err);
         if (200 !== res.statusCode)
-            return callback(new Error('/oauth2/register did not return 200: ' + res.statusCode));
+            return callback(new Error('/oauth2/token/implicit did not return 200: ' + res.statusCode));
         //assert.equal(200, res.statusCode);
         var jsonBody = utils.getJson(body);
         //console.log('getAccessToken(), jsonBody:');
         //console.log(jsonBody);
         if (!jsonBody.redirect_uri)
-            return callback(new Error('/oauth2/register did not return a redirect_uri'));
+            return callback(new Error('/oauth2/token/implicit did not return a redirect_uri'));
         try {
             var redirectUriString = jsonBody.redirect_uri;
             var redirectUri = URL.parse(redirectUriString);
@@ -115,7 +109,9 @@ function getAccessToken(authenticated_userid, api_id, client_id, scope, callback
     });
 }
 
-describe('With oauth2-implicit APIs,', function () {
+describe('With oauth2 implicit grant APIs,', function () {
+
+    this.timeout(5000);
 
     var provisionKey = null;
 
@@ -150,7 +146,7 @@ describe('With oauth2-implicit APIs,', function () {
             assert.isNotOk(err, 'some action went wrong: ' + err);
             var plugins = results.kongPlugins.body;
             //console.log(JSON.stringify(plugins, null, 2));
-            assert.equal(2, plugins.total, 'api needs two plugins (oauth2 and correlation-id)');
+            assert.equal(3, plugins.total, 'api needs three plugins (oauth2, acl and correlation-id)');
             var oauthPlugin = utils.findWithName(plugins.data, 'oauth2');
             assert.isOk(oauthPlugin, 'oauth2 plugin must be present');
             provisionKey = oauthPlugin.config.provision_key;
@@ -169,7 +165,7 @@ describe('With oauth2-implicit APIs,', function () {
             // Reset before each test
             clientId = null;
             // If we don't have this, we needn't start.
-            assert.isOk(provisionKey);
+            assert.isOk(provisionKey, 'there is no provision_key; cannot perform tests.');
             // Add a subscription to play with
             utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function (err, subsInfo) {
                 assert.isNotOk(err);
@@ -191,7 +187,7 @@ describe('With oauth2-implicit APIs,', function () {
         });
 
         it('should be possible to get an access token', function (done) {
-            var registerUrl = adapterUrl + 'oauth2/register';
+            var registerUrl = adapterUrl + 'oauth2/token/implicit';
             //console.log(registerUrl);
             request.post({
                 url: registerUrl,
@@ -200,7 +196,8 @@ describe('With oauth2-implicit APIs,', function () {
                     authenticated_userid: '12345',
                     api_id: oauth2Api,
                     client_id: clientId
-                }
+                },
+                headers: { 'Correlation-Id': 'should be possible to get an access token' }
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -212,7 +209,7 @@ describe('With oauth2-implicit APIs,', function () {
         });
 
         it('should not be possible to get an access token without subscription', function (done) {
-            var registerUrl = adapterUrl + 'oauth2/register';
+            var registerUrl = adapterUrl + 'oauth2/token/implicit';
             //console.log(registerUrl);
             request.post({
                 url: registerUrl,
@@ -462,18 +459,21 @@ describe('With oauth2-implicit APIs,', function () {
 
             async.parallel({
                 mobile: callback => utils.addSubscription(appId, devUserId, 'mobile', 'basic', null, function (err, subsInfo) {
+                    //console.log(subsInfo);
                     assert.isNotOk(err);
                     var clientId = subsInfo.clientId;
                     assert.isOk(clientId);
                     callback(null, clientId);
                 }),
                 partner: callback => utils.addSubscription(appId, devUserId, 'partner', 'basic', null, function (err, subsInfo) {
+                    //console.log(subsInfo);
                     assert.isNotOk(err);
                     var clientId = subsInfo.clientId;
                     assert.isOk(clientId);
                     callback(null, clientId);
                 })
             }, function (err, results) {
+                //console.log('addSubscription calls returned');
                 assert.isNotOk(err);
                 mobileClientId = results.mobile;
                 partnerClientId = results.partner;

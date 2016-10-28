@@ -27,7 +27,9 @@
             ],
             "auth": "oauth2",
             "settings": {
-                "token_expiration": 1800
+                "token_expiration": 1800,
+                "enable_client_credentials": true,
+                "enable_password_grant": true
             }
         },
         {
@@ -56,13 +58,14 @@
                 "Super",
                 "Content"
             ],
-            "auth": "oauth2-implicit",
+            "auth": "oauth2",
             "settings": {
                 "scopes": [
                     "some_scope",
                     "other_scope"
                 ],
-                "mandatory_scope": true
+                "mandatory_scope": true,
+                "enable_implicit_grant": true
             }
         },
         {
@@ -99,8 +102,9 @@
             "desc": "This is an OAuth2 Implicit Flow secured API",
             "tags": [],
             "authServer": "sample-server",
-            "auth": "oauth2-implicit",
+            "auth": "oauth2",
             "settings": {
+                "enable_implicit_grant": true,
                 "scopes": [
                     "some_scope",
                     "other_scope",

@@ -14,7 +14,7 @@ services:
     volumes_from:
     - "kong-adapter-test-data"
     environment:
-    - "PORTAL_API_HOOK_INTERVAL=1000"
+    - "PORTAL_API_HOOK_INTERVAL=200"
     restart: never
 
   portal-kong-adapter:
