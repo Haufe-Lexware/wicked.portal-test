@@ -262,8 +262,8 @@ utils.findWithName = function (someArray, name) {
 };
 
 utils.awaitEmptyQueue = function (queueName, userId, callback) {
-    var maxCount = 20;
-    var timeOut = 200;
+    var maxCount = 40;
+    var timeOut = 400;
     var _awaitEmptyQueue = function (tryCount) {
         // console.log('_awaitEmptyQueue(), try ' + tryCount + ': ' + queueName);
         if (tryCount >= maxCount)

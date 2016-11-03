@@ -44,7 +44,7 @@ describe('/apis', function () {
                 function(err, res, body) {
                     assert.isNotOk(err);
                     var jsonBody = utils.getJson(body);
-                    assert.equal(6, jsonBody.apis.length);
+                    assert.equal(7, jsonBody.apis.length);
                     assert.equal(200, res.statusCode);
                     done();
                 });

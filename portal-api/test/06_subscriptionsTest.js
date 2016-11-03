@@ -1,4 +1,5 @@
 var assert = require('chai').assert;
+var async = require('async');
 var request = require('request');
 var utils = require('./testUtils');
 var consts = require('./testConsts');
@@ -679,4 +680,102 @@ describe('/applications/<appId>/subscriptions', function () {
 
         }); // /subscriptions/<apiId> DELETE
     }); // /subscriptions/<apiId>
+
+    describe('deprecated APIs', function () {
+        it('should not be possible to create a subscription for a deprecated API', function (done) {
+            request.post(
+                {
+                    url: baseUrl + 'applications/' + appId + '/subscriptions',
+                    headers: { 'X-UserId': devUserId },
+                    json: true,
+                    body: {
+                        application: appId,
+                        api: 'deprecated',
+                        plan: 'basic'
+                    }
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(400, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.equal(jsonBody.message, 'API is deprecated. Subscribing not possible.');
+                    done();
+                });
+        });
+    });
+
+    describe('/apis/<apiIs>/subscriptions', function () {
+        it('should be forbidden to call for non-admin users', function (done) {
+            request.get({
+                url: baseUrl + 'apis/superduper/subscriptions',
+                headers: utils.makeHeaders(devUserId)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(403, res.statusCode);
+                var jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.message, 'Not Allowed. Only Admins can get subscriptions for an API.');
+                done();
+            });
+        });
+
+        it('should return subscriptions per API', function (done) {
+            utils.addSubscription(appId, devUserId, 'superduper', 'basic', null, function (err) {
+                assert.isNotOk(err);
+                request.get({
+                    url: baseUrl + 'apis/superduper/subscriptions',
+                    headers: utils.makeHeaders(adminUserId)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    utils.deleteSubscription(appId, devUserId, 'superduper', function (err) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.equal(1, jsonBody.length);
+                        assert.equal(jsonBody[0].application, appId);
+                        assert.equal(jsonBody[0].plan, 'basic');
+                        done();
+                    });
+                });
+            });
+        });
+
+        it('should delete applications from subscription API index again (when deleting subscriptions)', function (done) {
+            async.series([
+                callback => utils.addSubscription(appId, devUserId, 'superduper', 'basic', null, callback),
+                callback => utils.deleteSubscription(appId, devUserId, 'superduper', callback)
+            ], function (err, results) {
+                assert.isNotOk(err);
+                request.get({
+                    url: baseUrl + 'apis/superduper/subscriptions',
+                    headers: utils.makeHeaders(adminUserId)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.equal(0, jsonBody.length);
+                    done();
+                });
+            });
+        });
+
+        it('should delete applications from subscription API index again (when deleting applications)', function (done) {
+            async.series([
+                callback => utils.createApplication('whoawhoa', 'Whoa App', devUserId, callback),
+                callback => utils.addSubscription('whoawhoa', devUserId, 'superduper', 'basic', null, callback),
+                callback => utils.deleteApplication('whoawhoa', devUserId, callback)
+            ], function (err, results) {
+                assert.isNotOk(err);
+                request.get({
+                    url: baseUrl + 'apis/superduper/subscriptions',
+                    headers: utils.makeHeaders(adminUserId)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.equal(0, jsonBody.length);
+                    done();
+                });
+            });
+        });
+    });
 }); // /applications/<appId>/subscriptions

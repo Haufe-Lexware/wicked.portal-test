@@ -80,6 +80,19 @@
             "settings": {
                 "enable_implicit_grant": true
             }
+        },
+        {
+            "name": "Deprecated API",
+            "id": "deprecated",
+            "deprecated": true,
+            "plans": [
+                "basic",
+                "unlimited"
+            ],
+            "desc": "This is a deprecated API",
+            "tags": [],
+            "requiredGroup": "dev",
+            "auth": "key-auth"
         }
     ],
     "_links": {
