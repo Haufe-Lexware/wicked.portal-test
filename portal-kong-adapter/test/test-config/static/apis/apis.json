@@ -101,7 +101,7 @@
             ],
             "desc": "This is an OAuth2 Implicit Flow secured API",
             "tags": [],
-            "authServer": "sample-server",
+            "authServers": ["sample-server"],
             "auth": "oauth2",
             "settings": {
                 "enable_implicit_grant": true,

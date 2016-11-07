@@ -55,8 +55,10 @@ function closeServer(callback) {
     }
 }
 
-function getAccessToken(authenticated_userid, api_id, client_id, scope, callback) {
-    if (typeof (scope) === 'function' && !callback)
+function getAccessToken(authenticated_userid, api_id, client_id, scope, auth_server, callback) {
+    if (typeof (auth_server) === 'function' && !callback)
+        callback = auth_server;
+    else if (typeof (scope) === 'function' && !auth_server && !callback)
         callback = scope;
     var registerUrl = adapterUrl + 'oauth2/token/implicit';
 
@@ -70,6 +72,8 @@ function getAccessToken(authenticated_userid, api_id, client_id, scope, callback
     };
     if (scope)
         reqBody.scope = scope;
+    if (auth_server)
+        reqBody.auth_server = auth_server;
     request.post({
         url: registerUrl,
         json: true,
@@ -370,6 +374,23 @@ describe('With oauth2 implicit grant APIs,', function () {
             });
         });
 
+        it('should not be possible to get a token if API is configured for other auth server', function (done) {
+            getAccessToken('7287382', oauth2Api, clientId, null, 'meep-auth', function (err, accessToken) {
+                assert.isOk(err, 'got access token when you shouldn\'t');
+                done();
+            });
+        });
+
+        it('should be possible to get a token if API is configured for correct auth server', function (done) {
+            getAccessToken('7287382', oauth2Api, clientId, null, 'sample-server', function (err, accessToken) {
+                assert.isNotOk(err, 'did not get access token');
+                assert.isOk(accessToken, 'an access token could not be retrieved');
+                done();
+            });
+        });
+
+        
+
         /*
                 it('Kong should return the desired additional headers', function (done) {
                     getAccessToken('12347', oauth2Api, clientId, function (err, accessToken) {
@@ -562,7 +583,7 @@ describe('With oauth2 implicit grant APIs,', function () {
         });
 
 
-        // Re-enable this when Bug 
+        // Re-enable this when Bug is fixed
         /*
         it('should be possible to get a token with scopes as a huge array (2500 scopes)', function (done) {
             var manyScopes = [];
