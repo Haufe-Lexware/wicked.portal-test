@@ -29,7 +29,8 @@
             "settings": {
                 "token_expiration": 1800,
                 "enable_client_credentials": true,
-                "enable_password_grant": true
+                "enable_password_grant": true,
+                "enable_authorization_code": true
             }
         },
         {
@@ -65,7 +66,8 @@
                     "other_scope"
                 ],
                 "mandatory_scope": true,
-                "enable_implicit_grant": true
+                "enable_implicit_grant": true,
+                "enable_authorization_code": true
             }
         },
         {
