@@ -42,7 +42,7 @@ function findEvent(eventList, action, entity) {
 
 describe('/webhooks', function () {
 
-    this.timeout(10000);
+    this.timeout(5000);
 
     beforeEach(function() {
         utils.correlationId = utils.createRandomId();

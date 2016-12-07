@@ -8,6 +8,8 @@ var baseUrl = consts.BASE_URL;
 
 describe('/applications/<appId>/subscriptions', function () {
 
+    this.timeout(5000);
+
     var devUserId = '';
     var adminUserId = '';
     var noobUserId = '';
