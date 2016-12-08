@@ -19,3 +19,12 @@ services:
     env_file: variables.env
     image: ${DOCKER_PREFIX}portal:${DOCKER_TAG}
     restart: never
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 10.222.222.0/24
+        gateway: 10.222.222.1

@@ -42,4 +42,12 @@ services:
     - seccomp:unconfined
     command: "dockerize -timeout 30s -wait tcp://kong-database:5432 kong start"
     restart: never
-  
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 10.222.222.0/24
+        gateway: 10.222.222.1
