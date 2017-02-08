@@ -13,12 +13,10 @@ services:
     image: ${DOCKER_PREFIX}portal-api:${DOCKER_TAG}
     volumes_from:
     - "portal-test-data"
-    restart: never
 
   portal:
     env_file: variables.env
     image: ${DOCKER_PREFIX}portal:${DOCKER_TAG}
-    restart: never
 
 networks:
   default:

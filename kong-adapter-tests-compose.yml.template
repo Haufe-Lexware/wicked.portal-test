@@ -15,7 +15,6 @@ services:
     - "kong-adapter-test-data"
     environment:
     - "PORTAL_API_HOOK_INTERVAL=200"
-    restart: never
 
   portal-kong-adapter:
     env_file: variables.env
@@ -23,14 +22,12 @@ services:
     depends_on:
     - portal-api
     - kong
-    restart: never
   
   kong-database:
     image: postgres:9.4
     environment:
     - "POSTGRES_USER=kong"
     - "POSTGRES_PASSWORD=kong"
-    restart: never
 
   kong:
     image: ${DOCKER_PREFIX}kong:${DOCKER_TAG}
@@ -40,8 +37,6 @@ services:
     - kong-database:kong-database
     security_opt:
     - seccomp:unconfined
-    command: "dockerize -timeout 30s -wait tcp://kong-database:5432 kong start"
-    restart: never
 
 networks:
   default:

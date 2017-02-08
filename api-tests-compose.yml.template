@@ -13,7 +13,6 @@ services:
     image: ${DOCKER_PREFIX}portal-api:${DOCKER_TAG}
     volumes_from:
     - "api-test-data"
-    restart: never
 
 networks:
   default:
