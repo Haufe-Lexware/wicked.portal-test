@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo Running as `whoami`
+
 node node_modules/portal-env/await.js http://portal-api:3001/ping
 node node_modules/portal-env/await.js http://portal:3000/ping
 

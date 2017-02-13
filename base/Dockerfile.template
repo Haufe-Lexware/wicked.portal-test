@@ -1,3 +1,5 @@
 FROM ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild
 
+USER root
+
 RUN npm install -g mocha

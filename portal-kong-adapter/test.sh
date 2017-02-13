@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo Running as `whoami`
+
 echo Waiting for portal-api...
 node node_modules/portal-env/await.js http://portal-api:3001/ping
 echo Ping returned 200 for portal-api

@@ -7,6 +7,8 @@ RUN rm -rf /var/portal-api \
 
 WORKDIR /usr/src/app
 
+USER wicked
+
 CMD ["bash", "-c", "/usr/src/app/test.sh"]
 
 EXPOSE 3003
