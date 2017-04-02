@@ -128,7 +128,7 @@ describe('With oauth2 implicit grant APIs,', function () {
             callback => utils.createApplication(badAppId, { name: 'Bad App' }, devUserId, callback)
         ], function (err, results) {
             assert.isNotOk(err, 'creating applications failed.');
-            done();
+            utils.awaitEmptyQueue(adapterQueue, adminUserId, done);
         });
     });
 
@@ -138,7 +138,7 @@ describe('With oauth2 implicit grant APIs,', function () {
             callback => utils.deleteApplication(badAppId, devUserId, callback)
         ], function (err, results) {
             assert.isNotOk(err, 'deleting applications failed.');
-            done();
+            utils.awaitEmptyQueue(adapterQueue, adminUserId, done);
         });
     });
 

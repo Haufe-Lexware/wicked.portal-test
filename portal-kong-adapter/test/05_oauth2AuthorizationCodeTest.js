@@ -91,7 +91,7 @@ function getAccessToken(code, client_id, client_secret, api_id, callback) {
         code: code,
         client_id: client_id,
         client_secret: client_secret
-    }
+    };
     request.post({
         url: tokenUrl,
         headers: headers,
@@ -108,7 +108,7 @@ function getAccessToken(code, client_id, client_secret, api_id, callback) {
         var jsonBody = utils.getJson(body);
         //console.log(jsonBody);
         callback(null, jsonBody.access_token);
-    })
+    });
 }
 
 describe('Using the Authorization Code grant,', function () {
@@ -181,7 +181,7 @@ describe('Using the Authorization Code grant,', function () {
             }
         ], function (err) {
             assert.isNotOk(err);
-            done();
+            utils.awaitEmptyQueue(adapterQueue, adminUserId, done);
         });
     });
 
@@ -208,7 +208,7 @@ describe('Using the Authorization Code grant,', function () {
                 assert.isNotOk(err, 'getAccessToken returned an error');
                 assert.isOk(accessToken, 'did not receive an access token');
                 done();
-            })
+            });
         });
     });
 });
