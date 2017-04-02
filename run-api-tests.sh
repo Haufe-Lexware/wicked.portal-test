@@ -28,10 +28,21 @@ else
     docker login -u ${DOCKER_REGISTRY_USER} -p ${DOCKER_REGISTRY_PASSWORD} ${DOCKER_REGISTRY}
 fi
 
-rm -f docker-api.log
+if [ -z "$BUILD_ALPINE" ]; then
+    echo "Not building Alpine images."
+    export BUILD_ALPINE=""
+else 
+    if [ ! "$BUILD_ALPINE" = "-alpine" ]; then
+        echo "Unsupported value for BUILD_ALPINE, setting to -alpine"
+        export BUILD_ALPINE="-alpine"
+    fi
+    echo "Building Alpine images."
+fi
+
+rm -f docker-api${BUILD_ALPINE}.log
 thisPath=`pwd`
 
-echo Docker logs go into docker-api.log.
+echo Docker logs go into docker-api${BUILD_ALPINE}.log.
 
 if [ ! -z "$buildLocal" ]; then
 
@@ -39,20 +50,20 @@ if [ ! -z "$buildLocal" ]; then
 
     pushd ../wicked.portal-env
     echo Building Environment docker image...
-    docker build -t ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild . >> $thisPath/docker-api.log 
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild${BUILD_ALPINE} . >> $thisPath/docker-api${BUILD_ALPINE}.log 
     popd
 
     pushd ../wicked.portal-api
     echo Building API docker image...
-    perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile
-    docker build -t ${DOCKER_PREFIX}portal-api:${DOCKER_TAG} . >> $thisPath/docker-api.log
+    perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${DOCKER_TAG}${BUILD_ALPINE} . >> $thisPath/docker-api${BUILD_ALPINE}.log
     popd
 
 else
 
     echo Using prebuilt images:
-    echo DOCKER_PREFIX=$DOCKER_PREFIX
-    echo DOCKER_TAG=$DOCKER_TAG
+    echo DOCKER_PREFIX=${DOCKER_PREFIX}
+    echo DOCKER_TAG=${DOCKER_TAG}${BUILD_ALPINE}
 
 fi
 
@@ -64,25 +75,25 @@ perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;su
 if [ -z "$buildLocal" ]; then 
     echo Using prebuilt images: Pulling images...
     docker-compose -p wickedportaltest -f api-tests-compose.yml pull
-    docker pull ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild
+    docker pull ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild${BUILD_ALPINE}
 fi
 
 echo Building Test base container...
 pushd base
-docker build -t wickedportaltest_test-base . >> $thisPath/docker-api.log
+docker build -t wickedportaltest_test-base . >> $thisPath/docker-api${BUILD_ALPINE}.log
 popd
 
 echo Building Test container...
-docker-compose -p wickedportaltest -f api-tests-compose.yml build >> $thisPath/docker-api.log
+docker-compose -p wickedportaltest -f api-tests-compose.yml build >> $thisPath/docker-api${BUILD_ALPINE}.log
 echo Running API test containers...
-docker-compose -p wickedportaltest -f api-tests-compose.yml up --abort-on-container-exit > api-test.log
+docker-compose -p wickedportaltest -f api-tests-compose.yml up --abort-on-container-exit > api-test${BUILD_ALPINE}.log
 echo Copying test results...
 docker cp wickedportaltest_api-test-data_1:/usr/src/app/test_results .
 echo Taking down Test containers...
-docker-compose -p wickedportaltest -f api-tests-compose.yml down >> $thisPath/docker-api.log
+docker-compose -p wickedportaltest -f api-tests-compose.yml down >> $thisPath/docker-api${BUILD_ALPINE}.log
 
 cat test_results/api-test.log
 
-echo Detailed logs are in api-test.log.
+echo Detailed logs are in api-test${BUILD_ALPINE}.log.
 
 echo Done.

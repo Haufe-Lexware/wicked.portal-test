@@ -1,6 +1,6 @@
 {
   "name": "test-api",
-  "version": "0.11.5",
+  "version": "0.11.6",
   "description": "Tests for portal-kong-adapter",
   "main": "index.js",
   "directories": {

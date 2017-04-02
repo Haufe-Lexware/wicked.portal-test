@@ -1,4 +1,4 @@
-FROM ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild
+FROM ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild${BUILD_ALPINE}
 
 USER root
 
