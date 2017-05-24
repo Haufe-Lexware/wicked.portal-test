@@ -73,7 +73,7 @@ if [ ! -z "$buildLocal" ]; then
 
     pushd ../wicked.kong
     echo Building Kong docker image...
-    perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile
+    # perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile
     docker build -t ${DOCKER_PREFIX}kong:${DOCKER_TAG} . >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log
     popd
 
