@@ -113,6 +113,32 @@ function getAccessToken(authenticated_userid, api_id, client_id, scope, auth_ser
     });
 }
 
+function revokeAccessToken(accessToken, authenticatedUserId, callback) {
+    //console.log(`revokeAccessToken(${accessToken}, ${authenticatedUserId})`);
+    let revokeUrl = adapterUrl + 'oauth2/token?';
+    if (accessToken)
+        revokeUrl += ('access_token=' + qs.escape(accessToken));
+    else if (authenticatedUserId)
+        revokeUrl += ('authenticated_userid=' + qs.escape(authenticatedUserId));
+    else
+        throw new Error('revokeAccessToken - either accessToken or authenticatedUserId must be non-null');
+
+    var correlationId = utils.createRandomId();
+    console.log(`revokeAccessToken ${revokeUrl}, correlation id=${correlationId}`);
+
+    request.delete({
+        url: revokeUrl,
+        headers: {
+            'Correlation-Id': correlationId
+        }
+    }, function (err, res, body) {
+        if (err)
+            return callback(err);
+        // Give Kong some slack here
+        setTimeout(callback, 250);
+    });
+}
+
 describe('With oauth2 implicit grant APIs,', function () {
 
     this.timeout(5000);
@@ -342,6 +368,83 @@ describe('With oauth2 implicit grant APIs,', function () {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     done();
+                });
+            });
+        });
+
+        it('should be possible to revoke a token by access token', function (done) {
+            getAccessToken('abc123', oauth2Api, clientId, function (err, accessToken) {
+                assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
+                assert.isOk(accessToken);
+                request.get({
+                    url: gatewayUrl + 'mobile/',
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    revokeAccessToken(accessToken, null, function (err) {
+                        assert.isNotOk(err, 'revokeAccessToken returned an error: ' + err);
+                        request.get({
+                            url: gatewayUrl + 'mobile/',
+                            headers: { 'Authorization': 'Bearer ' + accessToken }
+                        }, function (err, res, body) {
+                            assert.isNotOk(err, 'request should be denied, but not fail: ' + err);
+                            assert.equal(res.statusCode, 401, 'Unexpected return code after revoking access token: ' + res.statusCode);
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+
+        it('should be possible to revoke a token by authenticated_userid', function (done) {
+            const userId = 'abcdefg';
+            getAccessToken(userId, oauth2Api, clientId, function (err, accessToken) {
+                assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
+                assert.isOk(accessToken);
+                request.get({
+                    url: gatewayUrl + 'mobile/',
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    revokeAccessToken(null, userId, function (err) {
+                        assert.isNotOk(err, 'revokeAccessToken returned an error: ' + err);
+                        request.get({
+                            url: gatewayUrl + 'mobile/',
+                            headers: { 'Authorization': 'Bearer ' + accessToken }
+                        }, function (err, res, body) {
+                            assert.isNotOk(err, 'request should be denied, but not fail: ' + err);
+                            assert.equal(res.statusCode, 401, 'Unexpected return code after revoking access token: ' + res.statusCode);
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+
+        it('should be possible to revoke a token by authenticated_userid (complicated userid)', function (done) {
+            const userId = 'huid:abcdefg-1279232;email:hello@world.de';
+            getAccessToken(userId, oauth2Api, clientId, function (err, accessToken) {
+                assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
+                assert.isOk(accessToken);
+                request.get({
+                    url: gatewayUrl + 'mobile/',
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    revokeAccessToken(null, userId, function (err) {
+                        assert.isNotOk(err, 'revokeAccessToken returned an error: ' + err);
+                        request.get({
+                            url: gatewayUrl + 'mobile/',
+                            headers: { 'Authorization': 'Bearer ' + accessToken }
+                        }, function (err, res, body) {
+                            assert.isNotOk(err, 'request should be denied, but not fail: ' + err);
+                            assert.equal(res.statusCode, 401, 'Unexpected return code after revoking access token: ' + res.statusCode);
+                            done();
+                        });
+                    });
                 });
             });
         });
