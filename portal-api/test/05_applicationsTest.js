@@ -173,7 +173,7 @@ describe('/applications', function () {
                     headers: { 'X-UserId': devUserId },
                     json: true,
                     body: {
-                        id: 'app456789012345678901',
+                        id: 'app456789012345678901app456789012345678901app456789012345678901',
                         name: appName
                     }
                 },
@@ -206,23 +206,46 @@ describe('/applications', function () {
                 });
         });
 
-        it('should be possible to create a new application with 20 char appId', function (done) {
+        it('should be possible to create a new application with 50 char appId', function (done) {
             request.post(
                 {
                     url: baseUrl + 'applications',
                     headers: { 'X-UserId': devUserId },
                     json: true,
                     body: {
-                        id: 'appl5678901234567890',
+                        id: 'appl5678901234567890appl56789012345678900123456789',
                         name: appName
                     }
                 },
                 function (err, res, body) {
-                    utils.deleteApplication('appl5678901234567890', devUserId, function () {
+                    utils.deleteApplication('appl5678901234567890appl56789012345678900123456789', devUserId, function () {
                         assert.isNotOk(err);
                         assert.equal(201, res.statusCode);
                         var jsonBody = utils.getJson(body);
                         assert.isOk(jsonBody);
+                        done();
+                    });
+                });
+        });
+
+        it('should be possible to create a new application, cap name at 128 chars', function (done) {
+            request.post(
+                {
+                    url: baseUrl + 'applications',
+                    headers: { 'X-UserId': devUserId },
+                    json: true,
+                    body: {
+                        id: 'appl5678901234567890appl56789012345678900123456789',
+                        name: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdefXXXX'
+                    }
+                },
+                function (err, res, body) {
+                    utils.deleteApplication('appl5678901234567890appl56789012345678900123456789', devUserId, function () {
+                        assert.isNotOk(err);
+                        assert.equal(201, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.isOk(jsonBody);
+                        assert.equal(jsonBody.name, '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef')
                         done();
                     });
                 });
@@ -326,6 +349,26 @@ describe('/applications', function () {
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
                     assert.equal('A different name', jsonBody.name);
+                    done();
+                });
+        });
+
+        it('should allow for changing an application name, cap at 128 chars', function (done) {
+            request.patch(
+                {
+                    url: baseUrl + 'applications/' + appId,
+                    headers: { 'X-UserId': devUserId },
+                    json: true,
+                    body: {
+                        id: appId,
+                        name: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdefXXXX'
+                    }
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.equal('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef', jsonBody.name);
                     done();
                 });
         });
