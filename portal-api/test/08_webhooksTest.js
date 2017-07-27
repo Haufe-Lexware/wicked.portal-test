@@ -206,7 +206,7 @@ describe('/webhooks', function () {
 
         it('should return expected events (create application)', function (done) {
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: { 'X-UserId': '1' } },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
                             utils.deleteApplication('dvolla', devUserId, function () {

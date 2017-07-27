@@ -40,11 +40,11 @@ describe('/apis', function () {
         it('should return all matching APIs for a logged in user', function (done) {
             request({
                 url: baseUrl + 'apis',
-                headers: { 'X-UserId' : devUserId } },
+                headers: utils.makeHeaders(devUserId) },
                 function(err, res, body) {
                     assert.isNotOk(err);
                     var jsonBody = utils.getJson(body);
-                    assert.equal(7, jsonBody.apis.length);
+                    assert.equal(8, jsonBody.apis.length);
                     assert.equal(200, res.statusCode);
                     done();
                 });
@@ -56,7 +56,7 @@ describe('/apis', function () {
                 function(err, res, body) {
                     assert.isNotOk(err);
                     var jsonBody = utils.getJson(body);
-                    assert.equal(3, jsonBody.apis.length);
+                    assert.equal(4, jsonBody.apis.length);
                     assert.equal(200, res.statusCode);
                     done();
                 });
@@ -65,11 +65,11 @@ describe('/apis', function () {
         it('should only return public APIs if user does not have required group', function(done) {
             request({
                 url: baseUrl + 'apis',
-                headers: { 'X-UserId' : noobUserId } },
+                headers: utils.makeHeaders(noobUserId) },
                 function(err, res, body) {
                     assert.isNotOk(err);
                     var jsonBody = utils.getJson(body);
-                    assert.equal(3, jsonBody.apis.length);
+                    assert.equal(4, jsonBody.apis.length);
                     assert.equal(200, res.statusCode);
                     done();
                 });
@@ -78,7 +78,7 @@ describe('/apis', function () {
         it('should return 403 if invalid user id is passed', function(done) {
             request({
                 url: baseUrl + 'apis',
-                headers: { 'X-UserId' : 'somethinginvalid' } },
+                headers: utils.makeHeaders('somethinginvalid') },
                 function(err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode);
@@ -89,7 +89,7 @@ describe('/apis', function () {
         it('should not return the health API for a normal user', function (done) {
             request({
                 url: baseUrl + 'apis',
-                headers: { 'X-UserId' : devUserId } },
+                headers: utils.makeHeaders(devUserId) },
                 function(err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
@@ -103,7 +103,7 @@ describe('/apis', function () {
         it('should return the health API for an admin user', function (done) {
             request({
                 url: baseUrl + 'apis',
-                headers: { 'X-UserId' : adminUserId } },
+                headers: utils.makeHeaders(adminUserId) },
                 function(err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
@@ -145,7 +145,7 @@ describe('/apis', function () {
             request(
                 {
                     uri: baseUrl + 'apis/users',
-                    headers: { 'X-UserId': noobUserId }
+                    headers: utils.makeHeaders(noobUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -158,7 +158,7 @@ describe('/apis', function () {
             request(
                 {
                     uri: baseUrl + 'apis/users',
-                    headers: { 'X-UserId': devUserId }
+                    headers: utils.makeHeaders(devUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -172,7 +172,7 @@ describe('/apis', function () {
             request(
                 {
                     uri: baseUrl + 'apis/users',
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -255,7 +255,7 @@ describe('/apis', function () {
             request(
                 {
                     uri: baseUrl + 'apis/users/desc',
-                    headers: { 'X-UserId': noobUserId }
+                    headers: utils.makeHeaders(noobUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -268,7 +268,7 @@ describe('/apis', function () {
             request(
                 {
                     uri: baseUrl + 'apis/users/desc',
-                    headers: { 'X-UserId': devUserId }
+                    headers: utils.makeHeaders(devUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -282,7 +282,7 @@ describe('/apis', function () {
             request(
                 {
                     uri: baseUrl + 'apis/users/desc',
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -323,7 +323,7 @@ describe('/apis', function () {
             request(
                 {
                     uri: baseUrl + 'apis/users/swagger',
-                    headers: { 'X-UserId': noobUserId }
+                    headers: utils.makeHeaders(noobUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -336,7 +336,7 @@ describe('/apis', function () {
             request(
                 {
                     uri: baseUrl + 'apis/users/swagger',
-                    headers: { 'X-UserId': devUserId }
+                    headers: utils.makeHeaders(devUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -350,7 +350,7 @@ describe('/apis', function () {
             request(
                 {
                     uri: baseUrl + 'apis/users/swagger',
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -365,7 +365,7 @@ describe('/apis', function () {
         it('must not be possible to retrieve restricted plans without corresponding groups', function (done) {
             request({
                 uri: baseUrl + 'apis/orders/plans',
-                headers: { 'X-UserId': devUserId }
+                headers: utils.makeHeaders(devUserId)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -378,7 +378,7 @@ describe('/apis', function () {
         it('must be possible to retrieve restricted plans as an admin', function (done) {
             request({
                 uri: baseUrl + 'apis/orders/plans',
-                headers: { 'X-UserId': adminUserId }
+                headers: utils.makeHeaders(adminUserId)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -392,7 +392,7 @@ describe('/apis', function () {
             utils.setGroups(devUserId, ["dev", "superdev"], function () {
                 request({
                     uri: baseUrl + 'apis/orders/plans',
-                    headers: { 'X-UserId': devUserId }
+                    headers: utils.makeHeaders(devUserId)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);

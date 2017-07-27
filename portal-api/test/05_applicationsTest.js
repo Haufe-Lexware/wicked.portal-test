@@ -59,7 +59,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: 'application',
@@ -81,7 +81,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: appId,
@@ -116,7 +116,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: { 'X-UserId': 'invaliduser' },
+                    headers: utils.makeHeaders('somethinginvalid'),
                     json: true,
                     body: {
                         id: 'application',
@@ -134,7 +134,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: 'my-app$id',
@@ -152,7 +152,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: 'app',
@@ -170,7 +170,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: 'app456789012345678901app456789012345678901app456789012345678901',
@@ -188,7 +188,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: 'appl',
@@ -210,7 +210,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: 'appl5678901234567890appl56789012345678900123456789',
@@ -232,7 +232,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: 'appl5678901234567890appl56789012345678900123456789',
@@ -245,7 +245,7 @@ describe('/applications', function () {
                         assert.equal(201, res.statusCode);
                         var jsonBody = utils.getJson(body);
                         assert.isOk(jsonBody);
-                        assert.equal(jsonBody.name, '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef')
+                        assert.equal(jsonBody.name, '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef');
                         done();
                     });
                 });
@@ -257,7 +257,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': devUserId }
+                    headers: utils.makeHeaders(devUserId)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -273,7 +273,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': devUserId }
+                    headers: utils.makeHeaders(devUserId)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -296,7 +296,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -309,7 +309,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': noobUserId }
+                    headers: utils.makeHeaders(noobUserId)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -322,7 +322,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': 'invaliduser' }
+                    headers: utils.makeHeaders('somethinginvalid')
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -337,7 +337,7 @@ describe('/applications', function () {
             request.patch(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: appId,
@@ -357,7 +357,7 @@ describe('/applications', function () {
             request.patch(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         id: appId,
@@ -377,7 +377,7 @@ describe('/applications', function () {
             request.patch(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': noobUserId },
+                    headers: utils.makeHeaders(noobUserId),
                     json: true,
                     body: {
                         id: appId,
@@ -395,7 +395,7 @@ describe('/applications', function () {
             request.patch(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': adminUserId },
+                    headers: utils.makeHeaders(adminUserId),
                     json: true,
                     body: {
                         id: appId,
@@ -414,7 +414,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'users',
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                 function(err, res, body) {
                     assert.equal(200, res.statusCode);
@@ -429,7 +429,7 @@ describe('/applications', function () {
                 request.patch(
                     {
                         url: baseUrl + 'applications/' + appId,
-                        headers: { 'X-UserId': noobUserId },
+                        headers: utils.makeHeaders(noobUserId),
                         json: true,
                         body: {
                             id: appId,
@@ -450,7 +450,7 @@ describe('/applications', function () {
             request.delete(
                 {
                     url: baseUrl + 'applications/unknownApp',
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -463,7 +463,7 @@ describe('/applications', function () {
             request.delete(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: { 'X-UserId': 'invaliduser' }
+                    headers: utils.makeHeaders('somethinginvalid')
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -489,7 +489,7 @@ describe('/applications', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/otherapp',
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -505,7 +505,7 @@ describe('/applications', function () {
                     request.delete(
                         {
                             url: baseUrl + 'applications/otherapp',
-                            headers: { 'X-UserId': noobUserId }
+                            headers: utils.makeHeaders(noobUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -521,7 +521,7 @@ describe('/applications', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/' + appId,
-                        headers: { 'X-UserId': noobUserId }
+                        headers: utils.makeHeaders(noobUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -536,7 +536,7 @@ describe('/applications', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/' + appId,
-                        headers: { 'X-UserId': noobUserId }
+                        headers: utils.makeHeaders(noobUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -552,7 +552,7 @@ describe('/applications', function () {
                     request(
                         {
                             url: baseUrl + 'users/' + noobUserId,
-                            headers: { 'X-UserId': noobUserId }
+                            headers: utils.makeHeaders(noobUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -572,7 +572,7 @@ describe('/applications', function () {
                         request(
                             {
                                 url: baseUrl + 'users/' + noobUserId,
-                                headers: { 'X-UserId': noobUserId }
+                                headers: utils.makeHeaders(noobUserId)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
@@ -609,7 +609,7 @@ describe('/applications', function () {
                 request.post(
                     {
                         url: baseUrl + 'applications/' + appId + '/owners',
-                        headers: { 'X-UserId': devUserId },
+                        headers: utils.makeHeaders(devUserId),
                         json: true,
                         body: {
                             email: 'admin@random.org',
@@ -629,7 +629,7 @@ describe('/applications', function () {
                     request.post(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners',
-                            headers: { 'X-UserId': noobUserId },
+                            headers: utils.makeHeaders(noobUserId),
                             json: true,
                             body: {
                                 email: 'admin@random.org',
@@ -650,7 +650,7 @@ describe('/applications', function () {
                     request.post(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners',
-                            headers: { 'X-UserId': noobUserId },
+                            headers: utils.makeHeaders(noobUserId),
                             json: true,
                             body: {
                                 email: 'admin@random.org',
@@ -684,7 +684,7 @@ describe('/applications', function () {
                     request.delete(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners?userEmail=noob@random.org',
-                            headers: { 'X-UserId': devUserId }
+                            headers: utils.makeHeaders(devUserId)
                         },
                         function(err, res, body) {
                             assert.isNotOk(err);
@@ -699,7 +699,7 @@ describe('/applications', function () {
                     request.delete(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners?userEmail=dev@random.org',
-                            headers: { 'X-UserId': noobUserId }
+                            headers: utils.makeHeaders(noobUserId)
                         },
                         function(err, res, body) {
                             // We have to re-add devUserId as owner to fulfill postcondition (for afterEach)
@@ -717,7 +717,7 @@ describe('/applications', function () {
                     request.delete(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners?userEmail=dev@random.org',
-                            headers: { 'X-UserId': noobUserId }
+                            headers: utils.makeHeaders(noobUserId)
                         },
                         function(err, res, body) {
                             assert.isNotOk(err);
@@ -731,7 +731,7 @@ describe('/applications', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/' + appId + '/owners?userEmail=dev@random.org',
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function(err, res, body) {
                         assert.isNotOk(err);
@@ -745,7 +745,7 @@ describe('/applications', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/' + appId + '/owners?userEmail=non@existing.com',
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function(err, res, body) {
                         assert.isNotOk(err);

@@ -66,7 +66,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: subsUrl,
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         application: appId,
@@ -86,7 +86,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.post(
                     {
                         url: subsUrl,
-                        headers: { 'X-UserId': noobUserId },
+                        headers: utils.makeHeaders(noobUserId),
                         json: true,
                         body: {
                             application: appId,
@@ -107,7 +107,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.post(
                     {
                         url: subsUrl,
-                        headers: { 'X-UserId': noobUserId },
+                        headers: utils.makeHeaders(noobUserId),
                         json: true,
                         body: {
                             application: appId,
@@ -128,7 +128,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.post(
                     {
                         url: subsUrl,
-                        headers: { 'X-UserId': noobUserId },
+                        headers: utils.makeHeaders(noobUserId),
                         json: true,
                         body: {
                             application: appId,
@@ -148,7 +148,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: subsUrl,
-                    headers: { 'X-UserId': 'invaliduser' },
+                    headers: utils.makeHeaders('somethinginvalid'),
                     json: true,
                     body: {
                         application: appId,
@@ -167,7 +167,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: subsUrl,
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         application: appId,
@@ -186,7 +186,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: subsUrl,
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         application: appId,
@@ -224,7 +224,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: subsUrl,
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         application: appId,
@@ -261,7 +261,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: baseUrl + 'applications/invalid-app/subscriptions',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         application: 'invalid-app',
@@ -280,7 +280,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.post(
                     {
                         url: baseUrl + 'applications/noobapp/subscriptions',
-                        headers: { 'X-UserId': noobUserId },
+                        headers: utils.makeHeaders(noobUserId),
                         json: true,
                         body: {
                             application: 'noobapp',
@@ -304,7 +304,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request(
                     {
                         url: subsUrl,
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -322,7 +322,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request(
                     {
                         url: subsUrl,
-                        headers: { 'X-UserId': adminUserId }
+                        headers: utils.makeHeaders(adminUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -342,7 +342,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request(
                     {
                         url: subsUrl,
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -360,7 +360,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl,
-                            headers: { 'X-UserId': noobUserId }
+                            headers: utils.makeHeaders(noobUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -379,7 +379,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl,
-                            headers: { 'X-UserId': noobUserId }
+                            headers: utils.makeHeaders(noobUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -397,7 +397,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request(
                     {
                         url: subsUrl,
-                        headers: { 'X-UserId': adminUserId }
+                        headers: utils.makeHeaders(adminUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -414,7 +414,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request(
                     {
                         url: subsUrl,
-                        headers: { 'X-UserId': noobUserId }
+                        headers: utils.makeHeaders(noobUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -432,7 +432,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: { 'X-UserId': devUserId }
+                            headers: utils.makeHeaders(devUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -450,7 +450,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: { 'X-UserId': devUserId }
+                            headers: utils.makeHeaders(devUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -469,7 +469,7 @@ describe('/applications/<appId>/subscriptions', function () {
                         request(
                             {
                                 url: subsUrl + '/' + privateApi,
-                                headers: { 'X-UserId': noobUserId }
+                                headers: utils.makeHeaders(noobUserId)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
@@ -488,7 +488,7 @@ describe('/applications/<appId>/subscriptions', function () {
                         request(
                             {
                                 url: subsUrl + '/' + privateApi,
-                                headers: { 'X-UserId': noobUserId }
+                                headers: utils.makeHeaders(noobUserId)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
@@ -506,7 +506,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: { 'X-UserId': adminUserId }
+                            headers: utils.makeHeaders(adminUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -523,7 +523,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: { 'X-UserId': noobUserId }
+                            headers: utils.makeHeaders(noobUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -538,7 +538,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: { 'X-UserId': devUserId }
+                            headers: utils.makeHeaders(devUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -566,7 +566,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request.delete(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: { 'X-UserId': devUserId }
+                            headers: utils.makeHeaders(devUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -580,7 +580,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/invalid-app/subscriptions/' + privateApi,
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -593,7 +593,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.delete(
                     {
                         url: subsUrl + '/' + privateApi,
-                        headers: { 'X-UserId': 'invaliduser' }
+                        headers: utils.makeHeaders('somethinginvalid')
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -606,7 +606,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.delete(
                     {
                         url: subsUrl + '/' + privateApi,
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -621,7 +621,7 @@ describe('/applications/<appId>/subscriptions', function () {
                         request.delete(
                             {
                                 url: subsUrl + '/' + privateApi,
-                                headers: { 'X-UserId': noobUserId }
+                                headers: utils.makeHeaders(noobUserId)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
@@ -638,7 +638,7 @@ describe('/applications/<appId>/subscriptions', function () {
                         request.delete(
                             {
                                 url: subsUrl + '/' + privateApi,
-                                headers: { 'X-UserId': noobUserId }
+                                headers: utils.makeHeaders(noobUserId)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
@@ -654,7 +654,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl,
-                            headers: { 'X-UserId': devUserId }
+                            headers: utils.makeHeaders(devUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -666,7 +666,7 @@ describe('/applications/<appId>/subscriptions', function () {
                                 request(
                                     {
                                         url: subsUrl,
-                                        headers: { 'X-UserId': devUserId }
+                                        headers: utils.makeHeaders(devUserId)
                                     },
                                     function (err, res, body) {
                                         assert.isNotOk(err);
@@ -688,7 +688,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: baseUrl + 'applications/' + appId + '/subscriptions',
-                    headers: { 'X-UserId': devUserId },
+                    headers: utils.makeHeaders(devUserId),
                     json: true,
                     body: {
                         application: appId,

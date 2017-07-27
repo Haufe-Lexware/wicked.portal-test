@@ -277,7 +277,7 @@ describe('With oauth2 implicit grant APIs,', function () {
         it('should not be possible to add a subscription', function (done) {
             request.post({
                 url: apiUrl + 'applications/' + badAppId + '/subscriptions',
-                headers: { 'X-UserId': devUserId },
+                headers: utils.makeHeaders(devUserId),
                 json: true,
                 body: {
                     application: badAppId,

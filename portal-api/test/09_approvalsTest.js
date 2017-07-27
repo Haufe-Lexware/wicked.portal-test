@@ -48,7 +48,7 @@ describe('/approvals', function () {
                 request(
                     {
                         url: baseUrl + 'approvals',
-                        headers: { 'X-UserId': adminUserId }
+                        headers: utils.makeHeaders(adminUserId)
                     },
                     function (err, res, body) {
                         utils.deleteSubscription(appId, devUserId, privateApi, function () {
@@ -67,7 +67,7 @@ describe('/approvals', function () {
                 request(
                     {
                         url: baseUrl + 'approvals',
-                        headers: { 'X-UserId': adminUserId }
+                        headers: utils.makeHeaders(adminUserId)
                     },
                     function (err, res, body) {
                         utils.deleteSubscription(appId, devUserId, privateApi, function () {
@@ -86,7 +86,7 @@ describe('/approvals', function () {
                 request.patch(
                     {
                         url: baseUrl + 'applications/' + appId + '/subscriptions/' + privateApi,
-                        headers: { 'X-UserId': adminUserId },
+                        headers: utils.makeHeaders(adminUserId),
                         json: true,
                         body: { approved: true }
                     },
@@ -94,7 +94,7 @@ describe('/approvals', function () {
                         request(
                             {
                                 url: baseUrl + 'approvals',
-                                headers: { 'X-UserId': adminUserId }
+                                headers: utils.makeHeaders(adminUserId)
                             },
                             function (err, res, body) {
                                 utils.deleteSubscription(appId, devUserId, privateApi, function () {
@@ -114,7 +114,7 @@ describe('/approvals', function () {
                 request.patch(
                     {
                         url: baseUrl + 'applications/' + appId + '/subscriptions/' + privateApi,
-                        headers: { 'X-UserId': devUserId },
+                        headers: utils.makeHeaders(devUserId),
                         json: true,
                         body: { approved: true }
                     },
@@ -133,7 +133,7 @@ describe('/approvals', function () {
                 request.patch(
                     {
                         url: baseUrl + 'applications/' + appId + '/subscriptions/' + privateApi,
-                        headers: { 'X-UserId': adminUserId },
+                        headers: utils.makeHeaders(adminUserId),
                         json: true,
                         body: { approved: true }
                     },
@@ -141,7 +141,7 @@ describe('/approvals', function () {
                         request(
                             {
                                 url: baseUrl + 'applications/' + appId + '/subscriptions/' + privateApi,
-                                headers: { 'X-UserId': devUserId }
+                                headers: utils.makeHeaders(devUserId)
                             },
                             function (err, res, body) {
                                 utils.deleteSubscription(appId, devUserId, privateApi, function () {
@@ -163,7 +163,7 @@ describe('/approvals', function () {
                     request(
                         {
                             url: baseUrl + 'approvals',
-                            headers: { 'X-UserId': adminUserId }
+                            headers: utils.makeHeaders(adminUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -183,7 +183,7 @@ describe('/approvals', function () {
                         request(
                             {
                                 url: baseUrl + 'approvals',
-                                headers: { 'X-UserId': adminUserId }
+                                headers: utils.makeHeaders(adminUserId)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);

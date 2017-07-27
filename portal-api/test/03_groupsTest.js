@@ -24,7 +24,7 @@ describe('/groups', function() {
         it('should not care about logged in users', function(done) {
             request({
                 url: baseUrl + 'groups',
-                headers: { 'X-UserId': 'somethinginvalid' }
+                headers: utils.makeHeaders('somethinginvalid')
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);

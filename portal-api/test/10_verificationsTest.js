@@ -25,7 +25,7 @@ describe('/verifications', function() {
     it('should, as a normal user, not be possible to retrieve the verifications', function (done) {
         request.get({
             url: baseUrl + 'verifications',
-            headers: { 'X-UserId': '9876543210' }
+            headers: utils.makeHeaders('9876543210')
         }, function(err, res, body) {
             assert.isNotOk(err);
             assert.equal(403, res.statusCode);
@@ -38,7 +38,7 @@ describe('/verifications', function() {
     it('should, as an admin, be possible to retrieve the verifications', function (done) {
         request.get({
             url: baseUrl + 'verifications',
-            headers: { 'X-UserId': '1' }
+            headers: utils.makeHeaders('1')
         }, function(err, res, body) {
             assert.isNotOk(err);
             assert.equal(200, res.statusCode);
@@ -108,7 +108,7 @@ describe('/verifications', function() {
     it('should render a validated user after that', function (done) {
         request.get({
             url: baseUrl + 'users/9876543210',
-            headers: { 'X-UserId': '9876543210' }
+            headers: utils.makeHeaders('9876543210')
         }, function (err, res, body) {
             assert.isNotOk(err);
             assert.equal(200, res.statusCode);

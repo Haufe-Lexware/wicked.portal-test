@@ -4,6 +4,10 @@ var consts = require('./testConsts');
 
 utils = {};
 
+// utils.SCOPES = {
+
+// }
+
 utils.createRandomId = function () {
     return crypto.randomBytes(5).toString('hex');
 };
@@ -43,12 +47,15 @@ utils.createUser = function(lastName, group, validated, callback) {
         });
 };
 
-utils.makeHeaders = function (userId) {
+utils.makeHeaders = function (userId, scopes) {
     if (!userId && !utils.correlationId)
         return null;
     var headers = {};
     if (userId)
-        headers['X-UserId'] = userId;
+        headers['X-Authenticated-UserId'] = userId;
+    if (scopes)
+        headers['X-Authenticated-Scope'] = scopes;
+    
     if (utils.correlationId)
         headers['Correlation-Id'] = utils.correlationId;
 
@@ -207,7 +214,7 @@ utils.deleteSubscription = function(appId, userId, apiId, callback) {
 utils.approveSubscription = function (appId, apiId, adminUserId, callback) {
     request.patch({
         url: consts.BASE_URL + 'applications/' + appId + '/subscriptions/' + apiId,
-        headers: { 'X-UserId': adminUserId },
+        headers: utils.makeHeaders(adminUserId),
         json: true,
         body: { approved: true }
     }, function (err, res, body) {

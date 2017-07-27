@@ -13,7 +13,7 @@ var devUserId = '11'; // Fred Flintstone
 var devEmail = 'fred@flintstone.com';
 
 function adminHeaders() {
-    return { 'X-UserId': adminUserId };
+    return utils.makeHeaders(adminUserId);
 }
 
 describe('After initialization,', function () {

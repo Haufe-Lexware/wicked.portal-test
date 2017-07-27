@@ -16,7 +16,7 @@ describe('/plans', function() {
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.plans);
-                    assert.equal(6, jsonBody.plans.length);                    
+                    assert.equal(8, jsonBody.plans.length);                    
                     done(); 
                 });
         });
@@ -43,7 +43,7 @@ describe('/plans', function() {
         it('should not care about logged in users', function(done) {
             request({
                 url: baseUrl + 'plans',
-                headers: { 'X-UserId': 'somethinginvalid' }
+                headers: utils.makeHeaders('somethinginvalid')
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);

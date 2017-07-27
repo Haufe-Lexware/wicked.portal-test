@@ -70,11 +70,11 @@ describe('/content', function() {
                 });
         });
         
-        it('should ignore invalid X-UserId for the index', function(done) {
+        it('should ignore invalid X-Authenticated-UserId for the index', function(done) {
             request(
                 {
                     uri: baseUrl + 'content',
-                    headers: { 'X-UserId': 'somethinginvalid' }
+                    headers: utils.makeHeaders('somethinginvalid')
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -115,7 +115,7 @@ describe('/content', function() {
             request(
                 {
                     uri: baseUrl + 'content/example',
-                    headers: { 'X-UserId': devUserId }
+                    headers: utils.makeHeaders(devUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -130,7 +130,7 @@ describe('/content', function() {
             request(
                 {
                     uri: baseUrl + 'content/restricted',
-                    headers: { 'X-UserId': devUserId }
+                    headers: utils.makeHeaders(devUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -145,7 +145,7 @@ describe('/content', function() {
             request(
                 {
                     uri: baseUrl + 'content/restricted',
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -160,7 +160,7 @@ describe('/content', function() {
             request(
                 {
                     uri: baseUrl + 'content/restricted',
-                    headers: { 'X-UserId': noobUserId }
+                    headers: utils.makeHeaders(noobUserId)
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);
@@ -197,7 +197,7 @@ describe('/content', function() {
             request(
                 {
                     uri: baseUrl + 'content/images/animal.jpg',
-                    headers: { 'X-UserId': 'invaliduserid' }
+                    headers: utils.makeHeaders('somethinginvalid')
                 },
                 function(err, res, body) {
                     assert.isNotOk(err);

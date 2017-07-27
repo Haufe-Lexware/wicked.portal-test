@@ -196,7 +196,7 @@ describe('/users', function () {
             request(
                 {
                     url: baseUrl + 'users',
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -226,7 +226,7 @@ describe('/users', function () {
             request(
                 {
                     url: baseUrl + 'users',
-                    headers: { 'X-UserId': devUserId }
+                    headers: utils.makeHeaders(devUserId)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -240,7 +240,7 @@ describe('/users', function () {
             request(
                 {
                     url: baseUrl + 'users',
-                    headers: { 'X-UserId': 'invaliduser' }
+                    headers: utils.makeHeaders('invaliduser')
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -313,7 +313,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
@@ -327,7 +327,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
@@ -342,7 +342,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: { 'X-UserId': devUserId }
+                        headers: utils.makeHeaders(devUserId)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
@@ -355,7 +355,7 @@ describe('/users', function () {
                     });
             });
 
-            it('should return a 403 if X-UserId is not passed', function (done) {
+            it('should return a 403 if X-Authenticated-UserId is not passed', function (done) {
                 request(
                     { url: baseUrl + 'users/' + devUserId },
                     function (err, res, body) {
@@ -364,11 +364,11 @@ describe('/users', function () {
                     });
             });
 
-            it('should return a 403 if invalid X-UserId is passed', function (done) {
+            it('should return a 403 if invalid X-Authenticated-UserId is passed', function (done) {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: { 'X-UserId': 'something invalid' }
+                        headers: utils.makeHeaders('something invalid')
                     },
                     function (err, res, body) {
                         assert.equal(403, res.statusCode, 'status code not 403');
@@ -376,11 +376,11 @@ describe('/users', function () {
                     });
             });
 
-            it('should return a 403 if X-UserId of different user is passed', function (done) {
+            it('should return a 403 if X-Authenticated-UserId of different user is passed', function (done) {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: { 'X-UserId': noobUserId }
+                        headers: utils.makeHeaders(noobUserId)
                     },
                     function (err, res, body) {
                         assert.equal(403, res.statusCode, 'status code not 403');
@@ -388,11 +388,11 @@ describe('/users', function () {
                     });
             });
 
-            it('should succeed if admin X-UserId is passed', function (done) {
+            it('should succeed if admin X-Authenticated-UserId is passed', function (done) {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: { 'X-UserId': adminUserId }
+                        headers: utils.makeHeaders(adminUserId)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
@@ -404,7 +404,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: { 'X-UserId': noobUserId }
+                        headers: utils.makeHeaders(noobUserId)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
@@ -419,7 +419,7 @@ describe('/users', function () {
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: { 'X-UserId': noobUserId },
+                        headers: utils.makeHeaders(noobUserId),
                         json: true,
                         body: {
                             firstName: 'New',
@@ -445,7 +445,7 @@ describe('/users', function () {
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: { 'X-UserId': noobUserId },
+                        headers: utils.makeHeaders(noobUserId),
                         json: true,
                         body: {
                             firstName: 'New',
@@ -461,7 +461,7 @@ describe('/users', function () {
                         request(
                             {
                                 url: baseUrl + 'users/' + noobUserId,
-                                headers: { 'X-UserId': noobUserId }
+                                headers: utils.makeHeaders(noobUserId)
                             },
                             function (err, res, body) {
                                 assert.equal(200, res.statusCode);
@@ -481,7 +481,7 @@ describe('/users', function () {
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: { 'X-UserId': noobUserId },
+                        headers: utils.makeHeaders(noobUserId),
                         json: true,
                         body: { customId: 'fhkdjfhkdjf' }
                     },
@@ -496,7 +496,7 @@ describe('/users', function () {
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: { 'X-UserId': devUserId },
+                        headers: utils.makeHeaders(devUserId),
                         json: true,
                         body: {
                             firstName: 'Helmer',
@@ -514,7 +514,7 @@ describe('/users', function () {
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: { 'X-UserId': adminUserId },
+                        headers: utils.makeHeaders(adminUserId),
                         json: true,
                         body: {
                             firstName: 'Helmer',
@@ -534,7 +534,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: { 'X-UserId': noobUserId }
+                        headers: utils.makeHeaders(noobUserId)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
@@ -566,7 +566,7 @@ describe('/users', function () {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/doesnotexist',
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                     function (err, res, body) {
                         assert.equal(404, res.statusCode, 'status code not 404');
@@ -574,11 +574,11 @@ describe('/users', function () {
                     });
             });
 
-            it('should return 403 if user does not match X-UserId', function (done) {
+            it('should return 403 if user does not match X-Authenticated-UserId', function (done) {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + devUserId,
-                    headers: { 'X-UserId': noobUserId }
+                    headers: utils.makeHeaders(noobUserId)
                 },
                     function (err, res, body) {
                         assert.equal(403, res.statusCode, 'status code not 403');
@@ -586,11 +586,11 @@ describe('/users', function () {
                     });
             });
 
-            it('should return 403 if X-UserId is invalid', function (done) {
+            it('should return 403 if X-Authenticated-UserId is invalid', function (done) {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + devUserId,
-                    headers: { 'X-UserId': 'somethinginvalid' }
+                    headers: utils.makeHeaders('somethinginvalid')
                 },
                     function (err, res, body) {
                         assert.equal(403, res.statusCode, 'status code not 403');
@@ -603,7 +603,7 @@ describe('/users', function () {
                     request.delete(
                         {
                             url: baseUrl + 'users/' + devUserId,
-                            headers: { 'X-UserId': devUserId }
+                            headers: utils.makeHeaders(devUserId)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -619,7 +619,7 @@ describe('/users', function () {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + noobUserId,
-                    headers: { 'X-UserId': noobUserId }
+                    headers: utils.makeHeaders(noobUserId)
                 },
                     function (err, res, body) {
                         assert.equal(204, res.statusCode);
@@ -631,7 +631,7 @@ describe('/users', function () {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + devUserId,
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                     function (err, res, body) {
                         assert.equal(204, res.statusCode);
@@ -643,7 +643,7 @@ describe('/users', function () {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + adminUserId,
-                    headers: { 'X-UserId': adminUserId }
+                    headers: utils.makeHeaders(adminUserId)
                 },
                     function (err, res, body) {
                         assert.equal(204, res.statusCode);
@@ -725,7 +725,7 @@ describe('/users', function () {
         it('should be possible to update the password', function (done) {
             request.patch({
                 url: baseUrl + 'users/' + pwdUserId,
-                headers: { 'X-UserId': pwdUserId },
+                headers: utils.makeHeaders(pwdUserId),
                 json: true,
                 body: {
                     password: 'm0re$3kriT!'
@@ -851,7 +851,7 @@ describe('/users', function () {
         it('should be possible to remove the password from a user', function (done) {
             request.delete({
                 url: baseUrl + 'users/1234567890/password',
-                headers: { 'X-UserId': '1' }
+                headers: utils.makeHeaders('1')
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(204, res.statusCode);
@@ -879,7 +879,7 @@ describe('/users', function () {
                 url: baseUrl + 'users/1234567890',
                 json: true,
                 body: { password: 'password' },
-                headers: { 'X-UserId': '1' }
+                headers: utils.makeHeaders('1')
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
