@@ -142,6 +142,34 @@ describe('After initialization,', function () {
             });
         });
 
+        it('should have a correct uris parameter for the brilliant API', function (done) {
+            request.get({
+                url: kongUrl + 'apis/brilliant'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                var apiConfig = utils.getJson(body);
+                assert.isOk(apiConfig.uris, 'API did not have uris defined');
+                assert.equal('/brilliant', apiConfig.uris[0], 'mismatched uri path');
+                done();
+            });
+        });
+
+        it('should have a correct strip_uri parameter for the mobile API', function (done) {
+            request.get({
+                url: kongUrl + 'apis/mobile'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                var apiConfig = utils.getJson(body);
+                assert.isOk(apiConfig.strip_uri, 'API did not have strip_uri defined');
+                assert.equal('/mobile', apiConfig.uris[0]);
+                done();
+            });
+        });
+
+        
+
         describe('consumers', function () {
             it('should have been inserted (five)', function (done) { // see globals.json
                 request.get({
