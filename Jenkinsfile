@@ -9,10 +9,12 @@ properties([
     ]),
     pipelineTriggers([
         [$class: "SCMTrigger", scmpoll_spec: "H/10 * * * *"],
-        [$class: 'jenkins.triggers.ReverseBuildTrigger', upstreamProjects: "wicked.portal/" + env.BRANCH_NAME.replaceAll("/", "%2F"), threshold: hudson.model.Result.SUCCESS],
-        [$class: 'jenkins.triggers.ReverseBuildTrigger', upstreamProjects: "wicked.portal-api/" + env.BRANCH_NAME.replaceAll("/", "%2F"), threshold: hudson.model.Result.SUCCESS],
-        [$class: 'jenkins.triggers.ReverseBuildTrigger', upstreamProjects: "wicked.portal-kong-adapter/" + env.BRANCH_NAME.replaceAll("/", "%2F"), threshold: hudson.model.Result.SUCCESS],
-        [$class: 'jenkins.triggers.ReverseBuildTrigger', upstreamProjects: "wicked.kong/" + env.BRANCH_NAME.replaceAll("/", "%2F"), threshold: hudson.model.Result.SUCCESS]
+        [$class: 'jenkins.triggers.ReverseBuildTrigger', upstreamProjects: 
+            "wicked.portal/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +,
+            "wicked.portal-api/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +,
+            "wicked.portal-kong-adapter/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +,
+            "wicked.kong/" + env.BRANCH_NAME.replaceAll("/", "%2F"),
+            threshold: hudson.model.Result.SUCCESS]
     ])
 ])
 
