@@ -1,4 +1,5 @@
 properties([
+    disableConcurrentBuilds(),
     parameters([
         string(
             name: 'DOCKER_PREFIX',
