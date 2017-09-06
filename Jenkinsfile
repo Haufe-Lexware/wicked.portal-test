@@ -67,7 +67,7 @@ node('docker') {
 
     }
 
-    stage('Kong Adapter Tests') {
+    stage('Kong Adapter Tests (alpine)') {
 
         env.BUILD_ALPINE = '-alpine';
         sh './run-kong-adapter-tests.sh'
