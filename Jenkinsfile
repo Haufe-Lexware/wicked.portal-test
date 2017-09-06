@@ -34,18 +34,42 @@ node('docker') {
 
     stage('API Tests') {
 
+        env.BUILD_ALPINE = '';
+        sh './run-api-tests.sh'
+
+    }
+
+    stage('API Tests (alpine)') {
+
+        env.BUILD_ALPINE = '-alpine';
         sh './run-api-tests.sh'
 
     }
 
     stage('Portal Tests') {
 
+        env.BUILD_ALPINE = '';
+        sh './run-portal-tests.sh'
+
+    }
+
+    stage('Portal Tests (alpine)') {
+
+        env.BUILD_ALPINE = '-alpine';
         sh './run-portal-tests.sh'
 
     }
 
     stage('Kong Adapter Tests') {
 
+        env.BUILD_ALPINE = '';
+        sh './run-kong-adapter-tests.sh'
+
+    }
+
+    stage('Kong Adapter Tests') {
+
+        env.BUILD_ALPINE = '-alpine';
         sh './run-kong-adapter-tests.sh'
 
     }
