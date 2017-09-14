@@ -32,6 +32,24 @@ describe('After initialization,', function () {
         });
     });
 
+    describe('resync', function () {
+        it('should not trigger any changing actions to the Kong API', function (done) {
+            request.post({
+                url: adapterUrl + 'resync'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode, 'Resync status code not 200');
+                var jsonBody = utils.getJson(body);
+                assert.isOk(jsonBody.actions, 'Strange - resync response has no actions property');
+                if (0 !== jsonBody.actions.length) {
+                    console.log(JSON.stringify(jsonBody, 0, 2));
+                }
+                assert.equal(0, jsonBody.actions.length, 'There were API actions done at resync, must be empty');
+                done();
+            });
+        });
+    });
+
     describe('kong', function () {
         it('should have several API end points', function (done) {
             request.get({
@@ -142,6 +160,34 @@ describe('After initialization,', function () {
             });
         });
 
+        it('should have a correct uris parameter for the brilliant API', function (done) {
+            request.get({
+                url: kongUrl + 'apis/brilliant'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                var apiConfig = utils.getJson(body);
+                assert.isOk(apiConfig.uris, 'API did not have uris defined');
+                assert.equal('/brilliant', apiConfig.uris[0], 'mismatched uri path');
+                done();
+            });
+        });
+
+        it('should have a correct strip_uri parameter for the mobile API', function (done) {
+            request.get({
+                url: kongUrl + 'apis/mobile'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                var apiConfig = utils.getJson(body);
+                assert.isOk(apiConfig.strip_uri, 'API did not have strip_uri defined');
+                assert.equal('/mobile', apiConfig.uris[0]);
+                done();
+            });
+        });
+
+        
+
         describe('consumers', function () {
             it('should have been inserted (five)', function (done) { // see globals.json
                 request.get({
@@ -180,6 +226,22 @@ describe('After initialization,', function () {
                     assert.equal(1, acls.total, 'consumer has exactly one ACL entry');
                     var portalGroup = acls.data.find(g => g.group === 'portal-api-internal');
                     assert.isOk(portalGroup, 'consumer needs ACL group portal-api-internal');
+                    done();
+                });
+            });
+
+            it('should still not trigger any changing actions to the Kong API', function (done) {
+                request.post({
+                    url: adapterUrl + 'resync'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode, 'Resync status code not 200');
+                    var jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody.actions, 'Strange - resync response has no actions property');
+                    if (0 !== jsonBody.actions.length) {
+                        console.log(JSON.stringify(jsonBody, 0, 2));
+                    }
+                    assert.equal(0, jsonBody.actions.length, 'There were API actions done at resync, must be empty');
                     done();
                 });
             });
