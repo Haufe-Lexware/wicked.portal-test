@@ -106,11 +106,22 @@ popd
 echo Building Test container...
 docker-compose -p wickedportaltest -f kong-adapter-tests-compose.yml build >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log
 echo Running Kong Adapter test containers...
-docker-compose -p wickedportaltest -f kong-adapter-tests-compose.yml up --abort-on-container-exit > kong-adapter-test${BUILD_ALPINE}.log
+failedTests=""
+if ! docker-compose -p wickedportaltest -f kong-adapter-tests-compose.yml up --abort-on-container-exit > kong-adapter-test${BUILD_ALPINE}.log; then
+    echo WARNING: docker-compose exited with a non-zero return code.
+    failedTests="true"
+fi
 echo Copying test results...
-docker cp wickedportaltest_kong-adapter-test-data_1:/usr/src/app/test_results .
+if ! docker cp wickedportaltest_kong-adapter-test-data_1:/usr/src/app/test_results .; then
+    echo ERROR: The test results are not available.
+    failedTests="true"
+fi
 echo Taking down Test containers...
 docker-compose -p wickedportaltest -f kong-adapter-tests-compose.yml down >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log
+
+if [ ! -z "$failedTests" ]; then
+    exit 1
+fi
 
 cat test_results/kong-adapter-test.log
 
