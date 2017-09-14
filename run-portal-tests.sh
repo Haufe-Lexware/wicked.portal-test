@@ -39,6 +39,14 @@ else
     echo "Building Alpine images."
 fi
 
+if [ -z "$REDIS_SESSIONS" ]; then
+    echo "Not using Redis as a session store."
+    export NODE_ENV="test"
+else
+    echo "Using Redis as a session store."
+    export NODE_ENV="test-redis"
+fi
+
 rm -f docker-portal${BUILD_ALPINE}.log
 thisPath=`pwd`
 

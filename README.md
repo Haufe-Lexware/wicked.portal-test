@@ -43,7 +43,7 @@ The scripts will attempt to first build the needed docker images locally (this m
 The portal tests are run with file session store by default. If you want to run them using Redis as a session store, you can do so by running them like:
 
 ```bash
-$ SESSION_STORE_TYPE=redis SESSION_STORE_HOST=redis ./run-portal-tests.sh
+$ REDIS_SESSIONS=true ./run-portal-tests.sh
 ```
 
 ## Running the tests on prebuilt container images

@@ -4,6 +4,8 @@ set -e
 
 buildLocal=""
 
+export NODE_ENV=test
+
 if [ -z "$DOCKER_PREFIX" ]; then
     echo Env var DOCKER_PREFIX is not set, assuming local build.
     export DOCKER_PREFIX=local_
