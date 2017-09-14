@@ -17,6 +17,13 @@ services:
   portal:
     env_file: variables.env
     image: ${DOCKER_PREFIX}portal:${DOCKER_TAG}${BUILD_ALPINE}
+    environment:
+    - "SESSION_STORE_TYPE"
+    - "SESSION_STORE_HOST"
+    - "SESSION_STORE_PORT"
+
+  redis:
+    image: redis
 
 networks:
   default:
