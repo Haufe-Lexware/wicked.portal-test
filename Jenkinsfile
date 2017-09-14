@@ -49,6 +49,7 @@ node('docker') {
     stage('Portal Tests') {
 
         env.BUILD_ALPINE = '';
+        env.REDIS_SESSIONS = '';
         sh './run-portal-tests.sh'
 
     }
@@ -56,6 +57,23 @@ node('docker') {
     stage('Portal Tests (alpine)') {
 
         env.BUILD_ALPINE = '-alpine';
+        env.REDIS_SESSIONS = '';
+        sh './run-portal-tests.sh'
+
+    }
+
+    stage('Portal Tests (redis)') {
+
+        env.BUILD_ALPINE = '';
+        env.REDIS_SESSIONS = 'true';
+        sh './run-portal-tests.sh'
+
+    }
+
+    stage('Portal Tests (redis, alpine)') {
+
+        env.BUILD_ALPINE = '-alpine';
+        env.REDIS_SESSIONS = 'true';
         sh './run-portal-tests.sh'
 
     }
