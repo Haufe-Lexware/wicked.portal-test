@@ -10,7 +10,7 @@ properties([
         string(
             name: 'FEATURE_BRANCH_OVERRIDE',
             defaultValue: '',
-            description: 'Specify a feature branch you want to test with this branch of the tests. Tests will fall back to "next" images branch tag is not present.'
+            description: 'Specify a feature branch you want to test with this branch of the tests. Tests will fall back to "next" images branch tag is not present.',
             required: false
         )
     ]),
