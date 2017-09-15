@@ -14,6 +14,10 @@
             "requiredGroup": "dev"
         }        
     },
+    "sessionStore": {
+        "type": "${SESSION_STORE_TYPE}",
+        "host": "${SESSION_STORE_HOST}"
+    },
     "auth": {
         "local": {
             "useLocal": true,
