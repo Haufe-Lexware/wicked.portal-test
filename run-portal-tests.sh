@@ -123,6 +123,10 @@ if ! docker-compose -p wickedportaltest -f portal-tests-compose.yml up --abort-o
     failedTests="true"
 fi
 echo Copying test results...
+if [ -d test_results ]; then
+    echo "INFO: Cleaning up..."
+    rm -rf test_results
+fi
 if ! docker cp wickedportaltest_portal-test-data_1:/usr/src/app/test_results .; then
     echo ERROR: The test results are not available.
     failedTests="true"
@@ -137,5 +141,10 @@ fi
 cat test_results/portal-test.log
 
 echo Detailed logs are in portal-test${BUILD_ALPINE}.log.
+
+if [ -f test_results/PORTAL_FAILED ]; then
+    echo "ERROR: Some test cases failed."
+    exit 1
+fi
 
 echo Done.

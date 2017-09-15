@@ -126,6 +126,10 @@ if ! docker-compose -p wickedportaltest -f kong-adapter-tests-compose.yml up --a
     failedTests="true"
 fi
 echo Copying test results...
+if [ -d test_results ]; then
+    echo "INFO: Cleaning up..."
+    rm -rf test_results
+fi
 if ! docker cp wickedportaltest_kong-adapter-test-data_1:/usr/src/app/test_results .; then
     echo ERROR: The test results are not available.
     failedTests="true"
@@ -140,5 +144,10 @@ fi
 cat test_results/kong-adapter-test.log
 
 echo Detailed logs are in kong-adapter-test${BUILD_ALPINE}.log.
+
+if [ -f test_results/KONG_FAILED ]; then
+    echo "ERROR: Some test cases failed."
+    exit 1
+fi
 
 echo Done.

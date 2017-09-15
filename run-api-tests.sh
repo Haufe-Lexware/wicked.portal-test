@@ -108,6 +108,10 @@ if ! docker-compose -p wickedportaltest -f api-tests-compose.yml up --abort-on-c
     failedTests="true"
 fi
 echo Copying test results...
+if [ -d test_results ]; then
+    echo "INFO: Cleaning up..."
+    rm -rf test_results
+fi
 if ! docker cp wickedportaltest_api-test-data_1:/usr/src/app/test_results .; then
     echo ERROR: The test results are not available.
     failedTests="true"
@@ -122,5 +126,10 @@ fi
 cat test_results/api-test.log
 
 echo Detailed logs are in api-test${BUILD_ALPINE}.log.
+
+if [ -f test_results/API_FAILED ]; then
+    echo "ERROR: Some test cases failed."
+    exit 1
+fi
 
 echo Done.
