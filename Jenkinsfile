@@ -6,6 +6,12 @@ properties([
             defaultValue: 'haufelexware/wicked.',
             description: 'Docker image prefix to use when testing.',
             required: false
+        ),
+        string(
+            name: 'FEATURE_BRANCH_OVERRIDE',
+            defaultValue: '',
+            description: 'Specify a feature branch you want to test with this branch of the tests. Tests will fall back to "next" images branch tag is not present.'
+            required: false
         )
     ]),
     pipelineTriggers([
@@ -26,6 +32,8 @@ node('docker') {
     }
 
     def dockerTag = env.BRANCH_NAME.replaceAll('/', '-')
+    if (params.FEATURE_BRANCH_OVERRIDE != "")
+        dockerTag = params.FEATURE_BRANCH_OVERRIDE.replaceAll('/', '-');
 
     echo 'Using docker tag:    ' + dockerTag
     env.DOCKER_TAG = dockerTag

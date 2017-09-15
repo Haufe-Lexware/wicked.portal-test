@@ -50,6 +50,10 @@ fi
 rm -f docker-portal${BUILD_ALPINE}.log
 thisPath=`pwd`
 
+export PORTAL_ENV_TAG=${DOCKER_TAG}-onbuild
+export PORTAL_API_TAG=${DOCKER_TAG}
+export PORTAL_TAG=${DOCKER_TAG}
+
 echo Docker logs go into docker-portal${BUILD_ALPINE}.log.
 
 if [ ! -z "$buildLocal" ]; then
@@ -58,29 +62,41 @@ if [ ! -z "$buildLocal" ]; then
 
     pushd ../wicked.portal-env
     echo Building Environment docker image...
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild${BUILD_ALPINE} . >> $thisPath/docker-portal${BUILD_ALPINE}.log 
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/docker-portal${BUILD_ALPINE}.log 
     popd
 
     pushd ../wicked.portal-api
     echo Building API docker image...
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${DOCKER_TAG}${BUILD_ALPINE} . >> $thisPath/docker-portal${BUILD_ALPINE}.log
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/docker-portal${BUILD_ALPINE}.log
     popd
 
     pushd ../wicked.portal
     echo Building Portal docker image...
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal:${DOCKER_TAG}${BUILD_ALPINE} . >> $thisPath/docker-portal${BUILD_ALPINE}.log
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal:${PORTAL_TAG}${BUILD_ALPINE} . >> $thisPath/docker-portal${BUILD_ALPINE}.log
     popd
 
 else
 
     echo Using prebuilt images:
     echo DOCKER_PREFIX=$DOCKER_PREFIX
-    echo DOCKER_TAG=$DOCKER_TAG
-    echo BUILD_ALPINE=$BUILD_ALPINE
+    dockerTag=${DOCKER_TAG}
+    echo DOCKER_TAG=${dockerTag}
 
+    # Magic image matching?
+    if [[ "$DOCKER_PREFIX" == "haufelexware/wicked." ]]; then
+        echo "INFO: Resolving image names for tag ${dockerTag}"
+        docker pull haufelexware/wicked.portal-env:next-onbuild-alpine
+        export PORTAL_ENV_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-env ${dockerTag})
+        export PORTAL_API_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-api ${dockerTag})
+        export PORTAL_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal ${dockerTag})
+    fi
 fi
+
+echo "INFO: PORTAL_ENV_TAG=${PORTAL_ENV_TAG}"
+echo "INFO: PORTAL_API_TAG=${PORTAL_API_TAG}"
+echo "INFO: PORTAL_TAG=${PORTAL_TAG}"
 
 echo Templating Dockerfile for test base and compose file...
 
@@ -90,7 +106,7 @@ perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;su
 if [ -z "$buildLocal" ]; then 
     echo Using prebuilt images: Pulling images...
     docker-compose -p wickedportaltest -f portal-tests-compose.yml pull
-    docker pull ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild${BUILD_ALPINE}
+    docker pull ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE}
 fi
 
 echo Building Test base container...
