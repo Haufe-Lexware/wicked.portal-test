@@ -94,31 +94,35 @@ else
     fi
 fi
 
+export PROJECT_NAME=test$(od -vN "8" -An -tx1 /dev/urandom | tr -d " \n")
+
 echo "INFO: PORTAL_ENV_TAG=${PORTAL_ENV_TAG}"
 echo "INFO: PORTAL_API_TAG=${PORTAL_API_TAG}"
 echo "INFO: PORTAL_TAG=${PORTAL_TAG}"
+echo "INFO: PROJECT_NAME=${PROJECT_NAME}"
 
 echo Templating Dockerfile for test base and compose file...
 
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' base/Dockerfile.template > base/Dockerfile
+perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal/Dockerfile.template > portal/Dockerfile
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-tests-compose.yml.template > portal-tests-compose.yml
 
 if [ -z "$buildLocal" ]; then 
     echo Using prebuilt images: Pulling images...
-    docker-compose -p wickedportaltest -f portal-tests-compose.yml pull
+    docker-compose -p ${PROJECT_NAME} -f portal-tests-compose.yml pull
     docker pull ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE}
 fi
 
 echo Building Test base container...
 pushd base
-docker build -t wickedportaltest_test-base . >> $thisPath/docker-portal${BUILD_ALPINE}.log
+docker build -t ${PROJECT_NAME}_test-base . >> $thisPath/docker-portal${BUILD_ALPINE}.log
 popd
 
 echo Building Test container...
-docker-compose -p wickedportaltest -f portal-tests-compose.yml build >> $thisPath/docker-portal${BUILD_ALPINE}.log
+docker-compose -p ${PROJECT_NAME} -f portal-tests-compose.yml build >> $thisPath/docker-portal${BUILD_ALPINE}.log
 echo Running Portal test containers...
 failedTests=""
-if ! docker-compose -p wickedportaltest -f portal-tests-compose.yml up --abort-on-container-exit > portal-test${BUILD_ALPINE}.log; then
+if ! docker-compose -p ${PROJECT_NAME} -f portal-tests-compose.yml up --abort-on-container-exit > portal-test${BUILD_ALPINE}.log; then
     echo WARNING: docker-compose exited with a non-zero return code.
     failedTests="true"
 fi
@@ -127,12 +131,12 @@ if [ -d test_results ]; then
     echo "INFO: Cleaning up..."
     rm -rf test_results
 fi
-if ! docker cp wickedportaltest_portal-test-data_1:/usr/src/app/test_results .; then
+if ! docker cp ${PROJECT_NAME}_portal-test-data_1:/usr/src/app/test_results .; then
     echo ERROR: The test results are not available.
     failedTests="true"
 fi
 echo Taking down Test containers...
-docker-compose -p wickedportaltest -f portal-tests-compose.yml down >> $thisPath/docker-portal${BUILD_ALPINE}.log
+docker-compose -p ${PROJECT_NAME} -f portal-tests-compose.yml down >> $thisPath/docker-portal${BUILD_ALPINE}.log
 
 if [ ! -z "$failedTests" ]; then
     exit 1
@@ -141,6 +145,10 @@ fi
 cat test_results/portal-test.log
 
 echo Detailed logs are in portal-test${BUILD_ALPINE}.log.
+
+echo Cleaning up temporary images...
+docker rmi ${PROJECT_NAME}_test-base
+docker rmi ${PROJECT_NAME}_portal-test-data
 
 if [ -f test_results/PORTAL_FAILED ]; then
     echo "ERROR: Some test cases failed."
