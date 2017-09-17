@@ -14,11 +14,11 @@ services:
     volumes_from:
     - "api-test-data"
 
-networks:
-  default:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-      - subnet: 10.222.222.0/24
-        gateway: 10.222.222.1
+#networks:
+#  default:
+#    driver: bridge
+#    ipam:
+#      driver: default
+#      config:
+#      - subnet: 10.222.222.0/24
+#        gateway: 10.222.222.1
