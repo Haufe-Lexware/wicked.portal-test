@@ -89,4 +89,20 @@ describe('/confighash', function () {
             done();
         });
     });
+
+    it('should have added a default sessionStore configuration in globals', function (done) {
+        request.get({
+            url: baseUrl + 'globals',
+            headers: {
+                'X-Config-Hash': configHash
+            }
+        }, function (err, res, body) {
+            assert.isNotOk(err);
+            assert.equal(res.statusCode, 200);
+            var jsonBody = utils.getJson(body);
+            assert.isOk(jsonBody.sessionStore, 'globals.json do not contain a sessionStore property');
+            assert.equal(jsonBody.sessionStore.type, 'file', 'default sessionStore.type is not equal "file"');
+            done();
+        });
+    });
 });

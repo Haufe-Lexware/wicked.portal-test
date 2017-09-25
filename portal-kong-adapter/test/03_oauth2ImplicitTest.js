@@ -6,6 +6,7 @@ var URL = require('url');
 var qs = require('querystring');
 var utils = require('./testUtils');
 var consts = require('./testConsts');
+var enableDestroy = require('server-destroy');
 
 var adapterUrl = consts.KONG_ADAPTER_URL;
 var kongUrl = consts.KONG_ADMIN_URL;
@@ -38,6 +39,8 @@ function hookServer(serverListening) {
         }
     });
     __server.listen(INTERNAL_API_PORT, serverListening);
+    // https://github.com/isaacs/server-destroy
+    enableDestroy(__server);
 }
 
 function useReqHandler(reqHandler) {
@@ -46,7 +49,7 @@ function useReqHandler(reqHandler) {
 
 function closeServer(callback) {
     if (__server) {
-        __server.close(function () {
+        __server.destroy(function () {
             __server = null;
             callback();
         });
@@ -301,6 +304,7 @@ describe('With oauth2 implicit grant APIs,', function () {
         });
 
         after(function (done) {
+            console.log('after all when accessing the API');
             closeServer(done);
         });
 

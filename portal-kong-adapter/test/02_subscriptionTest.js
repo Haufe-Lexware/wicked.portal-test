@@ -66,6 +66,30 @@ describe('With subscriptions,', function () {
             });
         });
 
+        it('resync with subscription should not change anything', function (done) {
+            var consumer = kongConsumer(appId, keyAuthApi);
+            utils.addSubscription(appId, devUserId, keyAuthApi, 'basic', null, function (err, subsInfo) {
+                assert.isNotOk(err);
+                utils.awaitEmptyQueue(adapterQueue, adminUserId, function (err) {
+                    assert.isNotOk(err, 'Waiting for empty queue failed: ' + err);
+                    request.post({
+                        url: adapterUrl + 'resync'
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode, 'Resync status code not 200');
+                        var jsonBody = utils.getJson(body);
+                        assert.isOk(jsonBody.actions, 'Strange - resync response has no actions property');
+                        if (0 !== jsonBody.actions.length) {
+                            console.log(JSON.stringify(jsonBody, 0, 2));
+                        }
+                        assert.equal(0, jsonBody.actions.length, 'There were API actions done at resync, must be empty');
+                        done();
+                    });
+                });
+            });
+        });
+
+
         // After each, the application is deleted and re-added; should remove subscriptions
         it('should clean up keys after deleting an application', function (done) {
             var consumer = kongConsumer(appId, keyAuthApi);
@@ -119,6 +143,29 @@ describe('With subscriptions,', function () {
                 assert.equal(kongOAuth2.data[0].client_id, subsInfo.clientId, 'client_id must match');
                 assert.equal(kongOAuth2.data[0].client_secret, subsInfo.clientSecret, 'client_secret must match');
                 done();
+            });
+        });
+
+        it('should not trigger changes at resync for client id and secret either', function (done) {
+            var consumer = kongConsumer(appId, oauth2Api);
+            async.series({
+                addSubs: callback => utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, callback),
+                queue1: callback => utils.awaitEmptyQueue(adapterQueue, adminUserId, callback)
+            }, function (err, results) {
+                assert.isNotOk(err, 'Waiting for empty queue failed: ' + err);
+                request.post({
+                    url: adapterUrl + 'resync'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode, 'Resync status code not 200');
+                    var jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody.actions, 'Strange - resync response has no actions property');
+                    if (0 !== jsonBody.actions.length) {
+                        console.log(JSON.stringify(jsonBody, 0, 2));
+                    }
+                    assert.equal(0, jsonBody.actions.length, 'There were API actions done at resync, must be empty');
+                    done();
+                });
             });
         });
     });

@@ -10,5 +10,11 @@
     },
     "PORTAL_REC2": {
         "value": "Recursive"
+    },
+    "SESSION_STORE_HOST": {
+        "value": "portal-redis"
+    },
+    "SESSION_STORE_TYPE": {
+        "values": "(undefined)"
     }
 }

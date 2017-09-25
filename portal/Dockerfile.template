@@ -1,8 +1,8 @@
-FROM wickedportaltest_test-base
+FROM ${PROJECT_NAME}_test-base
 
 COPY . /usr/src/app
 
-RUN rm -rf /var/portal-api \
+RUN rm -rf /var/portal-api \\
     && cp -R /usr/src/app/test/test-config /var/portal-api
 
 WORKDIR /usr/src/app

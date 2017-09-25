@@ -4,6 +4,8 @@ set -e
 
 buildLocal=""
 
+export NODE_ENV=test
+
 if [ -z "$DOCKER_PREFIX" ]; then
     echo Env var DOCKER_PREFIX is not set, assuming local build.
     export DOCKER_PREFIX=local_
@@ -44,56 +46,98 @@ thisPath=`pwd`
 
 echo Docker logs go into docker-api${BUILD_ALPINE}.log.
 
+export PORTAL_ENV_TAG=${DOCKER_TAG}-onbuild
+export PORTAL_API_TAG=${DOCKER_TAG}
+
 if [ ! -z "$buildLocal" ]; then
 
     echo Building images locally.
 
     pushd ../wicked.portal-env
     echo Building Environment docker image...
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild${BUILD_ALPINE} . >> $thisPath/docker-api${BUILD_ALPINE}.log 
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/docker-api${BUILD_ALPINE}.log 
     popd
 
     pushd ../wicked.portal-api
     echo Building API docker image...
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${DOCKER_TAG}${BUILD_ALPINE} . >> $thisPath/docker-api${BUILD_ALPINE}.log
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/docker-api${BUILD_ALPINE}.log
     popd
 
 else
 
     echo Using prebuilt images:
     echo DOCKER_PREFIX=${DOCKER_PREFIX}
-    echo DOCKER_TAG=${DOCKER_TAG}${BUILD_ALPINE}
+    dockerTag=${DOCKER_TAG}
+    echo DOCKER_TAG=${dockerTag}
 
+    # Magic image matching?
+    if [[ "$DOCKER_PREFIX" == "haufelexware/wicked." ]]; then
+        echo "INFO: Resolving image names for tag ${dockerTag}"
+        docker pull haufelexware/wicked.portal-env:next-onbuild-alpine
+        export PORTAL_ENV_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-env ${dockerTag})
+        export PORTAL_API_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-api ${dockerTag})
+    fi
 fi
+
+export PROJECT_NAME=test$(od -vN "8" -An -tx1 /dev/urandom | tr -d " \n")
+
+echo "INFO: PORTAL_ENV_TAG=${PORTAL_ENV_TAG}"
+echo "INFO: PORTAL_API_TAG=${PORTAL_API_TAG}"
+echo "INFO: PROJECT_NAME=${PROJECT_NAME}"
 
 echo Templating Dockerfile for test base and compose file...
 
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' base/Dockerfile.template > base/Dockerfile
+perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-api/Dockerfile.template > portal-api/Dockerfile
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' api-tests-compose.yml.template > api-tests-compose.yml
 
 if [ -z "$buildLocal" ]; then 
     echo Using prebuilt images: Pulling images...
-    docker-compose -p wickedportaltest -f api-tests-compose.yml pull
-    docker pull ${DOCKER_PREFIX}portal-env:${DOCKER_TAG}-onbuild${BUILD_ALPINE}
+    docker-compose -p ${PROJECT_NAME} -f api-tests-compose.yml pull
+    docker pull ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE}
 fi
 
 echo Building Test base container...
 pushd base
-docker build -t wickedportaltest_test-base . >> $thisPath/docker-api${BUILD_ALPINE}.log
+docker build -t ${PROJECT_NAME}_test-base . >> $thisPath/docker-api${BUILD_ALPINE}.log
 popd
 
 echo Building Test container...
-docker-compose -p wickedportaltest -f api-tests-compose.yml build >> $thisPath/docker-api${BUILD_ALPINE}.log
+docker-compose -p ${PROJECT_NAME} -f api-tests-compose.yml build >> $thisPath/docker-api${BUILD_ALPINE}.log
 echo Running API test containers...
-docker-compose -p wickedportaltest -f api-tests-compose.yml up --abort-on-container-exit > api-test${BUILD_ALPINE}.log
+failedTests=""
+if ! docker-compose -p ${PROJECT_NAME} -f api-tests-compose.yml up --abort-on-container-exit > api-test${BUILD_ALPINE}.log; then
+    echo WARNING: docker-compose exited with a non-zero return code.
+    failedTests="true"
+fi
 echo Copying test results...
-docker cp wickedportaltest_api-test-data_1:/usr/src/app/test_results .
+if [ -d test_results ]; then
+    echo "INFO: Cleaning up..."
+    rm -rf test_results
+fi
+if ! docker cp ${PROJECT_NAME}_api-test-data_1:/usr/src/app/test_results .; then
+    echo ERROR: The test results are not available.
+    failedTests="true"
+fi
 echo Taking down Test containers...
-docker-compose -p wickedportaltest -f api-tests-compose.yml down >> $thisPath/docker-api${BUILD_ALPINE}.log
+docker-compose -p ${PROJECT_NAME} -f api-tests-compose.yml down >> $thisPath/docker-api${BUILD_ALPINE}.log
+
+if [ ! -z "$failedTests" ]; then
+    exit 1
+fi
 
 cat test_results/api-test.log
 
 echo Detailed logs are in api-test${BUILD_ALPINE}.log.
+
+echo Cleaning up temporary images...
+docker rmi ${PROJECT_NAME}_test-base
+docker rmi ${PROJECT_NAME}_api-test-data
+
+if [ -f test_results/API_FAILED ]; then
+    echo "ERROR: Some test cases failed."
+    exit 1
+fi
 
 echo Done.

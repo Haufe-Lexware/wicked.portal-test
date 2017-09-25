@@ -10,15 +10,15 @@ services:
 
   portal-api:
     env_file: variables.env  
-    image: ${DOCKER_PREFIX}portal-api:${DOCKER_TAG}${BUILD_ALPINE}
+    image: ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE}
     volumes_from:
     - "api-test-data"
 
-networks:
-  default:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-      - subnet: 10.222.222.0/24
-        gateway: 10.222.222.1
+#networks:
+#  default:
+#    driver: bridge
+#    ipam:
+#      driver: default
+#      config:
+#      - subnet: 10.222.222.0/24
+#        gateway: 10.222.222.1

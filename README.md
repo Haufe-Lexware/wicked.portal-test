@@ -40,6 +40,12 @@ $ ./run-<api|portal|kong-adapter>-tests.sh
 
 The scripts will attempt to first build the needed docker images locally (this may take some time the first time), and then runs the integration tests on the built images.
 
+The portal tests are run with file session store by default. If you want to run them using Redis as a session store, you can do so by running them like:
+
+```bash
+$ REDIS_SESSIONS=true ./run-portal-tests.sh
+```
+
 ## Running the tests on prebuilt container images
 
 In order to run the integration tests on already prebuilt containers (e.g. the official docker images from Haufe-Lexware), use the following syntax:
