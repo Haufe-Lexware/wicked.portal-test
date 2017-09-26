@@ -1,10 +1,6 @@
 {
   "name": "test-api",
-<<<<<<< HEAD
-  "version": "0.12.0",
-=======
   "version": "0.12.1",
->>>>>>> next
   "description": "Tests for portal-api",
   "main": "index.js",
   "directories": {
