@@ -5,10 +5,9 @@ var consts = require('./testConsts');
 var http = require('http');
 var async = require('async');
 
-var baseUrl = consts.BASE_URL;
-
-var HOOK_PORT = 3003;
-var HOOK_URL = 'http://api-test-data:' + HOOK_PORT;
+const baseUrl = consts.BASE_URL;
+const HOOK_URL = consts.HOOK_URL;
+const HOOK_PORT = consts.HOOK_PORT;
 
 var __server = null;
 

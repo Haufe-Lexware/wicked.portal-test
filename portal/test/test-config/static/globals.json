@@ -4,7 +4,13 @@
     "network": {
         "schema": "http",
         "portalHost": "localhost:3000",
-        "apiHost": "localhost:8000"
+        "apiHost": "localhost:8000",
+        "apiUrl": "$PORTAL_API_URL",
+        "portalUrl": "$PORTAL_PORTAL_URL",
+        "kongAdapterUrl": "$PORTAL_KONG_ADAPTER_URL",
+        "kongAdminUrl": "$PORTAL_KONG_ADMIN_URL",
+        "mailerUrl": "$PORTAL_MAILER_URL",
+        "chatbotUrl": "$PORTAL_CHATBOT_URL"
     },
     "validatedUserGroup": "dev",
     "api": {

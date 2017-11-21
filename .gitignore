@@ -4,3 +4,4 @@ test_results
 .DS_Store
 *compose.yml
 backup
+tmp
