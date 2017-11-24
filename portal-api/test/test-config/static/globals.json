@@ -1,6 +1,13 @@
 {
     "title": "$PORTAL_TITLE",
     "footer": "Recursive ${PORTAL_REC1}",
+    "storage": {
+        "type": "${WICKED_STORAGE}",
+        "pgHost": "localhost",
+        "pgPort": 6543,
+        "pgUser": "kong",
+        "pgPassword": "kong"
+    },
     "network": {
         "schema": "http",
         "portalHost": "localhost:3000",

@@ -10,5 +10,8 @@
     },
     "PORTAL_REC2": {
         "value": "Recursive"
+    },
+    "WICKED_STORAGE": {
+        "value": "json"
     }
 }

@@ -126,18 +126,21 @@ describe('/users', function () {
                 });
         });
 
-        it('should render OAuth credentials if belonging to correct group', function (done) {
-            utils.createUser('OAuth', 'dev', true, function (userId) {
-                utils.getUser(userId, function (userInfo) {
-                    utils.deleteUser(userId, function () {
-                        assert.isOk(userInfo);
-                        assert.isOk(userInfo.clientId);
-                        assert.isOk(userInfo.clientSecret);
-                        done();
-                    });
-                });
-            });
-        });
+        // This functionality does not exist anymore. It's not what you should do with
+        // OAuth2.
+        //
+        // it('should render OAuth credentials if belonging to correct group', function (done) {
+        //     utils.createUser('OAuth', 'dev', true, function (userId) {
+        //         utils.getUser(userId, function (userInfo) {
+        //             utils.deleteUser(userId, function () {
+        //                 assert.isOk(userInfo);
+        //                 assert.isOk(userInfo.clientId);
+        //                 assert.isOk(userInfo.clientSecret);
+        //                 done();
+        //             });
+        //         });
+        //     });
+        // });
 
         it('should not render OAuth credentials if not belonging to correct group', function (done) {
             utils.createUser('OAuth', null, false, function (userId) {
@@ -683,6 +686,7 @@ describe('/users', function () {
                     assert.equal(201, res.statusCode);
                     var jsonBody = utils.getJson(body);
                     assert.isNotOk(jsonBody.password);
+                    assert.isOk(jsonBody.id, 'create user must return the new ID');
                     pwdUserId = jsonBody.id;
                     done();
                 });

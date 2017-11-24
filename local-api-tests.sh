@@ -12,18 +12,30 @@ echo "Test dir: $baseDir"
 trap traperror ERR
 
 apiPid=""
+pgContainer=""
 
+function killthings() {
+    if [ ! -z "$apiPid" ]; then
+        echo "===> Killing API"
+        if ! kill $apiPid; then
+            echo "Apparently the API was already dead."
+        fi
+    fi
+    if [ ! -z "$pgContainer" ]; then
+        echo "===> Killing Postgres container"
+        docker rm -f $pgContainer
+    fi
+}
 function traperror() {
     echo "*********************************"
-    echo "Oh böse Welt"
+    echo "Oh sh... killing all the things"
     echo "*********************************"
-    if [ ! -z "$apiPid" ]; then
-        echo "===> Emergency killing API"
-        kill $apiPid
-    fi
+
+    killthings
 
     exit 1
 }
+
 
 cp -r ./portal-api/test/test-config/static ./tmp/$tmpDir/static
 mkdir -p ./tmp/$tmpDir/dynamic
@@ -49,6 +61,18 @@ export PORTAL_CHATBOT_URL=http://localhost:3004
 export HOOK_PORT=3111
 export HOOK_HOST=localhost
 
+if [ -z "$1" ]; then
+    echo "=== JSON mode"
+    export WICKED_STORAGE=json
+else 
+    echo "=== Postgres mode"
+    docker run -d --name $tmpDir -p 6543:5432 -e POSTGRES_USER=kong -e POSTGRES_PASSWORD=kong postgres:9.6
+    pgContainer=$tmpDir
+    # TODO: Make better
+    sleep 10
+    export WICKED_STORAGE=postgres
+fi
+
 pushd ../wicked.portal-api
 node bin/api &> ${thisDir}/api-test-local.log &
 apiPid=$!
@@ -59,5 +83,4 @@ node node_modules/portal-env/await.js http://localhost:3001/ping
 mocha
 popd
 
-echo Killing API at shutdown
-kill $apiPid
+killthings
