@@ -351,6 +351,26 @@ describe('/apis', function () {
                 });
         });
 
+        it('should contain a correct host, basePath and scheme setting for the swagger', function (done) {
+            request(
+                {
+                    uri: baseUrl + 'apis/superduper/swagger'
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode, 'Body: ' + utils.getText(body));
+                    assert.isTrue(res.headers['content-type'].startsWith('application/json'));
+                    var swaggerJson = utils.getJson(body);
+                    // From globals.json
+                    assert.equal(swaggerJson.host, 'localhost:8000', 'Mismatched host property');
+                    // From globals.json
+                    assert.equal(swaggerJson.schemes[0], 'http', 'Mismatched scheme');
+                    // From apis/superduper/config.json
+                    assert.equal(swaggerJson.basePath, '/mock', 'Mismatched basePath');
+                    done();
+                });
+        });
+
         it('should return a 404 if the API is not known', function (done) {
             request(
                 {
