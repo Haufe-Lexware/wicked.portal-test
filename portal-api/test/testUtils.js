@@ -22,8 +22,12 @@ utils.getText = function(ob) {
 
 utils.createUser = function(lastName, group, validated, callback) {
     var thisGroup = [];
-    if (group)
-        thisGroup = [group];
+    if (group) {
+        if (!Array.isArray(group))
+            thisGroup = [group];
+        else
+            thisGroup = group;
+    }
     request({
         method: 'POST',
         url: consts.BASE_URL + 'users',

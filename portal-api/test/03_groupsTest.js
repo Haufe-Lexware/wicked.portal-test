@@ -16,7 +16,7 @@ describe('/groups', function() {
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.groups);
-                    assert.equal(3, jsonBody.groups.length);                    
+                    assert.equal(4, jsonBody.groups.length);                    
                     done(); 
                 });
         });
