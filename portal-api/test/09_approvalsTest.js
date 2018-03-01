@@ -85,13 +85,13 @@ describe('/approvals', function () {
                 request(
                     {
                         url: baseUrl + 'approvals',
-                        headers: { 'X-UserId': approverUserId }
+                        headers: utils.makeHeaders(approverUserId)
                     },
                     function (err, res, body) {
                         request(
                             {
                                 url: baseUrl + 'approvals',
-                                headers: { 'X-UserId': adminUserId }
+                                headers: utils.makeHeaders(adminUserId)
                             },
                             function (adminErr, adminRes, adminBody) {
                                 utils.deleteSubscription(superAppId, superDevUserId, veryPrivateApi, function () {
@@ -163,7 +163,7 @@ describe('/approvals', function () {
                 request.patch(
                     {
                         url: baseUrl + 'applications/' + appId + '/subscriptions/' + privateApi,
-                        headers: { 'X-UserId': approverUserId },
+                        headers: utils.makeHeaders(approverUserId),
                         json: true,
                         body: { approved: true }
                     },
@@ -171,7 +171,7 @@ describe('/approvals', function () {
                         request(
                             {
                                 url: baseUrl + 'approvals',
-                                headers: { 'X-UserId': approverUserId }
+                                headers: utils.makeHeaders(approverUserId)
                             },
                             function (err, res, body) {
                                 utils.deleteSubscription(appId, devUserId, privateApi, function () {

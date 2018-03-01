@@ -51,6 +51,7 @@ export PORTAL_API_STATIC_CONFIG=$baseDir/static
 export PORTAL_API_DYNAMIC_CONFIG=$baseDir/dynamic
 export NODE_ENV=test
 
+export SWAGGER_RESOURCE_URL=http://localhost:8080
 export PORTAL_API_URL=http://localhost:3001
 export PORTAL_PORTAL_URL=http://localhost:3000
 export PORTAL_KONG_ADAPTER_URL=http://localhost:3002
