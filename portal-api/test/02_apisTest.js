@@ -1,4 +1,7 @@
 var assert = require('chai').assert;
+var http = require('http');
+var fs = require('fs');
+var path = require('path');
 var request = require('request');
 var utils = require('./testUtils');
 var consts = require('./testConsts');
@@ -6,11 +9,33 @@ var consts = require('./testConsts');
 var baseUrl = consts.BASE_URL;
 
 describe('/apis', function () {
-    
+
+    var swaggerServer = null;
+    before(function (done) {
+        var swaggerText = fs.readFileSync(path.join(__dirname, 'res', 'swagger.json'), 'utf8');
+        // Hook up a stupid little web server which serves a Swagger file
+        swaggerServer = http.createServer(function (req, res) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            return res.end(swaggerText);
+        });
+        swaggerServer.listen(8080, done);
+    });
+
+    after(function (done) {
+        if (swaggerServer) {
+            swaggerServer.close(function () {
+                swaggerServer = null;
+                done();
+            });
+        } else {
+            done();
+        }
+    });
+
     var devUserId = '';
     var adminUserId = '';
     var noobUserId = '';
-    
+
     // Let's create some users to play with
     before(function (done) {
         utils.createUser('Dev', 'dev', true, function (id) {
@@ -35,7 +60,7 @@ describe('/apis', function () {
             });
         });
     });
-    
+
     describe('GET', function () {
         it('should return all matching APIs for a logged in user', function (done) {
             request({
@@ -49,11 +74,12 @@ describe('/apis', function () {
                     done();
                 });
         });
-        
-        it('should only return public APIs if not logged in', function(done) {
+
+        it('should only return public APIs if not logged in', function (done) {
             request({
-                url: baseUrl + 'apis' },
-                function(err, res, body) {
+                url: baseUrl + 'apis'
+            },
+                function (err, res, body) {
                     assert.isNotOk(err);
                     var jsonBody = utils.getJson(body);
                     assert.equal(4, jsonBody.apis.length);
@@ -61,8 +87,8 @@ describe('/apis', function () {
                     done();
                 });
         });
-        
-        it('should only return public APIs if user does not have required group', function(done) {
+
+        it('should only return public APIs if user does not have required group', function (done) {
             request({
                 url: baseUrl + 'apis',
                 headers: utils.makeHeaders(noobUserId) },
@@ -75,7 +101,7 @@ describe('/apis', function () {
                 });
         });
 
-        it('should return 403 if invalid user id is passed', function(done) {
+        it('should return 403 if invalid user id is passed', function (done) {
             request({
                 url: baseUrl + 'apis',
                 headers: utils.makeHeaders('somethinginvalid') },
@@ -94,7 +120,7 @@ describe('/apis', function () {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
-                    var healthApi = jsonBody.apis.find(function (a) { return a.id == 'portal-health'; } );
+                    var healthApi = jsonBody.apis.find(function (a) { return a.id == 'portal-health'; });
                     assert.isNotOk(healthApi);
                     done();
                 });
@@ -108,88 +134,88 @@ describe('/apis', function () {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
-                    var healthApi = jsonBody.apis.find(function (a) { return a.id == 'portal-health'; } );
+                    var healthApi = jsonBody.apis.find(function (a) { return a.id == 'portal-health'; });
                     assert.isOk(healthApi);
                     done();
                 });
         });
     }); // /apis GET
 
-    describe('/<apiID>', function() {
-        it('should return a JSON representation', function(done) {
+    describe('/<apiID>', function () {
+        it('should return a JSON representation', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/brilliant'
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Body: ' + utils.getText(body));
                     assert.isTrue(res.headers['content-type'].startsWith('application/json'));
-                    done(); 
-                });            
+                    done();
+                });
         });
-        
-        it('should return a 404 if the API is not known', function(done) {
+
+        it('should return a 404 if the API is not known', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/invalidapi'
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(404, res.statusCode);
-                    done(); 
-                });            
+                    done();
+                });
         });
 
-        it('should return a 403 for group-less users if the API is restricted', function(done) {
+        it('should return a 403 for group-less users if the API is restricted', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/users',
                     headers: utils.makeHeaders(noobUserId)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode);
-                    done(); 
-                });            
+                    done();
+                });
         });
 
-        it('should succeed for users of right group if the API is restricted', function(done) {
+        it('should succeed for users of right group if the API is restricted', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/users',
                     headers: utils.makeHeaders(devUserId)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     assert.isTrue(res.headers['content-type'].startsWith('application/json'));
-                    done(); 
-                });            
+                    done();
+                });
         });
 
-        it('should succeed for admin users if the API is restricted', function(done) {
+        it('should succeed for admin users if the API is restricted', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/users',
                     headers: utils.makeHeaders(adminUserId)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     assert.isTrue(res.headers['content-type'].startsWith('application/json'));
-                    done(); 
-                });            
+                    done();
+                });
         });
     });
-    
-    describe('/desc', function() {
-        it('should return the generic description', function(done) {
+
+    describe('/desc', function () {
+        it('should return the generic description', function (done) {
             request(
                 {
                     url: baseUrl + 'apis/desc'
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     assert.isTrue(res.headers['content-type'].startsWith('text/markdown'));
@@ -197,167 +223,200 @@ describe('/apis', function () {
                 });
         });
     });
-    
-    describe('/<apiID>/config', function() {
-        it('should return a JSON config representation', function(done) {
+
+    describe('/<apiID>/config', function () {
+        it('should return a JSON config representation', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/superduper/config'
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     assert.isTrue(res.headers['content-type'].startsWith('application/json'));
-                    done(); 
-                });            
+                    done();
+                });
         });
-        
-        it('should return a 404 if the API is not known', function(done) {
+
+        it('should return a 404 if the API is not known', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/invalidapi/config'
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(404, res.statusCode);
-                    done(); 
-                });            
+                    done();
+                });
         });
     });
 
-    describe('/<apiID>/desc', function() {
-        it('should return a markdown representation', function(done) {
+    describe('/<apiID>/desc', function () {
+        it('should return a markdown representation', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/brilliant/desc'
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     assert.isTrue(res.headers['content-type'].startsWith('text/markdown'));
-                    done(); 
-                });            
+                    done();
+                });
         });
-        
-        it('should return a 404 if the API is not known', function(done) {
+
+        it('should return a 404 if the API is not known', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/invalidapi/desc'
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(404, res.statusCode);
-                    done(); 
-                });            
+                    done();
+                });
         });
 
-        it('should return a 403 for group-less users if the API is restricted', function(done) {
+        it('should return a 403 for group-less users if the API is restricted', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/users/desc',
                     headers: utils.makeHeaders(noobUserId)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode);
-                    done(); 
-                });            
+                    done();
+                });
         });
 
-        it('should succeed for users of right group if the API is restricted', function(done) {
+        it('should succeed for users of right group if the API is restricted', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/users/desc',
                     headers: utils.makeHeaders(devUserId)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     assert.isTrue(res.headers['content-type'].startsWith('text/markdown'));
-                    done(); 
-                });            
+                    done();
+                });
         });
 
-        it('should succeed for admin users if the API is restricted', function(done) {
+        it('should succeed for admin users if the API is restricted', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/users/desc',
                     headers: utils.makeHeaders(adminUserId)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     assert.isTrue(res.headers['content-type'].startsWith('text/markdown'));
-                    done(); 
-                });            
+                    done();
+                });
         });
     });
 
-    describe('/<apiID>/swagger', function() {
-        it('should return a JSON swagger representation', function(done) {
+    describe('/<apiID>/swagger', function () {
+        it('should return a JSON swagger representation', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/brilliant/swagger'
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Body: ' + utils.getText(body));
                     assert.isTrue(res.headers['content-type'].startsWith('application/json'));
-                    done(); 
-                });            
+                    done();
+                });
         });
-        
-        it('should return a 404 if the API is not known', function(done) {
+
+        it('should return a JSON swagger representation (remote lookup of swagger)', function (done) {
+            request(
+                {
+                    uri: baseUrl + 'apis/superduper/swagger'
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode, 'Body: ' + utils.getText(body));
+                    assert.isTrue(res.headers['content-type'].startsWith('application/json'));
+                    done();
+                });
+        });
+
+        it('should contain a correct host, basePath and scheme setting for the swagger', function (done) {
+            request(
+                {
+                    uri: baseUrl + 'apis/superduper/swagger'
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode, 'Body: ' + utils.getText(body));
+                    assert.isTrue(res.headers['content-type'].startsWith('application/json'));
+                    var swaggerJson = utils.getJson(body);
+                    // From globals.json
+                    assert.equal(swaggerJson.host, 'localhost:8000', 'Mismatched host property');
+                    // From globals.json
+                    assert.equal(swaggerJson.schemes[0], 'http', 'Mismatched scheme');
+                    // From apis/superduper/config.json
+                    assert.equal(swaggerJson.basePath, '/mock', 'Mismatched basePath');
+                    done();
+                });
+        });
+
+        it('should return a 404 if the API is not known', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/invalidapi/swagger'
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(404, res.statusCode);
-                    done(); 
-                });            
+                    done();
+                });
         });
 
-        it('should return a 403 for group-less users if the API is restricted', function(done) {
+        it('should return a 403 for group-less users if the API is restricted', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/users/swagger',
                     headers: utils.makeHeaders(noobUserId)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode);
-                    done(); 
-                });            
+                    done();
+                });
         });
 
-        it('should succeed for users of right group if the API is restricted', function(done) {
+        it('should succeed for users of right group if the API is restricted', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/users/swagger',
                     headers: utils.makeHeaders(devUserId)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     assert.isTrue(res.headers['content-type'].startsWith('application/json'));
-                    done(); 
-                });            
+                    done();
+                });
         });
 
-        it('should succeed for admin users if the API is restricted', function(done) {
+        it('should succeed for admin users if the API is restricted', function (done) {
             request(
                 {
                     uri: baseUrl + 'apis/users/swagger',
                     headers: utils.makeHeaders(adminUserId)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     assert.isTrue(res.headers['content-type'].startsWith('application/json'));
-                    done(); 
-                });            
+                    done();
+                });
         });
     });
 

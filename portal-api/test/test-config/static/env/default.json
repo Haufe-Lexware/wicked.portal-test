@@ -13,5 +13,8 @@
     },
     "WICKED_STORAGE": {
         "value": "json"
+    },
+    "SWAGGER_RESOURCE_URL": {
+        "value": "http://api-test-data:8080"
     }
 }

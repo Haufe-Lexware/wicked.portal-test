@@ -60,7 +60,8 @@
             "name": "Very Restricted",
             "id": "restricted",
             "plans": [
-                "restricted_basic"
+                "restricted_basic",
+                "restricted_unlimited"
             ],
             "requiredGroup": "superdev",
             "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
