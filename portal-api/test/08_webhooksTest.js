@@ -18,7 +18,7 @@ function hookServer(callback, serverHooked) {
         res.writeHead(200, { 'Content-Type': 'text/plain' });
         res.end('OK');
 
-        __server.close(function() {
+        __server.close(function () {
             __server = null;
             callback();
         });
@@ -28,7 +28,7 @@ function hookServer(callback, serverHooked) {
 
 function findEvent(eventList, action, entity) {
     var e = null;
-    for (var i=0; i<eventList.length; ++i) {
+    for (var i = 0; i < eventList.length; ++i) {
         var thisE = eventList[i];
         if (thisE.action == action &&
             thisE.entity == entity) {
@@ -43,12 +43,12 @@ describe('/webhooks', function () {
 
     this.timeout(5000);
 
-    beforeEach(function() {
+    beforeEach(function () {
         utils.correlationId = utils.createRandomId();
         console.log('Correlation ID: ' + utils.correlationId);
     });
 
-    afterEach(function() {
+    afterEach(function () {
         utils.correlationId = null;
     });
 
@@ -223,6 +223,75 @@ describe('/webhooks', function () {
                             });
                         });
                     });
+            }, function () {
+                utils.createListener(LISTENER, HOOK_URL, function () {
+                    utils.createApplication('dvolla', 'Dvolla App', devUserId, function () {
+                        // We don't need to do anything here.
+                    });
+                });
+            });
+        });
+
+        it('should be possible to delete events (create application)', function (done) {
+            hookServer(function () {
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                    function (err, apiResponse, apiBody) {
+                        var jsonBody = utils.getJson(apiBody);
+                        var wh = findEvent(jsonBody, 'add', 'application');
+                        request.delete({ url: `${baseUrl}webhooks/events/${LISTENER}/${wh.id}`, headers: utils.makeHeaders('1') }, function (deleteErr, deleteRes, deleteBody) {
+                            utils.deleteListener(LISTENER, function () {
+                                utils.deleteApplication('dvolla', devUserId, function () {
+                                    assert.isNotOk(deleteErr);
+                                    assert.equal(204, deleteRes.statusCode);
+                                    assert.isNotOk(err);
+                                    assert.equal(200, apiResponse.statusCode);
+                                    assert.isOk(wh);
+                                    assert.isOk(wh.data);
+                                    assert.equal(devUserId, wh.data.userId);
+                                    assert.equal('dvolla', wh.data.applicationId);
+
+                                    done();
+                                });
+                            });
+                        });
+                    });
+            }, function () {
+                utils.createListener(LISTENER, HOOK_URL, function () {
+                    utils.createApplication('dvolla', 'Dvolla App', devUserId, function () {
+                        // We don't need to do anything here.
+                    });
+                });
+            });
+        });
+
+        it('should be possible to flush events (create application)', function (done) {
+            hookServer(function () {
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') }, function (err, apiResponse, apiBody) {
+                    request.delete({ url: `${baseUrl}webhooks/events/${LISTENER}`, headers: utils.makeHeaders('1') }, function (deleteErr, deleteRes, deleteBody) {
+                        request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') }, function (err2, apiResponse2, apiBody2) {
+                            utils.deleteListener(LISTENER, function () {
+                                utils.deleteApplication('dvolla', devUserId, function () {
+                                    assert.isNotOk(deleteErr);
+                                    assert.equal(204, deleteRes.statusCode);
+                                    // Before flush
+                                    assert.isNotOk(err);
+                                    assert.equal(200, apiResponse.statusCode);
+                                    var jsonBody = utils.getJson(apiBody);
+                                    var wh = findEvent(jsonBody, 'add', 'application');
+                                    assert.isOk(wh);
+                                    assert.isOk(wh.data);
+                                    // After flush
+                                    assert.isNotOk(err2);
+                                    assert.equal(200, apiResponse2.statusCode);
+                                    var jsonBody2 = utils.getJson(apiBody2);
+                                    assert.isTrue(Array.isArray(jsonBody2));
+                                    assert.equal(0, jsonBody2.length);
+                                    done();
+                                });
+                            });
+                        });
+                    });
+                });
             }, function () {
                 utils.createListener(LISTENER, HOOK_URL, function () {
                     utils.createApplication('dvolla', 'Dvolla App', devUserId, function () {
