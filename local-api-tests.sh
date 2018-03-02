@@ -36,6 +36,22 @@ function traperror() {
     exit 1
 }
 
+function waitFor() {
+    x=$3
+    while ! nc -z "$1" "$2";
+    do
+        sleep 1
+        echo "Waiting for ${1}:${2} for ${x} times"
+        x=$((x-1))
+        if [[ x -le 0 ]];
+        then
+            return 1 ## return failure
+        fi
+    done
+
+    return 0 ## return success
+}
+
 
 cp -r ./portal-api/test/test-config/static ./tmp/$tmpDir/static
 mkdir -p ./tmp/$tmpDir/dynamic
@@ -69,8 +85,9 @@ else
     echo "=== Postgres mode"
     docker run -d --name $tmpDir -p 6543:5432 -e POSTGRES_USER=kong -e POSTGRES_PASSWORD=kong postgres:9.6
     pgContainer=$tmpDir
-    # TODO: Make better
-    sleep 10
+    # Wait for Postgres to be ready
+    sleep 3
+    waitFor localhost 6543 10
     export WICKED_STORAGE=postgres
 fi
 
