@@ -23,7 +23,7 @@
     "async": "2.0.1",
     "chai": "3.5.0",
     "mocha": "3.0.2",
-    "portal-env": "file:../../portal-env.tgz",
+    "portal-env": "file:../../portal-env-1.0.0.tgz",
     "request": "2.74.0"
   },
   "jshintConfig": {
