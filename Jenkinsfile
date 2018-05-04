@@ -49,6 +49,24 @@ node('docker') {
 
     stage('API Tests (alpine)') {
 
+        env.BUILD_POSTGRES = '';
+        env.BUILD_ALPINE = '-alpine';
+        sh './run-api-tests.sh'
+
+    }
+
+    stage('API Tests (postgres)') {
+
+        env.BUILD_POSTGRES = '';
+        env.BUILD_POSTGRES = 'true';
+        env.BUILD_ALPINE = '';
+        sh './run-api-tests.sh'
+
+    }
+
+    stage('API Tests (postgres, alpine)') {
+
+        env.BUILD_POSTGRES = 'true';
         env.BUILD_ALPINE = '-alpine';
         sh './run-api-tests.sh'
 

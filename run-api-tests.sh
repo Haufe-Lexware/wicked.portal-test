@@ -41,6 +41,13 @@ else
     echo "Building Alpine images."
 fi
 
+wickedStorage="json"
+if [ ! -z "$BUILD_POSTGRES" ]; then
+    echo "Running tests with Postgres"
+    wickedStorage="postgres" 
+fi
+export WICKED_STORAGE=${wickedStorage}
+
 rm -f docker-api${BUILD_ALPINE}.log
 thisPath=`pwd`
 

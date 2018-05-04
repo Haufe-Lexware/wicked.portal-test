@@ -3,8 +3,8 @@
     "footer": "Recursive ${PORTAL_REC1}",
     "storage": {
         "type": "${WICKED_STORAGE}",
-        "pgHost": "localhost",
-        "pgPort": 6543,
+        "pgHost": "${PORTAL_STORAGE_PGHOST}",
+        "pgPort": "${PORTAL_STORAGE_PGPORT}",
         "pgUser": "kong",
         "pgPassword": "kong"
     },
