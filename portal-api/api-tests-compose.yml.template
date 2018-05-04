@@ -2,9 +2,9 @@ version: '2'
 
 services:
   api-test-data:
-    env_file: variables.env  
+    env_file: ../variables.env  
     build: 
-      context: portal-api
+      context: .
     volumes:
     - "/var/portal-api/static"
 
@@ -13,7 +13,7 @@ services:
     - postgres
     links:
     - postgres:postgres
-    env_file: variables.env
+    env_file: ../variables.env
     environment:
     - WICKED_STORAGE
     - PORTAL_STORAGE_PGHOST=postgres
@@ -27,12 +27,3 @@ services:
     environment:
     - POSTGRES_USER=kong
     - POSTGRES_PASSWORD=kong
-
-#networks:
-#  default:
-#    driver: bridge
-#    ipam:
-#      driver: default
-#      config:
-#      - subnet: 10.222.222.0/24
-#        gateway: 10.222.222.1

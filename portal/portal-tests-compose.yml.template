@@ -2,30 +2,21 @@ version: '2'
 
 services:    
   portal-test-data:
-    env_file: variables.env  
+    env_file: ../variables.env  
     build: 
-      context: portal
+      context: .
     volumes:
     - "/var/portal-api/static"
 
   portal-api:
-    env_file: variables.env  
+    env_file: ../variables.env  
     image: ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE}
     volumes_from:
     - "portal-test-data"
 
   portal:
-    env_file: variables.env
+    env_file: ../variables.env
     image: ${DOCKER_PREFIX}portal:${PORTAL_TAG}${BUILD_ALPINE}
 
   portal-redis:
     image: redis:3.2.10-alpine
-
-#networks:
-#  default:
-#    driver: bridge
-#    ipam:
-#      driver: default
-#      config:
-#      - subnet: 10.222.222.0/24
-#        gateway: 10.222.222.1

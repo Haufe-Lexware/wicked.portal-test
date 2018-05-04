@@ -41,7 +41,7 @@ else
     echo "Building Alpine images."
 fi
 
-rm -f docker-kong-adapter${BUILD_ALPINE}.log
+rm -f logs/docker-kong-adapter${BUILD_ALPINE}.log
 thisPath=`pwd`
 
 export PORTAL_ENV_TAG=${DOCKER_TAG}-onbuild
@@ -49,7 +49,7 @@ export PORTAL_API_TAG=${DOCKER_TAG}
 export PORTAL_KONG_ADAPTER_TAG=${DOCKER_TAG}
 export KONG_TAG=${DOCKER_TAG}
 
-echo Docker logs go into docker-kong-adapter${BUILD_ALPINE}.log.
+echo Docker logs go into logs/docker-kong-adapter${BUILD_ALPINE}.log.
 
 if [ ! -z "$buildLocal" ]; then
 
@@ -57,25 +57,25 @@ if [ ! -z "$buildLocal" ]; then
 
     pushd ../wicked.portal-env
     echo Building Environment docker image...
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log 
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log 
     popd
 
     pushd ../wicked.portal-api
     echo Building API docker image...
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
     popd
 
     pushd ../wicked.portal-kong-adapter
     echo Building Kong Adapter docker image...
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-kong-adapter:${PORTAL_KONG_ADAPTER_TAG}${BUILD_ALPINE} . >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-kong-adapter:${PORTAL_KONG_ADAPTER_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
     popd
 
     pushd ../wicked.kong
     echo Building Kong docker image...
     # perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile
-    docker build -t ${DOCKER_PREFIX}kong:${KONG_TAG} . >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log
+    docker build -t ${DOCKER_PREFIX}kong:${KONG_TAG} . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
     popd
 
 else
@@ -108,24 +108,24 @@ echo Templating Dockerfile for test base and compose file...
 
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' base/Dockerfile.template > base/Dockerfile
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-kong-adapter/Dockerfile.template > portal-kong-adapter/Dockerfile
-perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' kong-adapter-tests-compose.yml.template > kong-adapter-tests-compose.yml
+perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-kong-adapter/kong-adapter-tests-compose.yml.template > portal-kong-adapter/kong-adapter-tests-compose.yml
 
 if [ -z "$buildLocal" ]; then 
     echo Using prebuilt images: Pulling images...
-    docker-compose -p ${PROJECT_NAME} -f kong-adapter-tests-compose.yml pull
+    docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml pull
     docker pull ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE}
 fi
 
 echo Building Test base container...
 pushd base
-docker build -t ${PROJECT_NAME}_test-base . >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log
+docker build -t ${PROJECT_NAME}_test-base . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
 popd
 
 echo Building Test container...
-docker-compose -p ${PROJECT_NAME} -f kong-adapter-tests-compose.yml build >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log
+docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml build >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
 echo Running Kong Adapter test containers...
 failedTests=""
-if ! docker-compose -p ${PROJECT_NAME} -f kong-adapter-tests-compose.yml up --abort-on-container-exit > kong-adapter-test${BUILD_ALPINE}.log; then
+if ! docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml up --abort-on-container-exit > logs/kong-adapter-test${BUILD_ALPINE}.log; then
     echo WARNING: docker-compose exited with a non-zero return code.
     failedTests="true"
 fi
@@ -139,7 +139,7 @@ if ! docker cp ${PROJECT_NAME}_kong-adapter-test-data_1:/usr/src/app/test_result
     failedTests="true"
 fi
 echo Taking down Test containers...
-docker-compose -p ${PROJECT_NAME} -f kong-adapter-tests-compose.yml down >> $thisPath/docker-kong-adapter${BUILD_ALPINE}.log
+docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml down >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
 
 if [ ! -z "$failedTests" ]; then
     exit 1
@@ -147,7 +147,7 @@ fi
 
 cat test_results/kong-adapter-test.log
 
-echo Detailed logs are in kong-adapter-test${BUILD_ALPINE}.log.
+echo Detailed logs are in logs/kong-adapter-test${BUILD_ALPINE}.log.
 
 echo Cleaning up temporary images...
 docker rmi ${PROJECT_NAME}_test-base

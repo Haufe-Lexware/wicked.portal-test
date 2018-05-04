@@ -2,6 +2,10 @@
 
 This repository contains the integration testing code for the API Portal docker containers.
 
+## STATE FOR WICKED 1.0.0
+
+**IMPORTANT**: Currently, the Portal and Kong Adapter tests are not running (in the `wicked_1_0` branch). They need to be reworked quite some, as the entire authentication and authorization pieces have been reworked.
+
 ## Running the tests on locally built container images
 
 In order to run the integration tests locally on your own machine, the following prerequisites needs to be fulfilled.
@@ -24,6 +28,8 @@ wicked
   +-- wicked.portal-kong-adapter
 ```
 
+This is the default if you are using the `checkout.sh` from the [wicked.portal-tools](https://github.com/apim-haufe-io/wicked.portal-tools) repository. There you will find `checkout.sh` in the `development` subfolder (**IMPORTANT**: Until wicked 1.0.0, you must check out the `wicked_1_0` branch to get the full set of development tooling).
+
 #### Docker
 
 You will need to have a docker host available by simply invoking `docker`. Additionally, the test suite makes use of `docker-compose`, so that needs to be installed as well.
@@ -45,6 +51,20 @@ The portal tests are run with file session store by default. If you want to run 
 ```bash
 $ REDIS_SESSIONS=true ./run-portal-tests.sh
 ```
+
+The API tests are run using the non-alpine images, using JSON file storage, as a default. You can switch on the Postgres DAO and Alpine builds using the following two environment variables:
+
+* `BUILD_POSTGRES`: Use Postgres as a backing storage
+* `BUILD_ALPINE`: Build and test the Alpine images
+
+**Example:**
+
+```
+$ BUILD_ALPINE=true BUILD_POSTGRES=true ./run-api-tests.sh
+...
+```
+
+In Jenkins (see the [Jenkinsfile](Jenkinsfile), all four permutations are run (with JSON or Postgres, Alpine or Debian).
 
 ## Running the tests on prebuilt container images
 
