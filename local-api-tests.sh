@@ -79,7 +79,31 @@ export PORTAL_CHATBOT_URL=http://localhost:3004
 export HOOK_PORT=3111
 export HOOK_HOST=localhost
 
-if [ -z "$1" ]; then
+mode=""
+grepFilter=""
+while [[ -n "$1" ]]; do
+    case "$1" in
+        "--json")
+            mode="json"
+            ;;
+        "--postgres")
+            mode="postgres"
+            ;;
+        "--grep")
+            shift 1
+            grepFilter="$1"
+            echo "Filtering test cases for '${grepFilter}''"
+            ;;
+    esac
+    shift 1
+done
+
+if [[ -z "${mode}" ]]; then
+    echo "Usage: $0 <--json|--postgres> [-grep <filter>]"
+    exit 1
+fi
+
+if [[ $mode == json ]]; then
     echo "=== JSON mode"
     export WICKED_STORAGE=json
 else 
@@ -100,7 +124,11 @@ popd
 
 pushd portal-api
 node node_modules/portal-env/await.js http://localhost:3001/ping
-mocha
+if [[ -z "$grepFilter" ]]; then
+    mocha
+else
+    mocha --grep "${grepFilter}"
+fi
 popd
 
 killthings
