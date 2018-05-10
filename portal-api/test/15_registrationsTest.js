@@ -374,7 +374,7 @@ describe('/registrations', () => {
 
             it('should be possible to have two registrations for a single user', (done) => {
                 request.put({
-                    url: baseUrl + `pools/hello/users/${devUserId}`,
+                    url: baseUrl + `pools/woo/users/${devUserId}`,
                     headers: utils.makeHeaders(devUserId),
                     body: {
                         id: devUserId,
@@ -398,9 +398,9 @@ describe('/registrations', () => {
                     const jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.pools, 'items property is missing');
                     assert.isOk(jsonBody.pools[poolId], `Registration for ${poolId} not found`);
-                    assert.isOk(jsonBody.pools.hello, 'registration for pool hello not found.');
+                    assert.isOk(jsonBody.pools.woo, 'registration for pool hello not found.');
                     // Delete it to clean up again
-                    deleteRegistration('hello', devUserId, () => {
+                    deleteRegistration('woo', devUserId, () => {
                         done();
                     });
                 });
