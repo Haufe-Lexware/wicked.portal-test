@@ -259,4 +259,8 @@ utils.deleteListener = function(listenerId, callback) {
     });
 };
 
+utils.generateCrap = (len) => {
+    return 'X'.repeat(len);
+};
+
 module.exports = utils;

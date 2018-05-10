@@ -139,6 +139,17 @@ describe('/registrations', () => {
                     done();
                 });
             });
+
+            it('should return a 404 for an non-existing pool ID', (done) => {
+                request.get({
+                    url: baseUrl + 'pools/non-existing',
+                    headers: utils.makeHeaders(adminUserId)
+                }, (err, res, body) => {
+                    assert.isNotOk(err);
+                    assert.equal(404, res.statusCode, 'GET registrations returned unexpected status code');
+                    done();
+                });
+            });
         }); // basic usage
 
         describe('basic usage (2)', () => {
@@ -406,6 +417,71 @@ describe('/registrations', () => {
                 });
             });
         }); // PUT
+
+        describe('PUT (with validation)', () => {
+            it('should reject registrations without required fields', (done) => {
+                request.put({
+                    url: baseUrl + `pools/${poolId}/users/${devUserId}`,
+                    headers: utils.makeHeaders(devUserId),
+                    body: {
+                        id: devUserId,
+                        namespace: 'ns3'
+                    },
+                    json: true
+                }, (err, res, body) => {
+                    assert.isNotOk(err);
+                    assert.equal(400, res.statusCode, 'Unexpected status code');
+                    done();
+                });
+            });
+
+            it('should reject registrations with a too long name', (done) => {
+                request.put({
+                    url: baseUrl + `pools/${poolId}/users/${devUserId}`,
+                    headers: utils.makeHeaders(devUserId),
+                    body: {
+                        id: devUserId,
+                        name: utils.generateCrap(260),
+                        namespace: 'ns3'
+                    },
+                    json: true
+                }, (err, res, body) => {
+                    assert.isNotOk(err);
+                    assert.equal(400, res.statusCode, 'Unexpected status code');
+                    done();
+                });
+            });
+
+            it('should filter out excess properties', (done) => {
+                request.put({
+                    url: baseUrl + `pools/woo/users/${devUserId}`,
+                    headers: utils.makeHeaders(devUserId),
+                    body: {
+                        id: devUserId,
+                        name: 'Hello World',
+                        namespace: 'ns3',
+                        company: 'This is okay',
+                        excess_crap: 'Arghjaghr'
+                    },
+                    json: true
+                }, (err, res, body) => {
+                    assert.isNotOk(err);
+                    assert.equal(204, res.statusCode, 'Unexpected status code');
+                    request.get({
+                        url: baseUrl + `pools/woo/users/${devUserId}`,
+                        headers: utils.makeHeaders(devUserId),
+                    }, (err, res, body) => {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode, 'Unexpected status code');
+                        const jsonBody = utils.getJson(body);
+                        console.log(jsonBody);
+                        assert.isNotOk(jsonBody.excess_crap);
+                        assert.equal('This is okay', jsonBody.company, 'Defined field missing');
+                        done();
+                    });
+                });
+            });
+        });
 
         describe('DELETE', () => {
             beforeEach((done) => {
