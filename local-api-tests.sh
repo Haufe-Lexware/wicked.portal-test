@@ -2,6 +2,11 @@
 
 set -e
 
+if nc -z localhost 3001; then
+    echo "*** ERROR: Port 3001 is already open."
+    exit 1
+fi
+
 tmpDir=test-$(date +%Y%m%d%H%M%S)
 mkdir -p ./tmp/$tmpDir
 baseDir=$(pwd)/tmp/$tmpDir
