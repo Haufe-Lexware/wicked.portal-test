@@ -8,7 +8,9 @@
                 "unlimited"
             ],
             "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
-            "tags": ["Content"],
+            "tags": [
+                "Content"
+            ],
             "auth": "key-auth"
         },
         {
@@ -20,7 +22,9 @@
                 "godlike"
             ],
             "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
-            "tags": ["Super"],
+            "tags": [
+                "Super"
+            ],
             "auth": "oauth2"
         },
         {
@@ -32,7 +36,9 @@
             ],
             "requiredGroup": "dev",
             "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
-            "tags": ["Super"]
+            "tags": [
+                "Super"
+            ]
         },
         {
             "name": "Partner API",
@@ -43,7 +49,10 @@
             ],
             "requiredGroup": "dev",
             "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
-            "tags": ["Super", "Content"]
+            "tags": [
+                "Super",
+                "Content"
+            ]
         },
         {
             "name": "Ordering API",
@@ -54,7 +63,10 @@
             ],
             "requiredGroup": "dev",
             "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
-            "tags": ["Invoice", "Content"]
+            "tags": [
+                "Invoice",
+                "Content"
+            ]
         },
         {
             "name": "Very Restricted",
@@ -76,7 +88,9 @@
             ],
             "desc": "This is an OAuth2 Implicit Flow secured API",
             "tags": [],
-            "authServers": ["auth-server"],
+            "authServers": [
+                "auth-server"
+            ],
             "auth": "oauth2",
             "settings": {
                 "enable_implicit_grant": true
@@ -94,6 +108,36 @@
             "tags": [],
             "requiredGroup": "dev",
             "auth": "key-auth"
+        },
+        {
+            "name": "OAuth2 API",
+            "id": "oauth2-api",
+            "plans": [
+                "basic",
+                "unlimited"
+            ],
+            "desc": "This is an OAuth2 enabled API",
+            "tags": [],
+            "requiredGroup": "dev",
+            "auth": "oauth2",
+            "settings": {
+                "enable_client_credentials": true,
+                "enable_implicit_grant": true,
+                "enable_authorization_code": true,
+                "enable_password_grant": true,
+                "token_expiration": "120",
+                "scopes": {
+                    "read": {
+                        "description": "Read data"
+                    },
+                    "write": {
+                        "description": "Write data"
+                    },
+                    "admin": {
+                        "description": "Super access"
+                    }
+                }
+            }
         }
     ],
     "_links": {

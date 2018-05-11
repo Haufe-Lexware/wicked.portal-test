@@ -69,7 +69,7 @@ describe('/apis', function () {
                 function(err, res, body) {
                     assert.isNotOk(err);
                     var jsonBody = utils.getJson(body);
-                    assert.equal(8, jsonBody.apis.length);
+                    assert.equal(9, jsonBody.apis.length);
                     assert.equal(200, res.statusCode);
                     done();
                 });

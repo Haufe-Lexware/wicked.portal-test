@@ -1,7 +1,7 @@
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
 const baseUrl = consts.BASE_URL + 'registrations/';
 const poolId = 'wicked';
