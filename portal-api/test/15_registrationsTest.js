@@ -6,6 +6,9 @@ var consts = require('./testConsts');
 const baseUrl = consts.BASE_URL + 'registrations/';
 const poolId = 'wicked';
 
+const READ_SCOPE = 'read_registrations';
+const WRITE_SCOPE = 'write_registrations';
+
 describe('/registrations', () => {
 
     var devUserId = '';
@@ -42,7 +45,7 @@ describe('/registrations', () => {
             callback = namespace;
         request.put({
             url: baseUrl + `pools/${poolId}/users/${userId}`,
-            headers: utils.makeHeaders(userId),
+            headers: utils.makeHeaders(userId, WRITE_SCOPE),
             body: {
                 id: userId,
                 name: name,
@@ -63,7 +66,7 @@ describe('/registrations', () => {
         }
         request.delete({
             url: baseUrl + `pools/${poolId}/users/${userId}`,
-            headers: utils.makeHeaders(userId),
+            headers: utils.makeHeaders(userId, WRITE_SCOPE),
         }, (err, res, body) => {
             assert.isNotOk(err);
             if (!accept404) {
@@ -107,7 +110,7 @@ describe('/registrations', () => {
             it('should return an empty list without registrations (admin)', (done) => {
                 request.get({
                     url: baseUrl + 'pools/' + poolId,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'GET registrations returned unexpected status code');
@@ -118,10 +121,21 @@ describe('/registrations', () => {
                 });
             });
 
+            it('should reject calls with a 403 which do not have the right scope', (done) => {
+                request.get({
+                    url: baseUrl + 'pools/' + poolId,
+                    headers: utils.makeHeaders(adminUserId, WRITE_SCOPE) // wrong scope
+                }, (err, res, body) => {
+                    assert.isNotOk(err);
+                    assert.equal(403, res.statusCode, 'GET registrations returned unexpected status code');
+                    done();
+                });
+            });
+
             it('should return a 403 for non-admins', (done) => {
                 request.get({
                     url: baseUrl + 'pools/' + poolId,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode, 'GET registrations returned unexpected status code');
@@ -132,7 +146,7 @@ describe('/registrations', () => {
             it('should return a 400 for an invalid pool ID', (done) => {
                 request.get({
                     url: baseUrl + 'pools/ìnvälid',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(400, res.statusCode, 'GET registrations returned unexpected status code');
@@ -143,7 +157,7 @@ describe('/registrations', () => {
             it('should return a 404 for an non-existing pool ID', (done) => {
                 request.get({
                     url: baseUrl + 'pools/non-existing',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(404, res.statusCode, 'GET registrations returned unexpected status code');
@@ -160,7 +174,7 @@ describe('/registrations', () => {
             it('should return a list of registrations', (done) => {
                 request.get({
                     url: baseUrl + 'pools/' + poolId,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'GET registrations returned unexpected status code');
@@ -174,7 +188,7 @@ describe('/registrations', () => {
             it('should return a filtered list of registrations (name_filter)', (done) => {
                 request.get({
                     url: baseUrl + 'pools/' + poolId + '?name_filter=Developer',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'GET registrations returned unexpected status code');
@@ -189,7 +203,7 @@ describe('/registrations', () => {
             it('should return a filtered list of registrations (namespace filter)', (done) => {
                 request.get({
                     url: baseUrl + 'pools/' + poolId + '?namespace=ns1',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'GET registrations returned unexpected status code');
@@ -203,7 +217,7 @@ describe('/registrations', () => {
             it('should return a filtered list of registrations (namespace+name filter)', (done) => {
                 request.get({
                     url: baseUrl + 'pools/' + poolId + '?namespace=ns1&name_filter=Developer',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'GET registrations returned unexpected status code');
@@ -218,7 +232,7 @@ describe('/registrations', () => {
             it('should return an empty filtered list of registrations (namespace+name filter, no match)', (done) => {
                 request.get({
                     url: baseUrl + 'pools/' + poolId + '?namespace=ns2&name_filter=Developer',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'GET registrations returned unexpected status code');
@@ -232,7 +246,7 @@ describe('/registrations', () => {
             it('should return a 400 when filtering for faulty namespace', (done) => {
                 request.get({
                     url: baseUrl + 'pools/' + poolId + '?namespace=öäü',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(400, res.statusCode, 'GET registrations returned unexpected status code');
@@ -250,7 +264,7 @@ describe('/registrations', () => {
             it('should be possible to get a single registration', (done) => {
                 request.get({
                     url: baseUrl + `pools/${poolId}/users/${devUserId}`,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Unexpected status code');
@@ -260,10 +274,21 @@ describe('/registrations', () => {
                 });
             });
 
+            it('should reject calls with the wrong scope', (done) => {
+                request.get({
+                    url: baseUrl + `pools/${poolId}/users/${devUserId}`,
+                    headers: utils.makeHeaders(devUserId, WRITE_SCOPE)
+                }, (err, res, body) => {
+                    assert.isNotOk(err);
+                    assert.equal(403, res.statusCode, 'Unexpected status code');
+                    done();
+                });
+            });
+
             it('should not be possible to get a single registration as a different user', (done) => {
                 request.get({
                     url: baseUrl + `pools/${poolId}/users/${noobUserId}`,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode, 'Unexpected status code');
@@ -274,7 +299,7 @@ describe('/registrations', () => {
             it('should be possible to get a single registration as a different user, if admin', (done) => {
                 request.get({
                     url: baseUrl + `pools/${poolId}/users/${devUserId}`,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Unexpected status code');
@@ -291,7 +316,7 @@ describe('/registrations', () => {
             it('should be possible to upsert a single registration', (done) => {
                 request.put({
                     url: baseUrl + `pools/${poolId}/users/${devUserId}`,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SCOPE),
                     body: {
                         id: devUserId,
                         name: newDevName,
@@ -305,11 +330,27 @@ describe('/registrations', () => {
                 });
             });
 
+            it('should reject calls with a 403 which have the wrong scope', (done) => {
+                request.put({
+                    url: baseUrl + `pools/${poolId}/users/${devUserId}`,
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE),
+                    body: {
+                        id: devUserId,
+                        name: 'Does Not Matter'
+                    },
+                    json: true
+                }, (err, res, body) => {
+                    assert.isNotOk(err);
+                    assert.equal(403, res.statusCode, 'Unexpected status code');
+                    done();
+                });
+            });
+
             // Sue me, this is checking a side effect
             it('should have updated the information in the registration', (done) => {
                 request.get({
                     url: baseUrl + `pools/${poolId}/users/${devUserId}`,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Unexpected status code');
@@ -325,7 +366,7 @@ describe('/registrations', () => {
             it('should return the updated registration in the new namespace', (done) => {
                 request.get({
                     url: baseUrl + `pools/${poolId}?namespace=${newNamespace}`,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Unexpected status code');
@@ -340,7 +381,7 @@ describe('/registrations', () => {
             it('should not be possible to upsert a single registration as a different user', (done) => {
                 request.get({
                     url: baseUrl + `pools/${poolId}/users/${noobUserId}`,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode, 'Unexpected status code');
@@ -351,7 +392,7 @@ describe('/registrations', () => {
             it('should be possible to update a single registration as a different user, if admin', (done) => {
                 request.put({
                     url: baseUrl + `pools/${poolId}/users/${devUserId}`,
-                    headers: utils.makeHeaders(adminUserId),
+                    headers: utils.makeHeaders(adminUserId, WRITE_SCOPE),
                     body: {
                         id: devUserId,
                         name: 'Dan Developer',
@@ -368,7 +409,7 @@ describe('/registrations', () => {
             it('should not be possible to create a registration for non-existing user (even if admin)', (done) => {
                 request.put({
                     url: baseUrl + `pools/${poolId}/users/bad-user-id`,
-                    headers: utils.makeHeaders(adminUserId),
+                    headers: utils.makeHeaders(adminUserId, WRITE_SCOPE),
                     body: {
                         id: 'bad-user-id',
                         name: 'Not Existing',
@@ -386,7 +427,7 @@ describe('/registrations', () => {
             it('should be possible to have two registrations for a single user', (done) => {
                 request.put({
                     url: baseUrl + `pools/woo/users/${devUserId}`,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SCOPE),
                     body: {
                         id: devUserId,
                         name: 'Daniel Developer',
@@ -402,7 +443,7 @@ describe('/registrations', () => {
             it('should be possibe to retrieve both registrations', (done) => {
                 request.get({
                     url: baseUrl + `users/${devUserId}`,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
@@ -422,7 +463,7 @@ describe('/registrations', () => {
             it('should reject registrations without required fields', (done) => {
                 request.put({
                     url: baseUrl + `pools/${poolId}/users/${devUserId}`,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SCOPE),
                     body: {
                         id: devUserId,
                         namespace: 'ns3'
@@ -438,7 +479,7 @@ describe('/registrations', () => {
             it('should reject registrations with a too long name', (done) => {
                 request.put({
                     url: baseUrl + `pools/${poolId}/users/${devUserId}`,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SCOPE),
                     body: {
                         id: devUserId,
                         name: utils.generateCrap(260),
@@ -455,7 +496,7 @@ describe('/registrations', () => {
             it('should filter out excess properties', (done) => {
                 request.put({
                     url: baseUrl + `pools/woo/users/${devUserId}`,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SCOPE),
                     body: {
                         id: devUserId,
                         name: 'Hello World',
@@ -469,12 +510,11 @@ describe('/registrations', () => {
                     assert.equal(204, res.statusCode, 'Unexpected status code');
                     request.get({
                         url: baseUrl + `pools/woo/users/${devUserId}`,
-                        headers: utils.makeHeaders(devUserId),
+                        headers: utils.makeHeaders(devUserId, READ_SCOPE),
                     }, (err, res, body) => {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode, 'Unexpected status code');
                         const jsonBody = utils.getJson(body);
-                        console.log(jsonBody);
                         assert.isNotOk(jsonBody.excess_crap);
                         assert.equal('This is okay', jsonBody.company, 'Defined field missing');
                         done();
@@ -496,7 +536,7 @@ describe('/registrations', () => {
             it('should return a 404 if user is not found', (done) => {
                 request.delete({
                     url: baseUrl + `pools/woo/users/bad-user-id`,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, WRITE_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(404, res.statusCode, 'Unexpected status code');
@@ -507,7 +547,7 @@ describe('/registrations', () => {
             it('should return a 400 if pool ID contains invalid characters', (done) => {
                 request.delete({
                     url: baseUrl + `pools/pööl/users/${adminUserId}`,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, WRITE_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(400, res.statusCode, 'Unexpected status code');
@@ -518,7 +558,7 @@ describe('/registrations', () => {
             it('should be possible to delete a registration as yourself', (done) => {
                 request.delete({
                     url: baseUrl + `pools/woo/users/${devUserId}`,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, WRITE_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(204, res.statusCode, 'Unexpected status code');
@@ -526,10 +566,21 @@ describe('/registrations', () => {
                 });
             });
 
+            it('should reject calls with the wrong scope', (done) => {
+                request.delete({
+                    url: baseUrl + `pools/woo/users/${devUserId}`,
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE)
+                }, (err, res, body) => {
+                    assert.isNotOk(err);
+                    assert.equal(403, res.statusCode, 'Unexpected status code');
+                    done();
+                });
+            });
+
             it('should not be possible to delete a registration as somebody else', (done) => {
                 request.delete({
                     url: baseUrl + `pools/woo/users/${devUserId}`,
-                    headers: utils.makeHeaders(noobUserId)
+                    headers: utils.makeHeaders(noobUserId, WRITE_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode, 'Unexpected status code');
@@ -540,7 +591,7 @@ describe('/registrations', () => {
             it('should be possible to delete a registration as an admin', (done) => {
                 request.delete({
                     url: baseUrl + `pools/woo/users/${devUserId}`,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, WRITE_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(204, res.statusCode, 'Unexpected status code');
@@ -555,7 +606,7 @@ describe('/registrations', () => {
             it('should return an empty pools object if no registrations were made', (done) => {
                 request.get({
                     url: baseUrl + 'users/' + devUserId,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Unexpected status code');
@@ -570,7 +621,7 @@ describe('/registrations', () => {
                 putRegistration(poolId, devUserId, 'Daniel Developer', null, () => {
                     request.get({
                         url: baseUrl + 'users/' + devUserId,
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, READ_SCOPE)
                     }, (err, res, body) => {
                         deleteRegistration(poolId, devUserId, () => {
                             assert.isNotOk(err);
@@ -587,7 +638,7 @@ describe('/registrations', () => {
             it('should return 403 if accessing with other user', (done) => {
                 request.get({
                     url: baseUrl + 'users/' + devUserId,
-                    headers: utils.makeHeaders(noobUserId)
+                    headers: utils.makeHeaders(noobUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode, 'Unexpected status code');
@@ -598,7 +649,7 @@ describe('/registrations', () => {
             it('should return something if accessing as an admin', (done) => {
                 request.get({
                     url: baseUrl + 'users/' + devUserId,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Unexpected status code');
