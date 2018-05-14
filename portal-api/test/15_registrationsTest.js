@@ -269,7 +269,19 @@ describe('/registrations', () => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Unexpected status code');
                     const jsonBody = utils.getJson(body);
-                    assert.equal(devUserId, jsonBody.id, 'User id mismatch');
+                    assert.equal(devUserId, jsonBody.userId, 'User id mismatch');
+                    done();
+                });
+            });
+
+            it('should answer with 404 if there is no such registration', (done) => {
+                // woo and user both exist, but no registration
+                request.get({
+                    url: baseUrl + `pools/woo/users/${devUserId}`,
+                    headers: utils.makeHeaders(devUserId, READ_SCOPE)
+                }, (err, res, body) => {
+                    assert.isNotOk(err);
+                    assert.equal(404, res.statusCode, 'Unexpected status code');
                     done();
                 });
             });
@@ -304,7 +316,7 @@ describe('/registrations', () => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Unexpected status code');
                     const jsonBody = utils.getJson(body);
-                    assert.equal(devUserId, jsonBody.id, 'User id mismatch');
+                    assert.equal(devUserId, jsonBody.userId, 'User id mismatch');
                     done();
                 });
             });
@@ -355,7 +367,7 @@ describe('/registrations', () => {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Unexpected status code');
                     const jsonBody = utils.getJson(body);
-                    assert.equal(devUserId, jsonBody.id, 'User id mismatch');
+                    assert.equal(devUserId, jsonBody.userId, 'User id mismatch');
                     assert.equal(jsonBody.name, newDevName);
                     assert.equal(jsonBody.namespace, newNamespace);
                     done();

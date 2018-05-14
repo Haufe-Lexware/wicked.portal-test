@@ -251,7 +251,7 @@ describe('/grants', () => {
                             assert.equal(204, res.statusCode, 'Unexpected status code');
                             done();
                         });
-                    })
+                    });
                 });
             });
 

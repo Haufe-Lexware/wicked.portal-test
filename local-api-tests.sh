@@ -113,12 +113,12 @@ if [[ $mode == json ]]; then
     export WICKED_STORAGE=json
 else 
     echo "=== Postgres mode"
-    docker run -d --name $tmpDir -p 6543:5432 -e POSTGRES_USER=kong -e POSTGRES_PASSWORD=kong postgres:9.6
+    docker run -d --name $tmpDir -p 6543:5432 -e POSTGRES_USER=kong -e POSTGRES_PASSWORD=kong postgres:9.6.8
     pgContainer=$tmpDir
     # portal-api will wait for itself until Postgres is available,
     # no need to do that from bash. We'll just give it a couple of seconds
     # to gather itself.
-    sleep 3
+    sleep 10
     export WICKED_STORAGE=postgres
 fi
 
