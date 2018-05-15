@@ -5,6 +5,11 @@ var consts = require('./testConsts');
 
 var baseUrl = consts.BASE_URL;
 
+const WRITE_USERS_SCOPE = 'write_users';
+const READ_USERS_SCOPE = 'read_users';
+const INVALID_SCOPE = 'invalid_users';
+const LOGIN_SCOPE = 'login';
+
 describe('/users', function () {
 
     var adminUserId = '';
@@ -15,8 +20,6 @@ describe('/users', function () {
         it('should return the new ID of a newly created user', function (done) {
             var myBody = {
                 customId: 'xyz',
-                firstName: 'Unit',
-                lastName: 'Tester',
                 email: 'foo@foo.foo',
                 validated: true,
                 groups: ["dev"]
@@ -24,6 +27,7 @@ describe('/users', function () {
             request({
                 method: 'POST',
                 url: baseUrl + 'users',
+                headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                 json: true,
                 body: myBody
             },
@@ -39,8 +43,6 @@ describe('/users', function () {
         it('should return a 409 if the email address is duplicate.', function (done) {
             var myBody = {
                 customId: 'zyx',
-                firstName: 'Unit',
-                lastName: 'Tester',
                 email: 'foo@foo.foo',
                 validated: true,
                 groups: ["dev"]
@@ -48,6 +50,7 @@ describe('/users', function () {
             request({
                 method: 'POST',
                 url: baseUrl + 'users',
+                headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                 json: true,
                 body: myBody
             },
@@ -60,8 +63,6 @@ describe('/users', function () {
         it('should return a 409 if the custom ID is duplicate.', function (done) {
             var myBody = {
                 customId: 'xyz',
-                firstName: 'Unit',
-                lastName: 'Tester',
                 email: 'foo2@foo.foo',
                 validated: true,
                 groups: ["dev"]
@@ -69,6 +70,7 @@ describe('/users', function () {
             request({
                 method: 'POST',
                 url: baseUrl + 'users',
+                headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                 json: true,
                 body: myBody
             },
@@ -81,8 +83,6 @@ describe('/users', function () {
         it('should be possible to add a user without a group', function (done) {
             var myBody = {
                 customId: '123',
-                firstName: 'Noob',
-                lastName: 'User',
                 email: 'noob@noob.com',
                 validated: false,
                 groups: []
@@ -90,6 +90,7 @@ describe('/users', function () {
             request({
                 method: 'POST',
                 url: baseUrl + 'users',
+                headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                 json: true,
                 body: myBody
             },
@@ -105,8 +106,6 @@ describe('/users', function () {
         it('should be possible to add an admin user', function (done) {
             var myBody = {
                 customId: 'abc',
-                firstName: 'Admin',
-                lastName: 'User',
                 email: 'admin@admin.com',
                 validated: false,
                 groups: ["admin"]
@@ -114,6 +113,7 @@ describe('/users', function () {
             request({
                 method: 'POST',
                 url: baseUrl + 'users',
+                headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                 json: true,
                 body: myBody
             },
@@ -142,31 +142,31 @@ describe('/users', function () {
         //     });
         // });
 
-        it('should not render OAuth credentials if not belonging to correct group', function (done) {
-            utils.createUser('OAuth', null, false, function (userId) {
-                utils.getUser(userId, function (userInfo) {
-                    utils.deleteUser(userId, function () {
-                        assert.isOk(userInfo);
-                        assert.isNotOk(userInfo.clientId);
-                        assert.isNotOk(userInfo.clientSecret);
-                        done();
-                    });
-                });
-            });
-        });
+        // it('should not render OAuth credentials if not belonging to correct group', function (done) {
+        //     utils.createUser('OAuth', null, false, function (userId) {
+        //         utils.getUser(userId, function (userInfo) {
+        //             utils.deleteUser(userId, function () {
+        //                 assert.isOk(userInfo);
+        //                 assert.isNotOk(userInfo.clientId);
+        //                 assert.isNotOk(userInfo.clientSecret);
+        //                 done();
+        //             });
+        //         });
+        //     });
+        // });
 
-        it('should not render OAuth credentials if not validated', function (done) {
-            utils.createUser('OAuth', 'dev', false, function (userId) {
-                utils.getUser(userId, function (userInfo) {
-                    utils.deleteUser(userId, function () {
-                        assert.isOk(userInfo);
-                        assert.isNotOk(userInfo.clientId);
-                        assert.isNotOk(userInfo.clientSecret);
-                        done();
-                    });
-                });
-            });
-        });
+        // it('should not render OAuth credentials if not validated', function (done) {
+        //     utils.createUser('OAuth', 'dev', false, function (userId) {
+        //         utils.getUser(userId, function (userInfo) {
+        //             utils.deleteUser(userId, function () {
+        //                 assert.isOk(userInfo);
+        //                 assert.isNotOk(userInfo.clientId);
+        //                 assert.isNotOk(userInfo.clientSecret);
+        //                 done();
+        //             });
+        //         });
+        //     });
+        // });
 
         it('should not set the user group for a non-validated user', function (done) {
             utils.createUser('Whatever', null, false, function (userId) {
@@ -199,7 +199,7 @@ describe('/users', function () {
             request(
                 {
                     url: baseUrl + 'users',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_USERS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -225,11 +225,25 @@ describe('/users', function () {
             );
         });
 
+        it('should return 403 if the wrong scope is passed', function (done) {
+            request(
+                {
+                    url: baseUrl + 'users',
+                    headers: utils.makeHeaders(adminUserId, INVALID_SCOPE)
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(403, res.statusCode);
+                    done();
+                }
+            );
+        });
+
         it('should return 403 if non-admin user is passed', function (done) {
             request(
                 {
                     url: baseUrl + 'users',
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_USERS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -243,7 +257,7 @@ describe('/users', function () {
             request(
                 {
                     url: baseUrl + 'users',
-                    headers: utils.makeHeaders('invaliduser')
+                    headers: utils.makeHeaders('invaliduser', READ_USERS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -256,15 +270,28 @@ describe('/users', function () {
         it('should return a user by customId', function (done) {
             request(
                 {
-                    url: baseUrl + 'users?customId=xyz'
+                    url: baseUrl + 'users?customId=xyz',
+                    headers: utils.makeHeaders(devUserId, READ_USERS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
                     assert.equal(1, jsonBody.length);
-                    assert.equal("Unit Tester", jsonBody[0].name);
                     assert.equal(devUserId, jsonBody[0].id);
+                    done();
+                });
+        });
+
+        it('should return a 403 for search user by customId of wrong scope is passed', function (done) {
+            request(
+                {
+                    url: baseUrl + 'users?customId=xyz',
+                    headers: utils.makeHeaders(devUserId, INVALID_SCOPE)
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(403, res.statusCode);
                     done();
                 });
         });
@@ -272,7 +299,8 @@ describe('/users', function () {
         it('should return a 404 if customId is not found', function (done) {
             request(
                 {
-                    url: baseUrl + 'users?customId=invalidId'
+                    url: baseUrl + 'users?customId=invalidId',
+                    headers: utils.makeHeaders(devUserId, READ_USERS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -284,14 +312,14 @@ describe('/users', function () {
         it('should return a user by email', function (done) {
             request(
                 {
-                    url: baseUrl + 'users?email=noob@noob.com'
+                    url: baseUrl + 'users?email=noob@noob.com',
+                    headers: utils.makeHeaders(devUserId, READ_USERS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
                     assert.equal(1, jsonBody.length);
-                    assert.equal('Noob User', jsonBody[0].name);
                     assert.equal(noobUserId, jsonBody[0].id);
                     done();
                 });
@@ -300,7 +328,8 @@ describe('/users', function () {
         it('should return a 404 if email is not found', function (done) {
             request(
                 {
-                    url: baseUrl + 'users?email=invalid@email.com'
+                    url: baseUrl + 'users?email=invalid@email.com',
+                    headers: utils.makeHeaders(devUserId, READ_USERS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -316,7 +345,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, READ_USERS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
@@ -326,17 +355,15 @@ describe('/users', function () {
                     });
             });
 
-            it('should return the user full name (generated).', function (done) {
+            it('should return 403 if the scope is invalid ', function (done) {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, INVALID_SCOPE)
                     },
                     function (err, res, body) {
-                        assert.equal(200, res.statusCode, 'status code not 200');
-                        var jsonBody = utils.getJson(body);
-                        assert.equal(devUserId, jsonBody.id);
-                        assert.isOk(jsonBody.name);
+                        assert.isNotOk(err);
+                        assert.equal(403, res.statusCode, 'status code not 403');
                         done();
                     });
             });
@@ -345,7 +372,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, READ_USERS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
@@ -359,8 +386,10 @@ describe('/users', function () {
             });
 
             it('should return a 403 if X-Authenticated-UserId is not passed', function (done) {
-                request(
-                    { url: baseUrl + 'users/' + devUserId },
+                request({
+                    url: baseUrl + 'users/' + devUserId,
+                    headers: utils.onlyScope(READ_USERS_SCOPE)
+                },
                     function (err, res, body) {
                         assert.equal(403, res.statusCode, 'status code not 403');
                         done();
@@ -371,7 +400,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: utils.makeHeaders('something invalid')
+                        headers: utils.makeHeaders('something invalid', READ_USERS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.equal(403, res.statusCode, 'status code not 403');
@@ -383,7 +412,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: utils.makeHeaders(noobUserId)
+                        headers: utils.makeHeaders(noobUserId, READ_USERS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.equal(403, res.statusCode, 'status code not 403');
@@ -395,10 +424,22 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + devUserId,
-                        headers: utils.makeHeaders(adminUserId)
+                        headers: utils.makeHeaders(adminUserId, READ_USERS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
+                        done();
+                    });
+            });
+
+            it('should return 403 if admin X-Authenticated-UserId but wrong scope is passed', function (done) {
+                request(
+                    {
+                        url: baseUrl + 'users/' + devUserId,
+                        headers: utils.makeHeaders(adminUserId, INVALID_SCOPE)
+                    },
+                    function (err, res, body) {
+                        assert.equal(403, res.statusCode, 'status code not 403');
                         done();
                     });
             });
@@ -407,7 +448,7 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: utils.makeHeaders(noobUserId)
+                        headers: utils.makeHeaders(noobUserId, READ_USERS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
@@ -417,74 +458,116 @@ describe('/users', function () {
         }); // /users/<userId> GET
 
         describe('PATCH', function () {
-            it('should allow changing the name', function (done) {
+            it('should allow changing the email address', function (done) {
                 request(
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: utils.makeHeaders(noobUserId),
+                        headers: utils.makeHeaders(noobUserId, WRITE_USERS_SCOPE),
                         json: true,
                         body: {
-                            firstName: 'New',
-                            lastName: 'Name',
-                            email: 'new@new.com',
-                            validated: true
+                            email: 'new@new.com'
                         }
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode);
                         var jsonBody = utils.getJson(body);
-                        assert.equal('New', jsonBody.firstName);
-                        assert.equal('Name', jsonBody.lastName);
                         assert.equal('new@new.com', jsonBody.email);
-                        assert.equal(true, jsonBody.validated);
-                        assert.equal('New Name', jsonBody.name);
                         done();
                     });
             });
 
-            it('should allow changing the name', function (done) {
+            it('should return 403 if wrong scope is passed in', function (done) {
                 request(
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: utils.makeHeaders(noobUserId),
+                        headers: utils.makeHeaders(noobUserId, INVALID_SCOPE),
                         json: true,
                         body: {
-                            firstName: 'New',
-                            lastName: 'Name',
-                            email: 'new@new.com',
+                            email: 'evennewer@new.com'
+                        }
+                    },
+                    function (err, res, body) {
+                        assert.equal(403, res.statusCode);
+                        done();
+                    });
+            });
+
+            it('should return 403 if a non-admin user tries to change the groups', function (done) {
+                request(
+                    {
+                        method: 'PATCH',
+                        url: baseUrl + 'users/' + noobUserId,
+                        headers: utils.makeHeaders(noobUserId, WRITE_USERS_SCOPE),
+                        json: true,
+                        body: {
+                            groups: ['admin']
+                        }
+                    },
+                    function (err, res, body) {
+                        assert.equal(403, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.equal('Not allowed. Only admins can change a user\'s groups.', jsonBody.message, 'Unexpected error message.');
+                        done();
+                    });
+            });
+
+            it('should return 403 if a non-admin user tries to change the validated property', function (done) {
+                request(
+                    {
+                        method: 'PATCH',
+                        url: baseUrl + 'users/' + noobUserId,
+                        headers: utils.makeHeaders(noobUserId, WRITE_USERS_SCOPE),
+                        json: true,
+                        body: {
                             validated: true
                         }
                     },
                     function (err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(200, res.statusCode);
-                        // Now GET the user and check it's okay
-                        request(
-                            {
-                                url: baseUrl + 'users/' + noobUserId,
-                                headers: utils.makeHeaders(noobUserId)
-                            },
-                            function (err, res, body) {
-                                assert.equal(200, res.statusCode);
-                                var jsonBody = utils.getJson(body);
-                                assert.equal('New', jsonBody.firstName);
-                                assert.equal('Name', jsonBody.lastName);
-                                assert.equal('new@new.com', jsonBody.email);
-                                assert.equal(true, jsonBody.validated);
-                                assert.equal('New Name', jsonBody.name);
-                                done();
-                            });
+                        assert.equal(403, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.equal('Not allowed. Only admins can change a user\'s validated email status.', jsonBody.message, 'Unexpected error message.');
+                        done();
                     });
             });
+            
+            // it('should allow changing the name', function (done) {
+            //     request(
+            //         {
+            //             method: 'PATCH',
+            //             url: baseUrl + 'users/' + noobUserId,
+            //             headers: utils.makeHeaders(noobUserId, WRITE_SCOPE),
+            //             json: true,
+            //             body: {
+            //                 email: 'new@new.com'
+            //             }
+            //         },
+            //         function (err, res, body) {
+            //             assert.isNotOk(err);
+            //             assert.equal(200, res.statusCode);
+            //             // Now GET the user and check it's okay
+            //             request(
+            //                 {
+            //                     url: baseUrl + 'users/' + noobUserId,
+            //                     headers: utils.makeHeaders(noobUserId, READ_SCOPE)
+            //                 },
+            //                 function (err, res, body) {
+            //                     assert.equal(200, res.statusCode);
+            //                     var jsonBody = utils.getJson(body);
+            //                     assert.equal('new@new.com', jsonBody.email);
+            //                     assert.equal(true, jsonBody.validated);
+            //                     done();
+            //                 });
+            //         });
+            // });
 
             it('should forbid changing the custom ID', function (done) {
                 request(
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: utils.makeHeaders(noobUserId),
+                        headers: utils.makeHeaders(noobUserId, WRITE_USERS_SCOPE),
                         json: true,
                         body: { customId: 'fhkdjfhkdjf' }
                     },
@@ -499,11 +582,10 @@ describe('/users', function () {
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: utils.makeHeaders(devUserId),
+                        headers: utils.makeHeaders(devUserId, WRITE_USERS_SCOPE),
                         json: true,
                         body: {
-                            firstName: 'Helmer',
-                            lastName: 'Fudd'
+                            email: 'helmer@fudd.com'
                         }
                     },
                     function (err, res, body) {
@@ -517,18 +599,16 @@ describe('/users', function () {
                     {
                         method: 'PATCH',
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: utils.makeHeaders(adminUserId),
+                        headers: utils.makeHeaders(adminUserId, WRITE_USERS_SCOPE),
                         json: true,
                         body: {
-                            firstName: 'Helmer',
-                            lastName: 'Fudd'
+                            email: 'helmer@fudd.com'
                         }
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode);
                         var jsonBody = utils.getJson(body);
-                        assert.equal('Helmer', jsonBody.firstName);
-                        assert.equal('Fudd', jsonBody.lastName);
+                        assert.equal('helmer@fudd.com', jsonBody.email);
                         done();
                     });
             });
@@ -537,13 +617,12 @@ describe('/users', function () {
                 request(
                     {
                         url: baseUrl + 'users/' + noobUserId,
-                        headers: utils.makeHeaders(noobUserId)
+                        headers: utils.makeHeaders(noobUserId, READ_USERS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
                         var jsonBody = utils.getJson(body);
-                        assert.equal('Helmer', jsonBody.firstName);
-                        assert.equal('Fudd', jsonBody.lastName);
+                        assert.equal('helmer@fudd.com', jsonBody.email);
                         done();
                     });
             });
@@ -551,14 +630,14 @@ describe('/users', function () {
             it('should have actually changed things in the short list', function (done) {
                 request(
                     {
-                        url: baseUrl + 'users?customId=123'
+                        url: baseUrl + 'users?customId=123',
+                        headers: utils.makeHeaders(noobUserId, READ_USERS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.equal(200, res.statusCode, 'status code not 200');
                         var jsonBody = utils.getJson(body);
                         assert.equal(1, jsonBody.length);
-                        assert.equal('Helmer Fudd', jsonBody[0].name);
-                        assert.equal('new@new.com', jsonBody[0].email);
+                        assert.equal('helmer@fudd.com', jsonBody[0].email);
                         done();
                     });
             });
@@ -569,7 +648,7 @@ describe('/users', function () {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/doesnotexist',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, WRITE_USERS_SCOPE)
                 },
                     function (err, res, body) {
                         assert.equal(404, res.statusCode, 'status code not 404');
@@ -581,7 +660,7 @@ describe('/users', function () {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + devUserId,
-                    headers: utils.makeHeaders(noobUserId)
+                    headers: utils.makeHeaders(noobUserId, WRITE_USERS_SCOPE)
                 },
                     function (err, res, body) {
                         assert.equal(403, res.statusCode, 'status code not 403');
@@ -593,7 +672,7 @@ describe('/users', function () {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + devUserId,
-                    headers: utils.makeHeaders('somethinginvalid')
+                    headers: utils.makeHeaders('somethinginvalid', WRITE_USERS_SCOPE)
                 },
                     function (err, res, body) {
                         assert.equal(403, res.statusCode, 'status code not 403');
@@ -606,7 +685,7 @@ describe('/users', function () {
                     request.delete(
                         {
                             url: baseUrl + 'users/' + devUserId,
-                            headers: utils.makeHeaders(devUserId)
+                            headers: utils.makeHeaders(devUserId, WRITE_USERS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -618,14 +697,38 @@ describe('/users', function () {
                 });
             });
 
+            it('should return 403 if wrong scope is passed in', function (done) {
+                request({
+                    method: 'DELETE',
+                    url: baseUrl + 'users/' + noobUserId,
+                    headers: utils.makeHeaders(noobUserId, INVALID_SCOPE)
+                },
+                    function (err, res, body) {
+                        assert.equal(403, res.statusCode);
+                        done();
+                    });
+            });
+            
             it('should return 204 if successful', function (done) {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + noobUserId,
-                    headers: utils.makeHeaders(noobUserId)
+                    headers: utils.makeHeaders(noobUserId, WRITE_USERS_SCOPE)
                 },
                     function (err, res, body) {
                         assert.equal(204, res.statusCode);
+                        done();
+                    });
+            });
+
+            it('should not allow admins to delete users if using wrong scope', function (done) {
+                request({
+                    method: 'DELETE',
+                    url: baseUrl + 'users/' + devUserId,
+                    headers: utils.makeHeaders(adminUserId, INVALID_SCOPE)
+                },
+                    function (err, res, body) {
+                        assert.equal(403, res.statusCode);
                         done();
                     });
             });
@@ -634,7 +737,7 @@ describe('/users', function () {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + devUserId,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, WRITE_USERS_SCOPE)
                 },
                     function (err, res, body) {
                         assert.equal(204, res.statusCode);
@@ -646,7 +749,7 @@ describe('/users', function () {
                 request({
                     method: 'DELETE',
                     url: baseUrl + 'users/' + adminUserId,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, WRITE_USERS_SCOPE)
                 },
                     function (err, res, body) {
                         assert.equal(204, res.statusCode);
@@ -673,6 +776,7 @@ describe('/users', function () {
                 {
                     url: baseUrl + 'users',
                     json: true,
+                    headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                     body: {
                         firstName: 'Secret',
                         lastName: 'User',
@@ -695,6 +799,7 @@ describe('/users', function () {
         it('should be possible to login a user by email and password', function (done) {
             request.post({
                 url: baseUrl + 'login',
+                headers: utils.makeHeaders('1', LOGIN_SCOPE),
                 body: {
                     email: 'secret@user.com',
                     password: 'super$3cret!'
@@ -711,12 +816,13 @@ describe('/users', function () {
             });
         });
 
-        it('should return a 403 if email is correct and password wrong', function (done) {
+        it('should not be possible to verify a user by email and password with a wrong scope', function (done) {
             request.post({
                 url: baseUrl + 'login',
+                headers: utils.makeHeaders('1', INVALID_SCOPE),
                 body: {
                     email: 'secret@user.com',
-                    password: 'super$3cret'
+                    password: 'super$3cret!'
                 },
                 json: true
             }, function (err, res, body) {
@@ -726,10 +832,46 @@ describe('/users', function () {
             });
         });
 
+        it('should not be possible to verify user and password with a user which is non-admin', function (done) {
+            request.post({
+                url: baseUrl + 'login',
+                headers: utils.makeHeaders(pwdUserId, LOGIN_SCOPE),
+                body: {
+                    email: 'secret@user.com',
+                    password: 'super$3cret!'
+                },
+                json: true
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(403, res.statusCode);
+                var jsonBody = utils.getJson(body);
+                assert.equal('Not allowed. Only admin users can verify a user by email and password.', jsonBody.message, 'Unexpected error message');
+                done();
+            });
+        });
+
+        it('should return a 403 if email is correct and password wrong', function (done) {
+            request.post({
+                url: baseUrl + 'login',
+                headers: utils.makeHeaders('1', LOGIN_SCOPE),
+                body: {
+                    email: 'secret@user.com',
+                    password: 'super$3cret'
+                },
+                json: true
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(403, res.statusCode);
+                var jsonBody = utils.getJson(body);
+                assert.equal('Password not correct or user not found.', jsonBody.message, 'Unexpected error message');
+                done();
+            });
+        });
+
         it('should be possible to update the password', function (done) {
             request.patch({
                 url: baseUrl + 'users/' + pwdUserId,
-                headers: utils.makeHeaders(pwdUserId),
+                headers: utils.makeHeaders(pwdUserId, WRITE_USERS_SCOPE),
                 json: true,
                 body: {
                     password: 'm0re$3kriT!'
@@ -743,13 +885,15 @@ describe('/users', function () {
             });
         });
 
-        it('should be possible to retrieve a user by email and the new password', function (done) {
-            request({
-                url: baseUrl + 'users',
-                qs: {
+        it('should be possible to verify a user by email and the new password', function (done) {
+            request.post({
+                url: baseUrl + 'login',
+                headers: utils.makeHeaders('1', LOGIN_SCOPE),
+                body: {
                     email: 'secret@user.com',
                     password: 'm0re$3kriT!'
-                }
+                },
+                json: true
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -766,6 +910,7 @@ describe('/users', function () {
                 devUserId = userId;
                 request.post({
                     url: baseUrl + 'login',
+                    headers: utils.makeHeaders('1', LOGIN_SCOPE),
                     body: {
                         email: 'whatever@random.org',
                         password: 'doesntmatter'
@@ -780,15 +925,19 @@ describe('/users', function () {
         });
 
         it('should return a 404 if user email is not found', function (done) {
-            request({
-                url: baseUrl + 'users',
-                qs: {
+            request.post({
+                url: baseUrl + 'login',
+                headers: utils.makeHeaders('1', LOGIN_SCOPE),
+                body: {
                     email: 'whenever@random.org',
                     password: 'doesntmatter'
-                }
+                },
+                json: true
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(404, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                assert.equal('User not found or password not correct.', jsonBody.message, 'Unexpected error message.');
                 done();
             });
         });
@@ -797,6 +946,7 @@ describe('/users', function () {
             request.post(
                 {
                     url: baseUrl + 'users',
+                    headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                     json: true,
                     body: {
                         firstName: 'Secret',
@@ -817,6 +967,7 @@ describe('/users', function () {
             request.post(
                 {
                     url: baseUrl + 'users',
+                    headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                     json: true,
                     body: {
                         firstName: 'Secret',
@@ -836,6 +987,7 @@ describe('/users', function () {
         it('should be possible to log in as the predefined user', function (done) {
             request.post({
                 url: baseUrl + 'login',
+                headers: utils.makeHeaders('1', LOGIN_SCOPE),
                 body: {
                     email: 'initial@user.com',
                     password: 'password'
@@ -852,10 +1004,21 @@ describe('/users', function () {
             });
         });
 
+        it('should not be possible to remove the password from a user with a wrong scope', function (done) {
+            request.delete({
+                url: baseUrl + 'users/1234567890/password',
+                headers: utils.makeHeaders('1', INVALID_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(403, res.statusCode);
+                done();
+            });
+        });
+
         it('should be possible to remove the password from a user', function (done) {
             request.delete({
                 url: baseUrl + 'users/1234567890/password',
-                headers: utils.makeHeaders('1')
+                headers: utils.makeHeaders('1', WRITE_USERS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(204, res.statusCode);
@@ -866,6 +1029,7 @@ describe('/users', function () {
         it('should not be possible to log in to this user after removing password', function (done) {
             request.post({
                 url: baseUrl + 'login',
+                headers: utils.makeHeaders('1', LOGIN_SCOPE),
                 body: {
                     email: 'initial@user.com',
                     password: 'password'
@@ -878,12 +1042,12 @@ describe('/users', function () {
             });
         });
 
-        it('should be possible to re-define the password', function (done) {
+        it('should be possible to re-define the password for a different user, as admin', function (done) {
             request.patch({
                 url: baseUrl + 'users/1234567890',
                 json: true,
-                body: { password: 'password' },
-                headers: utils.makeHeaders('1')
+                body: { password: 'password1' },
+                headers: utils.makeHeaders('1', WRITE_USERS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -891,12 +1055,39 @@ describe('/users', function () {
             });
         });
 
+        it('should not be possible to redefine the password for a different user, as non-admin', function (done) {
+            request.patch({
+                url: baseUrl + 'users/1',
+                json: true,
+                body: { password: 'password2' },
+                headers: utils.makeHeaders('9876543210', WRITE_USERS_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(403, res.statusCode);
+                done();
+            });
+        });
+
+        it('should be possible to re-define the password', function (done) {
+            request.patch({
+                url: baseUrl + 'users/1234567890',
+                json: true,
+                body: { password: 'supersecret' },
+                headers: utils.makeHeaders('1234567890', WRITE_USERS_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                done();
+            });
+        });
+        
         it('should be possible to log in as the predefined user again after re-defining password', function (done) {
             request.post({
                 url: baseUrl + 'login',
+                headers: utils.makeHeaders('1', LOGIN_SCOPE),
                 body: {
                     email: 'initial@user.com',
-                    password: 'password'
+                    password: 'supersecret'
                 },
                 json: true
             }, function (err, res, body) {

@@ -72,6 +72,8 @@ export PORTAL_API_STATIC_CONFIG=$baseDir/static
 export PORTAL_API_DYNAMIC_CONFIG=$baseDir/dynamic
 export NODE_ENV=test
 export LOG_LEVEL=debug
+# Do not log in JSON
+export LOG_PLAIN=true
 
 export SWAGGER_RESOURCE_URL=http://localhost:8080
 export PORTAL_API_URL=http://localhost:3001

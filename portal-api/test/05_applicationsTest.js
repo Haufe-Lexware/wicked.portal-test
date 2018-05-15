@@ -5,6 +5,11 @@ var consts = require('./testConsts');
 
 var baseUrl = consts.BASE_URL;
 
+const READ_APPS_SCOPE = 'read_applications';
+const WRITE_APPS_SCOPE = 'write_applications';
+const INVALID_SCOPE = 'invalid_applications';
+const READ_USERS_SCOPE = 'read_users';
+
 describe('/applications', function () {
 
     var devUserId = '';
@@ -59,7 +64,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: 'application',
@@ -77,11 +82,29 @@ describe('/applications', function () {
                 });
         });
 
+        it('should not be possible to create a new application with a wrong scope', function (done) {
+            request.post(
+                {
+                    url: baseUrl + 'applications',
+                    headers: utils.makeHeaders(devUserId, INVALID_SCOPE),
+                    json: true,
+                    body: {
+                        id: 'application2',
+                        name: 'Application2'
+                    }
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(403, res.statusCode);
+                    done();
+                });
+        });
+
         it('should not be possible to add a duplicate appId', function (done) {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: appId,
@@ -116,7 +139,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: utils.makeHeaders('somethinginvalid'),
+                    headers: utils.makeHeaders('somethinginvalid', WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: 'application',
@@ -134,7 +157,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: 'my-app$id',
@@ -152,7 +175,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: 'app',
@@ -170,7 +193,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: 'app456789012345678901app456789012345678901app456789012345678901',
@@ -188,7 +211,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: 'appl',
@@ -210,7 +233,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: 'appl5678901234567890appl56789012345678900123456789',
@@ -232,7 +255,7 @@ describe('/applications', function () {
             request.post(
                 {
                     url: baseUrl + 'applications',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: 'appl5678901234567890appl56789012345678900123456789',
@@ -257,7 +280,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_APPS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -273,7 +296,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_APPS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -296,7 +319,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_APPS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -309,7 +332,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders(noobUserId)
+                    headers: utils.makeHeaders(noobUserId, READ_APPS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -322,7 +345,7 @@ describe('/applications', function () {
             request(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders('somethinginvalid')
+                    headers: utils.makeHeaders('somethinginvalid', READ_APPS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -337,7 +360,7 @@ describe('/applications', function () {
             request.patch(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: appId,
@@ -353,11 +376,29 @@ describe('/applications', function () {
                 });
         });
 
+        it('should not allow for changing an application name with a wrong scope', function (done) {
+            request.patch(
+                {
+                    url: baseUrl + 'applications/' + appId,
+                    headers: utils.makeHeaders(devUserId, INVALID_SCOPE),
+                    json: true,
+                    body: {
+                        id: appId,
+                        name: 'A different name'
+                    }
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(403, res.statusCode);
+                    done();
+                });
+        });
+
         it('should allow for changing an application name, cap at 128 chars', function (done) {
             request.patch(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: appId,
@@ -377,7 +418,7 @@ describe('/applications', function () {
             request.patch(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders(noobUserId),
+                    headers: utils.makeHeaders(noobUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: appId,
@@ -395,7 +436,7 @@ describe('/applications', function () {
             request.patch(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders(adminUserId),
+                    headers: utils.makeHeaders(adminUserId, WRITE_APPS_SCOPE),
                     json: true,
                     body: {
                         id: appId,
@@ -429,7 +470,7 @@ describe('/applications', function () {
                 request.patch(
                     {
                         url: baseUrl + 'applications/' + appId,
-                        headers: utils.makeHeaders(noobUserId),
+                        headers: utils.makeHeaders(noobUserId, WRITE_APPS_SCOPE),
                         json: true,
                         body: {
                             id: appId,
@@ -450,7 +491,7 @@ describe('/applications', function () {
             request.delete(
                 {
                     url: baseUrl + 'applications/unknownApp',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, WRITE_APPS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -459,11 +500,31 @@ describe('/applications', function () {
                 });
         });
 
+        it('should return 403 if scope is wrong', function (done) {
+            utils.createApplication('otherapp', 'My Application', devUserId, function () {
+                request.delete({
+                    url: baseUrl + 'applications/otherapp',
+                    headers: utils.makeHeaders(devUserId, INVALID_SCOPE)
+                }, function (err, res, body) {
+                    request.delete({
+                        url: baseUrl + 'applications/otherapp',
+                        headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE)
+                    }, (err2, res2, body2) => {
+                        assert.isNotOk(err);
+                        assert.isNotOk(err2);
+                        assert.equal(403, res.statusCode);
+                        assert.equal(204, res2.statusCode);
+                        done();
+                    });
+                });
+            });
+        });
+
         it('should not allow delete for unknown userId', function (done) {
             request.delete(
                 {
                     url: baseUrl + 'applications/' + appId,
-                    headers: utils.makeHeaders('somethinginvalid')
+                    headers: utils.makeHeaders('somethinginvalid', WRITE_APPS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -475,7 +536,8 @@ describe('/applications', function () {
         it('should not allow delete without userId', function (done) {
             request.delete(
                 {
-                    url: baseUrl + 'applications/' + appId
+                    url: baseUrl + 'applications/' + appId,
+                    headers: utils.onlyScope(WRITE_APPS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
@@ -489,7 +551,7 @@ describe('/applications', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/otherapp',
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -505,7 +567,7 @@ describe('/applications', function () {
                     request.delete(
                         {
                             url: baseUrl + 'applications/otherapp',
-                            headers: utils.makeHeaders(noobUserId)
+                            headers: utils.makeHeaders(noobUserId, WRITE_APPS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -521,7 +583,7 @@ describe('/applications', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/' + appId,
-                        headers: utils.makeHeaders(noobUserId)
+                        headers: utils.makeHeaders(noobUserId, WRITE_APPS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -536,7 +598,7 @@ describe('/applications', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/' + appId,
-                        headers: utils.makeHeaders(noobUserId)
+                        headers: utils.makeHeaders(noobUserId, WRITE_APPS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -552,7 +614,7 @@ describe('/applications', function () {
                     request(
                         {
                             url: baseUrl + 'users/' + noobUserId,
-                            headers: utils.makeHeaders(noobUserId)
+                            headers: utils.makeHeaders(noobUserId, READ_USERS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -572,7 +634,7 @@ describe('/applications', function () {
                         request(
                             {
                                 url: baseUrl + 'users/' + noobUserId,
-                                headers: utils.makeHeaders(noobUserId)
+                                headers: utils.makeHeaders(noobUserId, READ_USERS_SCOPE)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
@@ -587,13 +649,14 @@ describe('/applications', function () {
         }); // DELETE
     }); // /applications
 
-    describe('/roles', function() {
-        it('should return a list of roles (3)', function(done) {
+    describe('/roles', function () {
+        it('should return a list of roles (3)', function (done) {
             request(
                 {
-                    url: baseUrl + 'applications/roles'
+                    url: baseUrl + 'applications/roles',
+                    headers: utils.makeHeaders(devUserId, READ_APPS_SCOPE)
                 },
-                function(err, res, body) {
+                function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
@@ -604,12 +667,12 @@ describe('/applications', function () {
     }); // /applications/roles
 
     describe('/<appId>/owners', function () {
-        describe('POST', function() {
+        describe('POST', function () {
             it('should be possible to add an owner', function (done) {
                 request.post(
                     {
                         url: baseUrl + 'applications/' + appId + '/owners',
-                        headers: utils.makeHeaders(devUserId),
+                        headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                         json: true,
                         body: {
                             email: 'admin@random.org',
@@ -625,11 +688,11 @@ describe('/applications', function () {
             });
 
             it('should be possible for co-owners to add a collaborator', function (done) {
-                utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', function() {
+                utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', function () {
                     request.post(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners',
-                            headers: utils.makeHeaders(noobUserId),
+                            headers: utils.makeHeaders(noobUserId, WRITE_APPS_SCOPE),
                             json: true,
                             body: {
                                 email: 'admin@random.org',
@@ -644,13 +707,13 @@ describe('/applications', function () {
                         });
                 });
             });
-            
-            it('should not be allowed for collaborators to add owners', function(done) {
-                utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function() {
+
+            it('should not be allowed for collaborators to add owners', function (done) {
+                utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function () {
                     request.post(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners',
-                            headers: utils.makeHeaders(noobUserId),
+                            headers: utils.makeHeaders(noobUserId, WRITE_APPS_SCOPE),
                             json: true,
                             body: {
                                 email: 'admin@random.org',
@@ -665,10 +728,10 @@ describe('/applications', function () {
                         });
                 });
             });
-            
+
             it('should reflect in the users applications after he was added', function (done) {
-                utils.addOwner(appId, devUserId, 'noob@random.org', 'reader', function() {
-                    utils.getUser(noobUserId, function(user) {
+                utils.addOwner(appId, devUserId, 'noob@random.org', 'reader', function () {
+                    utils.getUser(noobUserId, function (user) {
                         // console.log(utils.getText(user));
                         assert.equal(1, user.applications.length);
                         assert.equal(appId, user.applications[0].id);
@@ -677,16 +740,31 @@ describe('/applications', function () {
                 });
             });
         }); // /owners POST
-        
-        describe('DELETE', function() {
-            it('should be possible for an owner to delete a co-owner', function(done) {
-                utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', function() {
+
+        describe('DELETE', function () {
+            it('should not be possible for an owner to delete a co-owner with a wrong scope', function (done) {
+                utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', function () {
                     request.delete(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners?userEmail=noob@random.org',
-                            headers: utils.makeHeaders(devUserId)
+                            headers: utils.makeHeaders(devUserId, INVALID_SCOPE)
                         },
-                        function(err, res, body) {
+                        function (err, res, body) {
+                            assert.isNotOk(err);
+                            assert.equal(403, res.statusCode);
+                            done();
+                        });
+                });
+            });
+
+            it('should be possible for an owner to delete a co-owner', function (done) {
+                utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', function () {
+                    request.delete(
+                        {
+                            url: baseUrl + 'applications/' + appId + '/owners?userEmail=noob@random.org',
+                            headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE)
+                        },
+                        function (err, res, body) {
                             assert.isNotOk(err);
                             assert.equal(200, res.statusCode);
                             done();
@@ -694,16 +772,16 @@ describe('/applications', function () {
                 });
             });
 
-            it('should be possible for a co-owner to delete an owner', function(done) {
-                utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', function() {
+            it('should be possible for a co-owner to delete an owner', function (done) {
+                utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', function () {
                     request.delete(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners?userEmail=dev@random.org',
-                            headers: utils.makeHeaders(noobUserId)
+                            headers: utils.makeHeaders(noobUserId, WRITE_APPS_SCOPE)
                         },
-                        function(err, res, body) {
+                        function (err, res, body) {
                             // We have to re-add devUserId as owner to fulfill postcondition (for afterEach)
-                            utils.addOwner(appId, noobUserId, 'dev@random.org', 'owner', function() {
+                            utils.addOwner(appId, noobUserId, 'dev@random.org', 'owner', function () {
                                 assert.isNotOk(err);
                                 assert.equal(200, res.statusCode);
                                 done();
@@ -712,28 +790,28 @@ describe('/applications', function () {
                 });
             });
 
-            it('should not be possible for a collaborator to delete an owner', function(done) {
-                utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function() {
+            it('should not be possible for a collaborator to delete an owner', function (done) {
+                utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function () {
                     request.delete(
                         {
                             url: baseUrl + 'applications/' + appId + '/owners?userEmail=dev@random.org',
-                            headers: utils.makeHeaders(noobUserId)
+                            headers: utils.makeHeaders(noobUserId, WRITE_APPS_SCOPE)
                         },
-                        function(err, res, body) {
+                        function (err, res, body) {
                             assert.isNotOk(err);
                             assert.equal(403, res.statusCode);
                             done();
                         });
                 });
             });
-                        
-            it('should not be possible to delete the last owner', function(done) {
+
+            it('should not be possible to delete the last owner', function (done) {
                 request.delete(
                     {
                         url: baseUrl + 'applications/' + appId + '/owners?userEmail=dev@random.org',
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE)
                     },
-                    function(err, res, body) {
+                    function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(409, res.statusCode);
                         done();
@@ -741,13 +819,13 @@ describe('/applications', function () {
                 );
             });
 
-            it('should react gracefully to non-existing user emails', function(done) {
+            it('should react gracefully to non-existing user emails', function (done) {
                 request.delete(
                     {
                         url: baseUrl + 'applications/' + appId + '/owners?userEmail=non@existing.com',
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE)
                     },
-                    function(err, res, body) {
+                    function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(400, res.statusCode);
                         done();
@@ -755,17 +833,18 @@ describe('/applications', function () {
                 );
             });
 
-            it('should not allow deleting owners without giving a user', function(done) {
-                utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function() {
-                request.delete(
-                    {
-                        url: baseUrl + 'applications/' + appId + '/owners?userEmail=noob@random.org',
-                    },
-                    function(err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(403, res.statusCode);
-                        done();
-                    });
+            it('should not allow deleting owners without giving a user', function (done) {
+                utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function () {
+                    request.delete(
+                        {
+                            url: baseUrl + 'applications/' + appId + '/owners?userEmail=noob@random.org',
+                            headers: utils.onlyScope(WRITE_APPS_SCOPE)
+                        },
+                        function (err, res, body) {
+                            assert.isNotOk(err);
+                            assert.equal(403, res.statusCode);
+                            done();
+                        });
                 });
             });
         }); // DELETE

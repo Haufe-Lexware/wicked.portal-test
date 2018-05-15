@@ -5,6 +5,15 @@ var consts = require('./testConsts');
 
 var baseUrl = consts.BASE_URL;
 
+const READ_SUBS_SCOPE = 'read_subscriptions';
+const WRITE_SUBS_SCOPE = 'write_subscriptions';
+
+const READ_APPS_SCOPE = 'read_applications';
+const WRITE_APPS_SCOPE = 'write_applications';
+
+const INVALID_SCOPE = 'invalid_applications';
+const READ_USERS_SCOPE = 'read_users';
+
 describe('operations on OAuth2 APIs', function () {
     // Let's create some users to play with
     before(function (done) {
@@ -62,7 +71,7 @@ describe('operations on OAuth2 APIs', function () {
         it('an application must return its redirectUri', function (done) {
             request.get({
                 url: baseUrl + 'applications/' + appId,
-                headers: utils.makeHeaders(devUserId)
+                headers: utils.makeHeaders(devUserId, READ_APPS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 200);
@@ -72,11 +81,28 @@ describe('operations on OAuth2 APIs', function () {
             });
         });
 
+        it('should not be possible to add a subscription for an app with the wrong scope', function (done) {
+            request.post({
+                url: baseUrl + 'applications/' + appId + '/subscriptions',
+                json: true,
+                headers: utils.makeHeaders(devUserId, INVALID_SCOPE),
+                body: {
+                    api: oauth2Api,
+                    application: appId,
+                    plan: 'basic'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 403);
+                done();
+            });
+        });
+        
         it('must be possible to add a subscription for an app with redirectUri', function (done) {
             request.post({
                 url: baseUrl + 'applications/' + appId + '/subscriptions',
                 json: true,
-                headers: utils.makeHeaders(devUserId),
+                headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
                 body: {
                     api: oauth2Api,
                     application: appId,
@@ -96,7 +122,7 @@ describe('operations on OAuth2 APIs', function () {
         it('must remove the clientId from the index after deleting an application', function (done) {
             request.get({
                 url: baseUrl + 'subscriptions/' + subscriptionClientId,
-                headers: utils.makeHeaders(adminUserId)
+                headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 404);
@@ -107,7 +133,7 @@ describe('operations on OAuth2 APIs', function () {
         it('must be forbidden to add a subscription to an oauth2 implicit grant API for an app without redirectUri', function (done) {
             request.post({
                 url: baseUrl + 'applications/' + badAppId + '/subscriptions',
-                headers: utils.makeHeaders(devUserId),
+                headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
                 json: true,
                 body: {
                     application: badAppId,
@@ -128,7 +154,7 @@ describe('operations on OAuth2 APIs', function () {
         it('must be possible to change the redirectUri of an app', function (done) {
             request.patch({
                 url: baseUrl + 'applications/' + appId,
-                headers: utils.makeHeaders(devUserId),
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                 json: true,
                 body: {
                     id: appId,
@@ -146,7 +172,7 @@ describe('operations on OAuth2 APIs', function () {
         it('must be possible to add a redirectUri to an app', function (done) {
             request.patch({
                 url: baseUrl + 'applications/' + badAppId,
-                headers: utils.makeHeaders(devUserId),
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                 json: true,
                 body: {
                     id: badAppId,
@@ -164,7 +190,7 @@ describe('operations on OAuth2 APIs', function () {
         it('must be forbidden to create an app with a http:// redirectUri', function (done) {
             request.post({
                 url: baseUrl + 'applications',
-                headers: utils.makeHeaders(devUserId),
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                 json: true,
                 body: {
                     id: 'someid',
@@ -183,7 +209,7 @@ describe('operations on OAuth2 APIs', function () {
         it('must be forbidden to patch an app to add a http:// redirectUri', function (done) {
             request.patch({
                 url: baseUrl + 'applications/' + badAppId,
-                headers: utils.makeHeaders(devUserId),
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                 json: true,
                 body: {
                     id: badAppId,
@@ -201,7 +227,7 @@ describe('operations on OAuth2 APIs', function () {
         it('should still be possible to use http://localhost as redirect URI for testing purposes', function (done) {
             request.post({
                 url: baseUrl + 'applications',
-                headers: utils.makeHeaders(devUserId),
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                 json: true,
                 body: {
                     id: 'someid',
@@ -220,7 +246,7 @@ describe('operations on OAuth2 APIs', function () {
         it('must be forbidden to create an app with only https:// as redirectUri', function (done) {
             request.post({
                 url: baseUrl + 'applications',
-                headers: utils.makeHeaders(devUserId),
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
                 json: true,
                 body: {
                     id: 'someid',
@@ -245,7 +271,7 @@ describe('operations on OAuth2 APIs', function () {
                 assert.isOk(subsInfo.clientId);
                 request.get({
                     url: baseUrl + 'subscriptions/' + subsInfo.clientId,
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 200);
@@ -270,7 +296,7 @@ describe('operations on OAuth2 APIs', function () {
                 utils.deleteSubscription(appId, devUserId, oauth2Api, function () {
                     request.get({
                         url: baseUrl + 'subscriptions/' + clientId,
-                        headers: utils.makeHeaders(adminUserId)
+                        headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(res.statusCode, 404);
@@ -287,7 +313,7 @@ describe('operations on OAuth2 APIs', function () {
                 //console.log('clientId: ' + subsInfo.clientId);
                 request.get({
                     url: baseUrl + 'subscriptions/' + subsInfo.clientId,
-                    headers: utils.makeHeaders(devUserId)
+                    headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 403);
@@ -310,7 +336,7 @@ describe('operations on OAuth2 APIs', function () {
                 utils.approveSubscription(appId, oauth2Api, adminUserId, function () {
                     request.get({
                         url: baseUrl + 'applications/' + appId + '/subscriptions/' + oauth2Api,
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(res.statusCode, 200);
@@ -329,7 +355,7 @@ describe('operations on OAuth2 APIs', function () {
                 utils.approveSubscription(appId, oauth2Api, adminUserId, function () {
                     request.get({
                         url: baseUrl + 'applications/' + appId + '/subscriptions/' + oauth2Api,
-                        headers: utils.makeHeaders(adminUserId)
+                        headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(res.statusCode, 200);
@@ -338,7 +364,7 @@ describe('operations on OAuth2 APIs', function () {
                         var clientId = jsonBody.clientId;
                         request.get({
                             url: baseUrl + 'subscriptions/' + clientId,
-                            headers: utils.makeHeaders(adminUserId)
+                            headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                         }, function (err, res, body) {
                             assert.isNotOk(err);
                             assert.equal(res.statusCode, 200);

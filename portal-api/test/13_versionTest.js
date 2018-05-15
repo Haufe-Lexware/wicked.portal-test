@@ -48,6 +48,20 @@ describe('/confighash', function () {
         });
     });
 
+    it('should not be possible to retrieve globals via Kong', function (done) {
+        request.get({
+            url: baseUrl + 'globals',
+            headers: {
+                'X-Config-Hash': configHash,
+                'X-Consumer-Custom-Id': 'abcdefgh'
+            }
+        }, function (err, res, body) {
+            assert.isNotOk(err);
+            utils.assertKongReject(res, body);
+            done();
+        });
+    });
+
     it('should be possible to retrieve globals with an valid version', function (done) {
         request.get({
             url: baseUrl + 'globals',

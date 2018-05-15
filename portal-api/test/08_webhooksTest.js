@@ -9,6 +9,18 @@ const baseUrl = consts.BASE_URL;
 const HOOK_URL = consts.HOOK_URL;
 const HOOK_PORT = consts.HOOK_PORT;
 
+const READ_SUBS_SCOPE = 'read_subscriptions';
+const WRITE_SUBS_SCOPE = 'write_subscriptions';
+
+const READ_APPS_SCOPE = 'read_applications';
+const WRITE_APPS_SCOPE = 'write_applications';
+
+const WEBHOOKS_SCOPE = 'webhooks';
+
+const INVALID_SCOPE = 'invalid_webhooks';
+const READ_USERS_SCOPE = 'read_users';
+const WRITE_USERS_SCOPE = 'write_users';
+
 var __server = null;
 
 function hookServer(callback, serverHooked) {
@@ -53,11 +65,27 @@ describe('/webhooks', function () {
     });
 
     describe('/listeners/:listenerId', function () {
+        it('should not be possible to add a listener with a wrong scope', function (done) {
+            request.put({
+                url: baseUrl + 'webhooks/listeners/sample',
+                json: true,
+                headers: utils.makeHeaders('1', INVALID_SCOPE),
+                body: {
+                    id: 'sample',
+                    url: 'http://localhost:3002'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                utils.assertScopeReject(res, body);
+                done();
+            });
+        });
+
         it('should be possible to add a listener', function (done) {
             request.put({
                 url: baseUrl + 'webhooks/listeners/sample',
                 json: true,
-                headers: utils.makeHeaders('1'),
+                headers: utils.makeHeaders('1', WEBHOOKS_SCOPE),
                 body: {
                     id: 'sample',
                     url: 'http://localhost:3002'
@@ -69,10 +97,21 @@ describe('/webhooks', function () {
             });
         });
 
+        it('should not return a list of listeners with a wrong scope', function (done) {
+            request.get({
+                url: baseUrl + 'webhooks/listeners',
+                headers: utils.makeHeaders('1', INVALID_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                utils.assertScopeReject(res, body);
+                done();
+            });
+        });
+
         it('should return a list of listeners', function (done) {
             request.get({
                 url: baseUrl + 'webhooks/listeners',
-                headers: utils.makeHeaders('1')
+                headers: utils.makeHeaders('1', WEBHOOKS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -86,10 +125,26 @@ describe('/webhooks', function () {
         it('should not return a list of listeners without admin user', function (done) {
             request.get({
                 url: baseUrl + 'webhooks/listeners',
-                headers: utils.makeHeaders()
+                headers: utils.onlyScope(WEBHOOKS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
-                assert.equal(403, res.statusCode);
+                utils.assertNotScopeReject(res, body);
+                done();
+            });
+        });
+
+        it('should not be possible to update a listener with a wrong scope', function (done) {
+            request.put({
+                url: baseUrl + 'webhooks/listeners/sample',
+                headers: utils.makeHeaders('1', INVALID_SCOPE),
+                json: true,
+                body: {
+                    id: 'sample',
+                    url: 'http://lostalllocals:3002'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                utils.assertScopeReject(res, body);
                 done();
             });
         });
@@ -97,7 +152,7 @@ describe('/webhooks', function () {
         it('should be possible to update a listener', function (done) {
             request.put({
                 url: baseUrl + 'webhooks/listeners/sample',
-                headers: utils.makeHeaders('1'),
+                headers: utils.makeHeaders('1', WEBHOOKS_SCOPE),
                 json: true,
                 body: {
                     id: 'sample',
@@ -113,7 +168,7 @@ describe('/webhooks', function () {
         it('should return the updated list of listeners', function (done) {
             request.get({
                 url: baseUrl + 'webhooks/listeners',
-                headers: utils.makeHeaders('1')
+                headers: utils.makeHeaders('1', WEBHOOKS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -124,10 +179,21 @@ describe('/webhooks', function () {
             });
         });
 
+        it('should not be possible to delete a listener with a wrong scope', function (done) {
+            request.delete({
+                url: baseUrl + 'webhooks/listeners/sample',
+                headers: utils.makeHeaders('1', INVALID_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                utils.assertScopeReject(res, body);
+                done();
+            });
+        });
+
         it('should be possible to delete a listener', function (done) {
             request.delete({
                 url: baseUrl + 'webhooks/listeners/sample',
-                headers: utils.makeHeaders('1')
+                headers: utils.makeHeaders('1', WEBHOOKS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(204, res.statusCode);
@@ -138,7 +204,7 @@ describe('/webhooks', function () {
         it('should return an empty list of listeners after the delete', function (done) {
             request.get({
                 url: baseUrl + 'webhooks/listeners',
-                headers: utils.makeHeaders('1')
+                headers: utils.makeHeaders('1', WEBHOOKS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -205,7 +271,7 @@ describe('/webhooks', function () {
 
         it('should return expected events (create application)', function (done) {
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
                             utils.deleteApplication('dvolla', devUserId, function () {
@@ -234,11 +300,11 @@ describe('/webhooks', function () {
 
         it('should be possible to delete events (create application)', function (done) {
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         var jsonBody = utils.getJson(apiBody);
                         var wh = findEvent(jsonBody, 'add', 'application');
-                        request.delete({ url: `${baseUrl}webhooks/events/${LISTENER}/${wh.id}`, headers: utils.makeHeaders('1') }, function (deleteErr, deleteRes, deleteBody) {
+                        request.delete({ url: `${baseUrl}webhooks/events/${LISTENER}/${wh.id}`, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) }, function (deleteErr, deleteRes, deleteBody) {
                             utils.deleteListener(LISTENER, function () {
                                 utils.deleteApplication('dvolla', devUserId, function () {
                                     assert.isNotOk(deleteErr);
@@ -266,9 +332,9 @@ describe('/webhooks', function () {
 
         it('should be possible to flush events (create application)', function (done) {
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') }, function (err, apiResponse, apiBody) {
-                    request.delete({ url: `${baseUrl}webhooks/events/${LISTENER}`, headers: utils.makeHeaders('1') }, function (deleteErr, deleteRes, deleteBody) {
-                        request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') }, function (err2, apiResponse2, apiBody2) {
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) }, function (err, apiResponse, apiBody) {
+                    request.delete({ url: `${baseUrl}webhooks/events/${LISTENER}`, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) }, function (deleteErr, deleteRes, deleteBody) {
+                        request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) }, function (err2, apiResponse2, apiBody2) {
                             utils.deleteListener(LISTENER, function () {
                                 utils.deleteApplication('dvolla', devUserId, function () {
                                     assert.isNotOk(deleteErr);
@@ -303,7 +369,7 @@ describe('/webhooks', function () {
 
         it('should return expected events (delete application)', function (done) {
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
 
@@ -335,7 +401,7 @@ describe('/webhooks', function () {
 
         it('should return expected events (delete application, including subscriptions)', function (done) {
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
 
@@ -371,7 +437,7 @@ describe('/webhooks', function () {
 
         it('should return expected events (create subscription)', function (done) {
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
                             utils.deleteApplication('dvolla', devUserId, function () {
@@ -405,7 +471,7 @@ describe('/webhooks', function () {
 
         it('should return expected events (patch subscription)', function (done) {
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
                             utils.deleteApplication('dvolla', devUserId, function () {
@@ -435,7 +501,7 @@ describe('/webhooks', function () {
                                     url: baseUrl + 'applications/dvolla/subscriptions/' + privateApi,
                                     json: true,
                                     body: { approved: true },
-                                    headers: utils.makeHeaders('1')
+                                    headers: utils.makeHeaders('1', WRITE_SUBS_SCOPE)
                                 }, function (err, res, body) {
                                     assert.isNotOk(err);
                                     assert.equal(200, res.statusCode);
@@ -449,7 +515,7 @@ describe('/webhooks', function () {
 
         it('should return expected events (delete subscription)', function (done) {
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
                             utils.deleteApplication('dvolla', devUserId, function () {
@@ -487,7 +553,7 @@ describe('/webhooks', function () {
         it('should return expected events (create user)', function (done) {
             var noobUserId = '';
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
                             utils.deleteUser(noobUserId, function () {
@@ -518,7 +584,7 @@ describe('/webhooks', function () {
         it('should return expected events (patch user)', function (done) {
             var noobUserId = '';
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
 
@@ -540,7 +606,7 @@ describe('/webhooks', function () {
                 utils.createListener(LISTENER, HOOK_URL, function () {
                     request.patch({
                         url: baseUrl + 'users/' + devUserId,
-                        headers: utils.makeHeaders('1'),
+                        headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                         json: true,
                         body: {
                             firstName: 'Developer',
@@ -556,7 +622,7 @@ describe('/webhooks', function () {
         it('should return expected events (delete user)', function (done) {
             var noobUserId = '';
             hookServer(function () {
-                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
                         utils.deleteListener(LISTENER, function () {
 
@@ -606,7 +672,7 @@ describe('/webhooks', function () {
 
             it('should return expected events (add owner)', function (done) {
                 hookServer(function () {
-                    request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                    request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                         function (err, apiResponse, apiBody) {
                             utils.deleteListener(LISTENER, function () {
                                 assert.isNotOk(err);
@@ -636,7 +702,7 @@ describe('/webhooks', function () {
 
             it('should return expected events (delete owner)', function (done) {
                 hookServer(function () {
-                    request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1') },
+                    request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                         function (err, apiResponse, apiBody) {
                             utils.deleteListener(LISTENER, function () {
                                 assert.isNotOk(err);

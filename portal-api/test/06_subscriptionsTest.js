@@ -6,6 +6,17 @@ var consts = require('./testConsts');
 
 var baseUrl = consts.BASE_URL;
 
+
+const READ_SUBS_SCOPE = 'read_subscriptions';
+const WRITE_SUBS_SCOPE = 'write_subscriptions';
+
+const READ_APPS_SCOPE = 'read_applications';
+const WRITE_APPS_SCOPE = 'write_applications';
+
+const INVALID_SCOPE = 'invalid_applications';
+const READ_USERS_SCOPE = 'read_users';
+const READ_APIS_SCOPE = 'read_apis';
+
 describe('/applications/<appId>/subscriptions', function () {
 
     this.timeout(5000);
@@ -62,11 +73,30 @@ describe('/applications/<appId>/subscriptions', function () {
     var privateApi = 'partner';
 
     describe('POST', function () {
+        it('should not be possible to add a subscription with the wrong scope', function (done) {
+            request.post(
+                {
+                    url: subsUrl,
+                    headers: utils.makeHeaders(devUserId, INVALID_SCOPE),
+                    json: true,
+                    body: {
+                        application: appId,
+                        api: publicApi,
+                        plan: 'unlimited'
+                    }
+                },
+                function (err, res, body) {
+                    assert.isNotOk(err);
+                    utils.assertScopeReject(res, body);
+                    done();
+                });
+        });
+        
         it('should be possible to add a subscription', function (done) {
             request.post(
                 {
                     url: subsUrl,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
                     json: true,
                     body: {
                         application: appId,
@@ -86,7 +116,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.post(
                     {
                         url: subsUrl,
-                        headers: utils.makeHeaders(noobUserId),
+                        headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
                         json: true,
                         body: {
                             application: appId,
@@ -107,7 +137,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.post(
                     {
                         url: subsUrl,
-                        headers: utils.makeHeaders(noobUserId),
+                        headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
                         json: true,
                         body: {
                             application: appId,
@@ -128,7 +158,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.post(
                     {
                         url: subsUrl,
-                        headers: utils.makeHeaders(noobUserId),
+                        headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
                         json: true,
                         body: {
                             application: appId,
@@ -148,7 +178,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: subsUrl,
-                    headers: utils.makeHeaders('somethinginvalid'),
+                    headers: utils.makeHeaders('somethinginvalid', WRITE_SUBS_SCOPE),
                     json: true,
                     body: {
                         application: appId,
@@ -167,7 +197,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: subsUrl,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
                     json: true,
                     body: {
                         application: appId,
@@ -186,7 +216,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: subsUrl,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
                     json: true,
                     body: {
                         application: appId,
@@ -224,7 +254,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: subsUrl,
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
                     json: true,
                     body: {
                         application: appId,
@@ -248,11 +278,12 @@ describe('/applications/<appId>/subscriptions', function () {
                         application: appId,
                         api: publicApi,
                         plan: 'basic'
-                    }
+                    },
+                    headers: utils.onlyScope(WRITE_SUBS_SCOPE)
                 },
                 function (err, res, body) {
                     assert.isNotOk(err);
-                    assert.equal(403, res.statusCode);
+                    utils.assertNotScopeReject(res, body);
                     done();
                 });
         });
@@ -261,7 +292,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: baseUrl + 'applications/invalid-app/subscriptions',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
                     json: true,
                     body: {
                         application: 'invalid-app',
@@ -280,7 +311,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.post(
                     {
                         url: baseUrl + 'applications/noobapp/subscriptions',
-                        headers: utils.makeHeaders(noobUserId),
+                        headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
                         json: true,
                         body: {
                             application: 'noobapp',
@@ -290,9 +321,8 @@ describe('/applications/<appId>/subscriptions', function () {
                     },
                     function (err, res, body) {
                         utils.deleteApplication('noobapp', noobUserId, function () {
-                            // console.log(utils.getText(body));
                             assert.isNotOk(err);
-                            assert.equal(403, res.statusCode);
+                            utils.assertNotScopeReject(res, body);
                             done();
                         });
                     });
@@ -301,10 +331,10 @@ describe('/applications/<appId>/subscriptions', function () {
 
         it('should not return an apikey for plans which require approval', function (done) {
             utils.addSubscription(appId, devUserId, privateApi, 'unlimited', null, function () {
-                request(
+                request.get(
                     {
                         url: subsUrl,
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -322,7 +352,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request(
                     {
                         url: subsUrl,
-                        headers: utils.makeHeaders(adminUserId)
+                        headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -342,7 +372,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request(
                     {
                         url: subsUrl,
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -360,7 +390,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl,
-                            headers: utils.makeHeaders(noobUserId)
+                            headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -379,7 +409,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl,
-                            headers: utils.makeHeaders(noobUserId)
+                            headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -397,7 +427,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request(
                     {
                         url: subsUrl,
-                        headers: utils.makeHeaders(adminUserId)
+                        headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -414,11 +444,11 @@ describe('/applications/<appId>/subscriptions', function () {
                 request(
                     {
                         url: subsUrl,
-                        headers: utils.makeHeaders(noobUserId)
+                        headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
-                        assert.equal(403, res.statusCode);
+                        utils.assertNotScopeReject(res, body);
                         done();
                     });
             });
@@ -432,7 +462,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(devUserId)
+                            headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -450,7 +480,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(devUserId)
+                            headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -469,7 +499,7 @@ describe('/applications/<appId>/subscriptions', function () {
                         request(
                             {
                                 url: subsUrl + '/' + privateApi,
-                                headers: utils.makeHeaders(noobUserId)
+                                headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
@@ -488,7 +518,7 @@ describe('/applications/<appId>/subscriptions', function () {
                         request(
                             {
                                 url: subsUrl + '/' + privateApi,
-                                headers: utils.makeHeaders(noobUserId)
+                                headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
@@ -506,7 +536,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(adminUserId)
+                            headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -523,11 +553,11 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(noobUserId)
+                            headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
-                            assert.equal(403, res.statusCode);
+                            utils.assertNotScopeReject(res, body);
                             done();
                         });
                 });
@@ -538,7 +568,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(devUserId)
+                            headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -566,7 +596,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request.delete(
                         {
                             url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(devUserId)
+                            headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -580,7 +610,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.delete(
                     {
                         url: baseUrl + 'applications/invalid-app/subscriptions/' + privateApi,
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -589,15 +619,28 @@ describe('/applications/<appId>/subscriptions', function () {
                     });
             });
 
+            it('should return a 403 if using the wrong scope', function (done) {
+                request.delete(
+                    {
+                        url: subsUrl + '/' + privateApi,
+                        headers: utils.makeHeaders(devUserId, INVALID_SCOPE)
+                    },
+                    function (err, res, body) {
+                        assert.isNotOk(err);
+                        utils.assertScopeReject(res, body);
+                        done();
+                    });
+            });
+
             it('should return a 403 if the user is invalid', function (done) {
                 request.delete(
                     {
                         url: subsUrl + '/' + privateApi,
-                        headers: utils.makeHeaders('somethinginvalid')
+                        headers: utils.makeHeaders('somethinginvalid', WRITE_SUBS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
-                        assert.equal(403, res.statusCode);
+                        utils.assertNotScopeReject(res, body);
                         done();
                     });
             });
@@ -606,7 +649,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 request.delete(
                     {
                         url: subsUrl + '/' + privateApi,
-                        headers: utils.makeHeaders(devUserId)
+                        headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE)
                     },
                     function (err, res, body) {
                         assert.isNotOk(err);
@@ -621,7 +664,7 @@ describe('/applications/<appId>/subscriptions', function () {
                         request.delete(
                             {
                                 url: subsUrl + '/' + privateApi,
-                                headers: utils.makeHeaders(noobUserId)
+                                headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
@@ -638,11 +681,11 @@ describe('/applications/<appId>/subscriptions', function () {
                         request.delete(
                             {
                                 url: subsUrl + '/' + privateApi,
-                                headers: utils.makeHeaders(noobUserId)
+                                headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE)
                             },
                             function (err, res, body) {
                                 assert.isNotOk(err);
-                                assert.equal(403, res.statusCode);
+                                utils.assertNotScopeReject(res, body);
                                 done();
                             });
                     });
@@ -654,7 +697,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     request(
                         {
                             url: subsUrl,
-                            headers: utils.makeHeaders(devUserId)
+                            headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
                         },
                         function (err, res, body) {
                             assert.isNotOk(err);
@@ -666,7 +709,7 @@ describe('/applications/<appId>/subscriptions', function () {
                                 request(
                                     {
                                         url: subsUrl,
-                                        headers: utils.makeHeaders(devUserId)
+                                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
                                     },
                                     function (err, res, body) {
                                         assert.isNotOk(err);
@@ -688,7 +731,7 @@ describe('/applications/<appId>/subscriptions', function () {
             request.post(
                 {
                     url: baseUrl + 'applications/' + appId + '/subscriptions',
-                    headers: utils.makeHeaders(devUserId),
+                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
                     json: true,
                     body: {
                         application: appId,
@@ -710,10 +753,10 @@ describe('/applications/<appId>/subscriptions', function () {
         it('should be forbidden to call for non-admin users', function (done) {
             request.get({
                 url: baseUrl + 'apis/superduper/subscriptions',
-                headers: utils.makeHeaders(devUserId)
+                headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE + ' ' + READ_APIS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
-                assert.equal(403, res.statusCode);
+                utils.assertNotScopeReject(res, body);
                 var jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.message, 'Not Allowed. Only Admins can get subscriptions for an API.');
                 done();
@@ -725,7 +768,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 assert.isNotOk(err);
                 request.get({
                     url: baseUrl + 'apis/superduper/subscriptions',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE + ' ' + READ_APIS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     utils.deleteSubscription(appId, devUserId, 'superduper', function (err) {
@@ -749,7 +792,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 assert.isNotOk(err);
                 request.get({
                     url: baseUrl + 'apis/superduper/subscriptions',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE + ' ' + READ_APIS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
@@ -769,7 +812,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 assert.isNotOk(err);
                 request.get({
                     url: baseUrl + 'apis/superduper/subscriptions',
-                    headers: utils.makeHeaders(adminUserId)
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE + ' ' + READ_APIS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
