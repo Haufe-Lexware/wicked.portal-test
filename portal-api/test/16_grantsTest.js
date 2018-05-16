@@ -1,3 +1,7 @@
+'use strict';
+
+/* global it, describe, before, beforeEach, after, afterEach, slow */
+
 const assert = require('chai').assert;
 const request = require('request');
 const utils = require('./testUtils');

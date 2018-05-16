@@ -1,9 +1,13 @@
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
+'use strict';
 
-var baseUrl = consts.BASE_URL;
+/* global it, describe, before, beforeEach, after, afterEach, slow */
+
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
+
+const baseUrl = consts.BASE_URL;
 
 describe('/ping', function() {
     describe('GET', function() {
@@ -12,7 +16,7 @@ describe('/ping', function() {
             function(err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal('OK', jsonBody.message);
                 done();
             });
@@ -26,7 +30,7 @@ describe('/globals', function () {
         function (err, res, body) {
             assert.isNotOk(err);
             assert.equal(200, res.statusCode);
-            var jsonBody = utils.getJson(body);
+            const jsonBody = utils.getJson(body);
             assert.equal('Portal Title', jsonBody.title);
             assert.equal('Recursive Recursive Recursive', jsonBody.footer);
             done();

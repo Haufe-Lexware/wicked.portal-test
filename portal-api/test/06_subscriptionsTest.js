@@ -1,3 +1,7 @@
+'use strict';
+
+/* global it, describe, before, beforeEach, after, afterEach, slow */
+
 var assert = require('chai').assert;
 var async = require('async');
 var request = require('request');

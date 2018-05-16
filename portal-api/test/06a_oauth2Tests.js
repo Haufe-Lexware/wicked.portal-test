@@ -1,3 +1,7 @@
+'use strict';
+
+/* global it, describe, before, beforeEach, after, afterEach, slow */
+
 var assert = require('chai').assert;
 var request = require('request');
 var utils = require('./testUtils');
@@ -15,6 +19,9 @@ const INVALID_SCOPE = 'invalid_applications';
 const READ_USERS_SCOPE = 'read_users';
 
 describe('operations on OAuth2 APIs', function () {
+
+    let devUserId, adminUserId, noobUserId;
+
     // Let's create some users to play with
     before(function (done) {
         utils.createUser('Dev', 'dev', true, function (id) {

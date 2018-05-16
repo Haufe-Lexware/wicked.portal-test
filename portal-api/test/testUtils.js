@@ -1,9 +1,13 @@
+'use strict';
+
+/* global it, describe, before, beforeEach, after, afterEach, slow */
+
 var assert = require('chai').assert;
 var crypto = require('crypto');
 var request = require('request');
 var consts = require('./testConsts');
 
-utils = {};
+const utils = {};
 
 // utils.SCOPES = {
 

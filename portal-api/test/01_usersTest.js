@@ -1,6 +1,6 @@
 'use strict';
 
-/* global it, describe, before, beforeAll, after, afterAll, slow */
+/* global it, describe, before, beforeEach, after, afterEach, slow */
 
 var assert = require('chai').assert;
 var request = require('request');
