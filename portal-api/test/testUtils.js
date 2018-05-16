@@ -2,10 +2,10 @@
 
 /* global it, describe, before, beforeEach, after, afterEach, slow */
 
-var assert = require('chai').assert;
-var crypto = require('crypto');
-var request = require('request');
-var consts = require('./testConsts');
+const assert = require('chai').assert;
+const crypto = require('crypto');
+const request = require('request');
+const consts = require('./testConsts');
 
 const utils = {};
 
@@ -30,15 +30,14 @@ utils.getText = function (ob) {
 };
 
 utils.createUser = function (lastName, group, validated, callback) {
-    var thisGroup = [];
+    let thisGroup = [];
     if (group) {
         if (!Array.isArray(group))
             thisGroup = [group];
         else
             thisGroup = group;
     }
-    request({
-        method: 'POST',
+    request.post({
         url: consts.BASE_URL + 'users',
         json: true,
         headers: utils.makeHeaders(1, 'write_users'),
@@ -51,7 +50,7 @@ utils.createUser = function (lastName, group, validated, callback) {
         function (err, res, body) {
             if (201 != res.statusCode)
                 throw Error("Creating user did not succeed: " + utils.getText(body));
-            var jsonBody = utils.getJson(body);
+            const jsonBody = utils.getJson(body);
             // console.log(jsonBody);
             callback(jsonBody.id);
         });
@@ -83,35 +82,29 @@ utils.onlyScope = function (scopes) {
 };
 
 utils.getUser = function (userId, callback) {
-    request(
-        {
-            url: consts.BASE_URL + 'users/' + userId,
-            headers: utils.makeHeaders(userId, 'read_users')
-        },
-        function (err, res, body) {
-            assert.isNotOk(err);
-            assert.equal(200,  res.statusCode, "Could not retrieve user: " + utils.getText(body));
-            callback(utils.getJson(body));
-        });
+    request({
+        url: consts.BASE_URL + 'users/' + userId,
+        headers: utils.makeHeaders(userId, 'read_users')
+    }, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(200, res.statusCode, "Could not retrieve user: " + utils.getText(body));
+        callback(utils.getJson(body));
+    });
 };
 
 utils.deleteUser = function (userId, callback) {
-    request(
-        {
-            method: 'DELETE',
-            url: consts.BASE_URL + 'users/' + userId,
-            headers: utils.makeHeaders(userId, 'write_users')
-        },
-        function (err, res, body) {
-            assert.isNotOk(err);
-            assert.equal(204, res.statusCode, "Deleting user " + userId + " did not succeed: " + utils.getText(body));
-            callback();
-        });
+    request.delete({
+        url: consts.BASE_URL + 'users/' + userId,
+        headers: utils.makeHeaders(userId, 'write_users')
+    }, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(204, res.statusCode, "Deleting user " + userId + " did not succeed: " + utils.getText(body));
+        callback();
+    });
 };
 
 utils.setGroups = function (userId, groups, callback) {
-    request({
-        method: 'PATCH',
+    request.patch({
         url: consts.BASE_URL + 'users/' + userId,
         headers: utils.makeHeaders('1', 'write_users'), // Admin required
         json: true,
@@ -126,109 +119,95 @@ utils.setGroups = function (userId, groups, callback) {
 };
 
 utils.createApplication = function (appId, appInfo, userId, callback) {
-    var appName = appInfo;
-    var redirectUri = null;
+    let appName = appInfo;
+    let redirectUri = null;
     if (typeof (appInfo) === 'object') {
         if (appInfo.name)
             appName = appInfo.name;
         if (appInfo.redirectUri)
             redirectUri = appInfo.redirectUri;
     }
-    request.post(
-        {
-            url: consts.BASE_URL + 'applications',
-            headers: utils.makeHeaders(userId, 'write_applications'),
-            json: true,
-            body: {
-                id: appId,
-                name: appName,
-                redirectUri: redirectUri
-            }
-        },
-        function (err, res, body) {
-            assert.isNotOk(err);
-            assert.equal(201, res.statusCode, 'Create application should return 201: ' + utils.getText(body));
-            callback();
-        });
+    request.post({
+        url: consts.BASE_URL + 'applications',
+        headers: utils.makeHeaders(userId, 'write_applications'),
+        json: true,
+        body: {
+            id: appId,
+            name: appName,
+            redirectUri: redirectUri
+        }
+    }, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(201, res.statusCode, 'Create application should return 201: ' + utils.getText(body));
+        callback();
+    });
 };
 
 utils.deleteApplication = function (appId, userId, callback) {
-    request.delete(
-        {
-            url: consts.BASE_URL + 'applications/' + appId,
-            headers: utils.makeHeaders(userId, 'write_applications')
-        },
-        function (err, res, body) {
-            assert.isNotOk(err);
-            assert.equal(204, res.statusCode, 'Delete application should return 204');
-            callback();
-        }
-    );
+    request.delete({
+        url: consts.BASE_URL + 'applications/' + appId,
+        headers: utils.makeHeaders(userId, 'write_applications')
+    }, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(204, res.statusCode, 'Delete application should return 204');
+        callback();
+    });
 };
 
 utils.addOwner = function (appId, userId, email, role, callback) {
-    request.post(
-        {
-            url: consts.BASE_URL + 'applications/' + appId + '/owners',
-            headers: utils.makeHeaders(userId, 'write_applications'),
-            json: true,
-            body: {
-                email: email,
-                role: role
-            }
-        },
-        function (err, res, body) {
-            assert.isNotOk(err);
-            assert.equal(201, res.statusCode, "Could not add owner '" + email + "' to application '" + appId + "': " + utils.getText(body));
-            callback();
+    request.post({
+        url: consts.BASE_URL + 'applications/' + appId + '/owners',
+        headers: utils.makeHeaders(userId, 'write_applications'),
+        json: true,
+        body: {
+            email: email,
+            role: role
         }
-    );
+    }, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(201, res.statusCode, "Could not add owner '" + email + "' to application '" + appId + "': " + utils.getText(body));
+        callback();
+    });
 };
 
 utils.deleteOwner = function (appId, userId, email, callback) {
-    request.delete(
-        {
-            url: consts.BASE_URL + 'applications/' + appId + '/owners?userEmail=' + email,
-            headers: utils.makeHeaders(userId, 'write_applications')
-        },
-        function (err, res, body) {
-            assert.isNotOk(err);
-            assert.equal(200, res.statusCode, "Deleting owner '" + email + "' from application '" + appId + "' failed: " + utils.getText(body));
-            callback();
-        });
+    request.delete({
+        url: consts.BASE_URL + 'applications/' + appId + '/owners?userEmail=' + email,
+        headers: utils.makeHeaders(userId, 'write_applications')
+    }, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(200, res.statusCode, "Deleting owner '" + email + "' from application '" + appId + "' failed: " + utils.getText(body));
+        callback();
+    });
 };
 
 utils.addSubscription = function (appId, userId, apiId, plan, apikey, callback) {
-    request.post(
-        {
-            url: consts.BASE_URL + 'applications/' + appId + '/subscriptions',
-            headers: utils.makeHeaders(userId, 'write_subscriptions'),
-            json: true,
-            body: {
-                application: appId,
-                api: apiId,
-                plan: plan,
-                apikey: apikey
-            }
-        },
-        function (err, res, body) {
-            assert.isNotOk(err);
-            assert.equal(201, res.statusCode, "Could not add subscription: " + utils.getText(body));
-            callback(null, utils.getJson(body));
-        });
+    request.post({
+        url: consts.BASE_URL + 'applications/' + appId + '/subscriptions',
+        headers: utils.makeHeaders(userId, 'write_subscriptions'),
+        json: true,
+        body: {
+            application: appId,
+            api: apiId,
+            plan: plan,
+            apikey: apikey
+        }
+    }, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(201, res.statusCode, "Could not add subscription: " + utils.getText(body));
+        callback(null, utils.getJson(body));
+    });
 };
 
 utils.deleteSubscription = function (appId, userId, apiId, callback) {
-    request.delete(
-        {
-            url: consts.BASE_URL + 'applications/' + appId + '/subscriptions/' + apiId,
-            headers: utils.makeHeaders(userId, 'write_subscriptions')
-        },
-        function (err, res, body) {
-            assert.isNotOk(err);
-            assert.equal(204, res.statusCode, "Could not delete subscription: " + utils.getText(body));
-            callback();
-        });
+    request.delete({
+        url: consts.BASE_URL + 'applications/' + appId + '/subscriptions/' + apiId,
+        headers: utils.makeHeaders(userId, 'write_subscriptions')
+    }, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(204, res.statusCode, "Could not delete subscription: " + utils.getText(body));
+        callback();
+    });
 };
 
 utils.approveSubscription = function (appId, apiId, adminUserId, callback) {

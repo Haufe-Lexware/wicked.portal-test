@@ -1,8 +1,10 @@
-var crypto = require('crypto');
-var request = require('request');
-var consts = require('./testConsts');
+'use strict';
 
-utils = {};
+const crypto = require('crypto');
+const request = require('request');
+const consts = require('./testConsts');
+
+const utils = {};
 
 utils.createRandomId = function () {
     return crypto.randomBytes(5).toString('hex');
@@ -21,11 +23,10 @@ utils.getText = function (ob) {
 };
 
 utils.createUser = function (lastName, group, validated, callback) {
-    var thisGroup = [];
+    let thisGroup = [];
     if (group)
         thisGroup = [group];
-    request({
-        method: 'POST',
+    request.post({
         url: consts.BASE_URL + 'users',
         json: true,
         headers: utils.makeHeaders(),
@@ -36,20 +37,19 @@ utils.createUser = function (lastName, group, validated, callback) {
             email: lastName.toLowerCase() + '@random.org',
             groups: thisGroup
         }
-    },
-        function (err, res, body) {
-            if (201 != res.statusCode)
-                throw Error("Creating user did not succeed: " + utils.getText(body));
-            var jsonBody = utils.getJson(body);
-            // console.log(jsonBody);
-            callback(jsonBody.id);
-        });
+    }, function (err, res, body) {
+        if (201 != res.statusCode)
+            throw Error("Creating user did not succeed: " + utils.getText(body));
+        const jsonBody = utils.getJson(body);
+        // console.log(jsonBody);
+        callback(jsonBody.id);
+    });
 };
 
 utils.makeHeaders = function (userId, scopes) {
     if (!userId && !utils.correlationId)
         return null;
-    var headers = {};
+    const headers = {};
     if (userId)
         headers['X-Authenticated-UserId'] = userId;
     if (scopes)
@@ -61,35 +61,29 @@ utils.makeHeaders = function (userId, scopes) {
 };
 
 utils.getUser = function (userId, callback) {
-    request(
-        {
-            url: consts.BASE_URL + 'users/' + userId,
-            headers: utils.makeHeaders(userId)
-        },
-        function (err, res, body) {
-            if (200 != res.statusCode)
-                throw Error("Could not retrieve user: " + utils.getText(body));
-            callback(utils.getJson(body));
-        });
+    request({
+        url: consts.BASE_URL + 'users/' + userId,
+        headers: utils.makeHeaders(userId)
+    }, function (err, res, body) {
+        if (200 != res.statusCode)
+            throw Error("Could not retrieve user: " + utils.getText(body));
+        callback(utils.getJson(body));
+    });
 };
 
 utils.deleteUser = function (userId, callback) {
-    request(
-        {
-            method: 'DELETE',
-            url: consts.BASE_URL + 'users/' + userId,
-            headers: utils.makeHeaders(userId)
-        },
-        function (err, res, body) {
-            if (204 != res.statusCode)
-                throw Error("Deleting user " + userId + " did not succeed: " + utils.getText(body));
-            callback();
-        });
+    request.delete({
+        url: consts.BASE_URL + 'users/' + userId,
+        headers: utils.makeHeaders(userId)
+    }, function (err, res, body) {
+        if (204 != res.statusCode)
+            throw Error("Deleting user " + userId + " did not succeed: " + utils.getText(body));
+        callback();
+    });
 };
 
 utils.setGroups = function (userId, groups, callback) {
-    request({
-        method: 'PATCH',
+    request.patch({
         url: consts.BASE_URL + 'users/' + userId,
         headers: utils.makeHeaders('1'), // Admin required
         json: true,
@@ -106,63 +100,55 @@ utils.setGroups = function (userId, groups, callback) {
 };
 
 utils.createApplication = function (appId, appInfo, userId, callback) {
-    var appName = appInfo;
-    var redirectUri = null;
+    let appName = appInfo;
+    let redirectUri = null;
     if (typeof (appInfo) === 'object') {
         if (appInfo.name)
             appName = appInfo.name;
         if (appInfo.redirectUri)
             redirectUri = appInfo.redirectUri;
     }
-    request.post(
-        {
-            url: consts.BASE_URL + 'applications',
-            headers: utils.makeHeaders(userId),
-            json: true,
-            body: {
-                id: appId,
-                name: appName,
-                redirectUri: redirectUri
-            }
-        },
-        function (err, res, body) {
-            if (201 != res.statusCode)
-                throw Error("Creating application failed:" + utils.getText(body));
-            callback();
-        });
+    request.post({
+        url: consts.BASE_URL + 'applications',
+        headers: utils.makeHeaders(userId),
+        json: true,
+        body: {
+            id: appId,
+            name: appName,
+            redirectUri: redirectUri
+        }
+    }, function (err, res, body) {
+        if (201 != res.statusCode)
+            throw Error("Creating application failed:" + utils.getText(body));
+        callback();
+    });
 };
 
 utils.deleteApplication = function (appId, userId, callback) {
-    request.delete(
-        {
-            url: consts.BASE_URL + 'applications/' + appId,
-            headers: utils.makeHeaders(userId)
-        },
-        function (err, res, body) {
-            if (204 != res.statusCode)
-                throw Error("Deleting application failed: " + utils.getText(body));
-            callback();
-        }
-    );
+    request.delete({
+        url: consts.BASE_URL + 'applications/' + appId,
+        headers: utils.makeHeaders(userId)
+    }, function (err, res, body) {
+        if (204 != res.statusCode)
+            throw Error("Deleting application failed: " + utils.getText(body));
+        callback();
+    });
 };
 
 utils.addOwner = function (appId, userId, email, role, callback) {
-    request.post(
-        {
-            url: consts.BASE_URL + 'applications/' + appId + '/owners',
-            headers: utils.makeHeaders(userId),
-            json: true,
-            body: {
-                email: email,
-                role: role
-            }
-        },
-        function (err, res, body) {
-            if (201 != res.statusCode)
-                throw Error("Could not add owner '" + email + "' to application '" + appId + "': " + utils.getText(body));
-            callback();
+    request.post({
+        url: consts.BASE_URL + 'applications/' + appId + '/owners',
+        headers: utils.makeHeaders(userId),
+        json: true,
+        body: {
+            email: email,
+            role: role
         }
-    );
+    }, function (err, res, body) {
+        if (201 != res.statusCode)
+            throw Error("Could not add owner '" + email + "' to application '" + appId + "': " + utils.getText(body));
+        callback();
+    });
 };
 
 utils.deleteOwner = function (appId, userId, email, callback) {
@@ -179,36 +165,32 @@ utils.deleteOwner = function (appId, userId, email, callback) {
 };
 
 utils.addSubscription = function (appId, userId, apiId, plan, apikey, callback) {
-    request.post(
-        {
-            url: consts.BASE_URL + 'applications/' + appId + '/subscriptions',
-            headers: utils.makeHeaders(userId),
-            json: true,
-            body: {
-                application: appId,
-                api: apiId,
-                plan: plan,
-                apikey: apikey
-            }
-        },
-        function (err, res, body) {
-            if (201 != res.statusCode)
-                throw Error("Could not add subscription: " + utils.getText(body));
-            callback(null, utils.getJson(body));
-        });
+    request.post({
+        url: consts.BASE_URL + 'applications/' + appId + '/subscriptions',
+        headers: utils.makeHeaders(userId),
+        json: true,
+        body: {
+            application: appId,
+            api: apiId,
+            plan: plan,
+            apikey: apikey
+        }
+    }, function (err, res, body) {
+        if (201 != res.statusCode)
+            throw Error("Could not add subscription: " + utils.getText(body));
+        callback(null, utils.getJson(body));
+    });
 };
 
 utils.deleteSubscription = function (appId, userId, apiId, callback) {
-    request.delete(
-        {
-            url: consts.BASE_URL + 'applications/' + appId + '/subscriptions/' + apiId,
-            headers: utils.makeHeaders(userId)
-        },
-        function (err, res, body) {
-            if (204 != res.statusCode)
-                throw Error("Could not delete subscription: " + utils.getText(body));
-            callback();
-        });
+    request.delete({
+        url: consts.BASE_URL + 'applications/' + appId + '/subscriptions/' + apiId,
+        headers: utils.makeHeaders(userId)
+    }, function (err, res, body) {
+        if (204 != res.statusCode)
+            throw Error("Could not delete subscription: " + utils.getText(body));
+        callback();
+    });
 };
 
 utils.approveSubscription = function (appId, apiId, adminUserId, callback) {
@@ -256,7 +238,7 @@ utils.deleteListener = function (listenerId, callback) {
 };
 
 utils.findWithName = function (someArray, name) {
-    for (var i = 0; i < someArray.length; ++i) {
+    for (let i = 0; i < someArray.length; ++i) {
         if (someArray[i].name === name)
             return someArray[i];
     }
@@ -264,9 +246,9 @@ utils.findWithName = function (someArray, name) {
 };
 
 utils.awaitEmptyQueue = function (queueName, userId, callback) {
-    var maxCount = 40;
-    var timeOut = 400;
-    var _awaitEmptyQueue = function (tryCount) {
+    const maxCount = 40;
+    const timeOut = 400;
+    const _awaitEmptyQueue = function (tryCount) {
         // console.log('_awaitEmptyQueue(), try ' + tryCount + ': ' + queueName);
         if (tryCount >= maxCount)
             return callback(new Error('awaitEmptyQueue: Max count of ' + maxCount + ' was reached: ' + tryCount));
@@ -278,7 +260,7 @@ utils.awaitEmptyQueue = function (queueName, userId, callback) {
                 return callback(err);
             if (res.statusCode !== 200)
                 return callback(new Error('awaitEmptyQueue: GET of events for ' + queueName + ' returns status code ' + res.statusCode));
-            var queue = utils.getJson(body);
+            const queue = utils.getJson(body);
             //console.log(queue);
             if (queue.length === 0) {
                 if (tryCount > 4)
@@ -294,10 +276,10 @@ utils.awaitEmptyQueue = function (queueName, userId, callback) {
 };
 
 utils.kongGet = function (url, expectedStatusCode, callback) {
-    var thisCallback = callback;
-    var thisStatusCode = expectedStatusCode;
+    let thisCallback = callback;
+    let thisStatusCode = expectedStatusCode;
     if (!callback &&
-        (typeof(expectedStatusCode) == 'function')) {
+        (typeof (expectedStatusCode) == 'function')) {
         thisCallback = expectedStatusCode;
         thisStatusCode = 200;
     }
