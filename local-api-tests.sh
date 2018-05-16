@@ -2,8 +2,12 @@
 
 set -e
 
-if nc -z localhost 3001; then
-    echo "*** ERROR: Port 3001 is already open."
+# Use a custom port here to not haphazardly interfer with a running portal-api local
+# instance. Which would not be good. Been there, done that (messes up your entire local
+# environment).
+apiPort=3301
+if nc -z localhost ${apiPort}; then
+    echo "*** ERROR: Port ${apiPort} is already open."
     exit 1
 fi
 
@@ -76,7 +80,7 @@ export LOG_LEVEL=debug
 export LOG_PLAIN=true
 
 export SWAGGER_RESOURCE_URL=http://localhost:8080
-export PORTAL_API_URL=http://localhost:3001
+export PORTAL_API_URL=http://localhost:${apiPort}
 export PORTAL_PORTAL_URL=http://localhost:3000
 export PORTAL_KONG_ADAPTER_URL=http://localhost:3002
 export PORTAL_KONG_ADMIN_URL=http://localhost:8001
@@ -125,12 +129,12 @@ else
 fi
 
 pushd ../wicked.portal-api
-node bin/api &> ${thisDir}/logs/api-test-local.log &
+PORT=${apiPort} node bin/api &> ${thisDir}/logs/api-test-local.log &
 apiPid=$!
 popd
 
 pushd portal-api
-node node_modules/portal-env/await.js http://localhost:3001/ping
+node node_modules/portal-env/await.js http://localhost:${apiPort}/ping
 if [[ -z "$grepFilter" ]]; then
     mocha
 else

@@ -1,3 +1,7 @@
+'use strict';
+
+/* global it, describe, before, beforeAll, after, afterAll, slow */
+
 var assert = require('chai').assert;
 var request = require('request');
 var utils = require('./testUtils');
@@ -24,20 +28,18 @@ describe('/users', function () {
                 validated: true,
                 groups: ["dev"]
             };
-            request({
-                method: 'POST',
+            request.post({
                 url: baseUrl + 'users',
                 headers: utils.makeHeaders('1', WRITE_USERS_SCOPE),
                 json: true,
                 body: myBody
-            },
-                function (err, res, body) {
-                    assert.equal(201, res.statusCode, "status code not 201");
-                    jsonBody = utils.getJson(body);
-                    devUserId = jsonBody.id;
-                    assert.isOk(devUserId);
-                    done();
-                });
+            }, function (err, res, body) {
+                assert.equal(201, res.statusCode, "status code not 201");
+                const jsonBody = utils.getJson(body);
+                devUserId = jsonBody.id;
+                assert.isOk(devUserId);
+                done();
+            });
         });
 
         it('should return a 409 if the email address is duplicate.', function (done) {
@@ -96,7 +98,7 @@ describe('/users', function () {
             },
                 function (err, res, body) {
                     assert.equal(201, res.statusCode, "status code not 201");
-                    jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     noobUserId = jsonBody.id;
                     assert.isOk(noobUserId);
                     done();
@@ -119,7 +121,7 @@ describe('/users', function () {
             },
                 function (err, res, body) {
                     assert.equal(201, res.statusCode, "status code not 201");
-                    jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     adminUserId = jsonBody.id;
                     assert.isOk(adminUserId);
                     done();
@@ -531,7 +533,7 @@ describe('/users', function () {
                         done();
                     });
             });
-            
+
             // it('should allow changing the name', function (done) {
             //     request(
             //         {
@@ -708,7 +710,7 @@ describe('/users', function () {
                         done();
                     });
             });
-            
+
             it('should return 204 if successful', function (done) {
                 request({
                     method: 'DELETE',
@@ -1080,7 +1082,7 @@ describe('/users', function () {
                 done();
             });
         });
-        
+
         it('should be possible to log in as the predefined user again after re-defining password', function (done) {
             request.post({
                 url: baseUrl + 'login',
@@ -1097,6 +1099,114 @@ describe('/users', function () {
                 assert.equal(1, jsonBody.length);
                 assert.equal(jsonBody[0].id, '1234567890');
                 assert.isNotOk(jsonBody[0].password);
+                done();
+            });
+        });
+    });
+
+    describe('/machine', () => {
+
+        let machineUserId;
+        after((done) => {
+            utils.deleteUser(machineUserId, done);
+        });
+
+        it('should return a 403 if called with via Kong', (done) => {
+            request.post({
+                url: baseUrl + 'users/machine',
+                headers: {
+                    'X-Consumer-Custom-Id': 'abcdefgh'
+                },
+                json: true,
+                body: {
+                    customId: 'internal:foo',
+                    email: 'foo@wicked.haufe.io',
+                    validated: true,
+                    groups: ["admin"]
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                utils.assertKongReject(res, body);
+                done();
+            });
+        });
+
+        it('should return 400 if the machine user does not have a custom ID', (done) => {
+            request.post({
+                url: baseUrl + 'users/machine',
+                headers: {},
+                json: true,
+                body: {
+                    email: 'foo@wicked.haufe.io',
+                    validated: true,
+                    groups: ["admin"]
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(400, res.statusCode, 'Unexpected status code');
+                const jsonBody = utils.getJson(body);
+                assert.equal('Machines users must have a custom ID', jsonBody.message, 'Unexpected error message');
+                done();
+            });
+        });
+
+        it('should return 400 if the machine user custom ID does not start with "internal:"', (done) => {
+            request.post({
+                url: baseUrl + 'users/machine',
+                headers: {},
+                json: true,
+                body: {
+                    customId: 'infernal:foo',
+                    email: 'foo@wicked.haufe.io',
+                    validated: true,
+                    groups: ["admin"]
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(400, res.statusCode, 'Unexpected status code');
+                const jsonBody = utils.getJson(body);
+                assert.equal('Machine user customId must start with "internal:"', jsonBody.message, 'Unexpected error message');
+                done();
+            });
+        });
+        
+        it('should return 400 if the machine user has a password', (done) => {
+            request.post({
+                url: baseUrl + 'users/machine',
+                headers: {},
+                json: true,
+                body: {
+                    customId: 'internal:foo',
+                    email: 'foo@wicked.haufe.io',
+                    password: 'p@assw0rd!',
+                    validated: true,
+                    groups: ["admin"]
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(400, res.statusCode, 'Unexpected status code');
+                const jsonBody = utils.getJson(body);
+                assert.equal('Machine users must not have a password', jsonBody.message, 'Unexpected error message');
+                done();
+            });
+        });
+
+        it('should be possible to create a machine user', (done) => {
+            request.post({
+                url: baseUrl + 'users/machine',
+                headers: {},
+                json: true,
+                body: {
+                    customId: 'internal:foo',
+                    email: 'foo@wicked.haufe.io',
+                    validated: true,
+                    groups: ["admin"]
+                }
+            }, function (err, res, body) {
+                assert.equal(201, res.statusCode, "status code not 201");
+                const jsonBody = utils.getJson(body);
+                machineUserId = jsonBody.id;
+                assert.isOk(machineUserId);
                 done();
             });
         });
