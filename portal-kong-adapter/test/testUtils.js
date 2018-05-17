@@ -29,7 +29,7 @@ utils.createUser = function (lastName, group, validated, callback) {
     request.post({
         url: consts.BASE_URL + 'users',
         json: true,
-        headers: utils.makeHeaders(),
+        headers: utils.makeHeaders('1', 'write_users'),
         body: {
             firstName: 'Dummy',
             lastName: lastName,
@@ -63,7 +63,7 @@ utils.makeHeaders = function (userId, scopes) {
 utils.getUser = function (userId, callback) {
     request({
         url: consts.BASE_URL + 'users/' + userId,
-        headers: utils.makeHeaders(userId)
+        headers: utils.makeHeaders(userId, 'read_users')
     }, function (err, res, body) {
         if (200 != res.statusCode)
             throw Error("Could not retrieve user: " + utils.getText(body));
@@ -74,7 +74,7 @@ utils.getUser = function (userId, callback) {
 utils.deleteUser = function (userId, callback) {
     request.delete({
         url: consts.BASE_URL + 'users/' + userId,
-        headers: utils.makeHeaders(userId)
+        headers: utils.makeHeaders(userId, 'write_users')
     }, function (err, res, body) {
         if (204 != res.statusCode)
             throw Error("Deleting user " + userId + " did not succeed: " + utils.getText(body));
@@ -85,7 +85,7 @@ utils.deleteUser = function (userId, callback) {
 utils.setGroups = function (userId, groups, callback) {
     request.patch({
         url: consts.BASE_URL + 'users/' + userId,
-        headers: utils.makeHeaders('1'), // Admin required
+        headers: utils.makeHeaders('1', 'write_users'), // Admin required
         json: true,
         body: {
             groups: groups
@@ -110,7 +110,7 @@ utils.createApplication = function (appId, appInfo, userId, callback) {
     }
     request.post({
         url: consts.BASE_URL + 'applications',
-        headers: utils.makeHeaders(userId),
+        headers: utils.makeHeaders(userId, 'write_applications'),
         json: true,
         body: {
             id: appId,
@@ -127,7 +127,7 @@ utils.createApplication = function (appId, appInfo, userId, callback) {
 utils.deleteApplication = function (appId, userId, callback) {
     request.delete({
         url: consts.BASE_URL + 'applications/' + appId,
-        headers: utils.makeHeaders(userId)
+        headers: utils.makeHeaders(userId, 'write_applications')
     }, function (err, res, body) {
         if (204 != res.statusCode)
             throw Error("Deleting application failed: " + utils.getText(body));
@@ -138,7 +138,7 @@ utils.deleteApplication = function (appId, userId, callback) {
 utils.addOwner = function (appId, userId, email, role, callback) {
     request.post({
         url: consts.BASE_URL + 'applications/' + appId + '/owners',
-        headers: utils.makeHeaders(userId),
+        headers: utils.makeHeaders(userId, 'write_applications'),
         json: true,
         body: {
             email: email,
@@ -155,7 +155,7 @@ utils.deleteOwner = function (appId, userId, email, callback) {
     request.delete(
         {
             url: consts.BASE_URL + 'applications/' + appId + '/owners?userEmail=' + email,
-            headers: utils.makeHeaders(userId)
+            headers: utils.makeHeaders(userId, 'write_applications')
         },
         function (err, res, body) {
             if (200 != res.statusCode)
@@ -167,7 +167,7 @@ utils.deleteOwner = function (appId, userId, email, callback) {
 utils.addSubscription = function (appId, userId, apiId, plan, apikey, callback) {
     request.post({
         url: consts.BASE_URL + 'applications/' + appId + '/subscriptions',
-        headers: utils.makeHeaders(userId),
+        headers: utils.makeHeaders(userId, 'write_subscriptions'),
         json: true,
         body: {
             application: appId,
@@ -185,7 +185,7 @@ utils.addSubscription = function (appId, userId, apiId, plan, apikey, callback) 
 utils.deleteSubscription = function (appId, userId, apiId, callback) {
     request.delete({
         url: consts.BASE_URL + 'applications/' + appId + '/subscriptions/' + apiId,
-        headers: utils.makeHeaders(userId)
+        headers: utils.makeHeaders(userId, 'write_subscriptions')
     }, function (err, res, body) {
         if (204 != res.statusCode)
             throw Error("Could not delete subscription: " + utils.getText(body));
@@ -196,7 +196,7 @@ utils.deleteSubscription = function (appId, userId, apiId, callback) {
 utils.approveSubscription = function (appId, apiId, adminUserId, callback) {
     request.patch({
         url: consts.BASE_URL + 'applications/' + appId + '/subscriptions/' + apiId,
-        headers: utils.makeHeaders(adminUserId),
+        headers: utils.makeHeaders(adminUserId, 'write_subscriptions'),
         json: true,
         body: { approved: true }
     }, function (err, res, body) {
@@ -209,7 +209,7 @@ utils.approveSubscription = function (appId, apiId, adminUserId, callback) {
 utils.createListener = function (listenerId, listenerUrl, callback) {
     request.put({
         url: consts.BASE_URL + 'webhooks/listeners/' + listenerId,
-        headers: utils.makeHeaders('1'),
+        headers: utils.makeHeaders('1', 'webhooks'),
         json: true,
         body: {
             id: listenerId,
@@ -227,7 +227,7 @@ utils.createListener = function (listenerId, listenerUrl, callback) {
 utils.deleteListener = function (listenerId, callback) {
     request.delete({
         url: consts.BASE_URL + 'webhooks/listeners/' + listenerId,
-        headers: utils.makeHeaders('1')
+        headers: utils.makeHeaders('1', 'webhooks')
     }, function (err, apiResponse, apiBody) {
         if (err)
             throw err;
@@ -254,7 +254,7 @@ utils.awaitEmptyQueue = function (queueName, userId, callback) {
             return callback(new Error('awaitEmptyQueue: Max count of ' + maxCount + ' was reached: ' + tryCount));
         request.get({
             url: consts.BASE_URL + 'webhooks/events/' + queueName,
-            headers: utils.makeHeaders(userId)
+            headers: utils.makeHeaders(userId, 'webhooks')
         }, function (err, res, body) {
             if (err)
                 return callback(err);

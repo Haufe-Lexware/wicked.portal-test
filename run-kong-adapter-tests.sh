@@ -6,42 +6,62 @@ buildLocal=""
 
 export NODE_ENV=test
 
+function separator {
+    echo "--------------------------------------------------"
+}
+
+function fat_separator {
+    echo "=================================================="
+}
+
+fat_separator
+echo "$0"
+fat_separator
+
 if [ -z "$DOCKER_PREFIX" ]; then
-    echo Env var DOCKER_PREFIX is not set, assuming local build.
+    echo "INFO: Env var DOCKER_PREFIX is not set, assuming local build."
     export DOCKER_PREFIX=local_
     buildLocal="yes"
 fi
 
 if [ -z "$DOCKER_TAG" ]; then
-    echo Env var DOCKER_TAG is not set, assuming dev
+    echo "INFO: Env var DOCKER_TAG is not set, assuming dev"
     export DOCKER_TAG=dev
 fi
 
 if [ -z "$DOCKER_REGISTRY" ]; then
-    echo DOCKER_REGISTRY is not set, assuming official Docker registry.
+    echo "INFO: DOCKER_REGISTRY is not set, assuming official Docker registry."
 else
     if [ -z "$DOCKER_REGISTRY_USER" ] || [ -z "$DOCKER_REGISTRY_PASSWORD" ]; then
-        echo Using custom DOCKER_REGISTRY, but either DOCKER_REGISTRY_USER or
-        echo DOCKER_REGISTRY_PASSWORD is empty.
+        echo "ERROR: Using custom DOCKER_REGISTRY, but either DOCKER_REGISTRY_USER or"
+        echo "       DOCKER_REGISTRY_PASSWORD is empty."
         exit 1
     fi
 
-    echo Logging in to docker registry ${DOCKER_REGISTRY}...
+    echo "INFO: Logging in to docker registry ${DOCKER_REGISTRY}..."
     docker login -u ${DOCKER_REGISTRY_USER} -p ${DOCKER_REGISTRY_PASSWORD} ${DOCKER_REGISTRY}
 fi
 
 if [ -z "$BUILD_ALPINE" ]; then
-    echo "Not building Alpine images."
+    echo "INFO: Env var BUILD_ALPINE is not set, not building Alpine images."
     export BUILD_ALPINE=""
-else
+else 
+    echo "INFO: Env var BUILD_ALPINE is set, building Alpine images."
     if [ ! "$BUILD_ALPINE" = "-alpine" ]; then
-        echo "Unsupported value for BUILD_ALPINE, setting to -alpine"
         export BUILD_ALPINE="-alpine"
     fi
-    echo "Building Alpine images."
 fi
 
-rm -f logs/docker-kong-adapter${BUILD_ALPINE}.log
+wickedStorage="json"
+if [ ! -z "$BUILD_POSTGRES" ]; then
+    echo "INFO: Env var BUILD_POSTGRES is set, running tests with Postgres"
+    wickedStorage="postgres" 
+else
+    echo "INFO: Env var BUILD_POSTGRES is not set, running tests with JSON storage"
+fi
+export WICKED_STORAGE=${wickedStorage}
+
+rm -f logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
 thisPath=`pwd`
 
 export PORTAL_ENV_TAG=${DOCKER_TAG}-onbuild
@@ -49,41 +69,41 @@ export PORTAL_API_TAG=${DOCKER_TAG}
 export PORTAL_KONG_ADAPTER_TAG=${DOCKER_TAG}
 export KONG_TAG=${DOCKER_TAG}
 
-echo Docker logs go into logs/docker-kong-adapter${BUILD_ALPINE}.log.
+echo "INFO: Docker logs go into logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log."
 
 if [ ! -z "$buildLocal" ]; then
 
-    echo Building images locally.
+    echo "INFO: Building images locally."
 
-    pushd ../wicked.portal-env
-    echo Building Environment docker image...
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log 
-    popd
+    pushd ../wicked.portal-env > /dev/null
+    echo "INFO: Building Environment docker image..."
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log 
+    popd > /dev/null
 
-    pushd ../wicked.portal-api
-    echo Building API docker image...
+    pushd ../wicked.portal-api > /dev/null
+    echo "INFO: Building API docker image..."
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
-    popd
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+    popd > /dev/null
 
-    pushd ../wicked.portal-kong-adapter
-    echo Building Kong Adapter docker image...
+    pushd ../wicked.portal-kong-adapter > /dev/null
+    echo "INFO: Building Kong Adapter docker image..."
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-kong-adapter:${PORTAL_KONG_ADAPTER_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
-    popd
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-kong-adapter:${PORTAL_KONG_ADAPTER_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+    popd > /dev/null
 
-    pushd ../wicked.kong
-    echo Building Kong docker image...
+    pushd ../wicked.kong > /dev/null
+    echo "INFO: Building Kong docker image..."
     # perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile
-    docker build -t ${DOCKER_PREFIX}kong:${KONG_TAG} . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
-    popd
+    docker build -t ${DOCKER_PREFIX}kong:${KONG_TAG} . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+    popd > /dev/null
 
 else
 
-    echo Using prebuilt images:
-    echo DOCKER_PREFIX=$DOCKER_PREFIX
+    echo "INFO: Using prebuilt images:"
+    echo "      DOCKER_PREFIX=$DOCKER_PREFIX"
     dockerTag=${DOCKER_TAG}
-    echo DOCKER_TAG=${dockerTag}
+    echo "      DOCKER_TAG=${dockerTag}"
 
     # Magic image matching?
     if [[ "$DOCKER_PREFIX" == "haufelexware/wicked." ]]; then
@@ -104,58 +124,71 @@ echo "INFO: PORTAL_KONG_ADAPTER_TAG=${PORTAL_KONG_ADAPTER_TAG}"
 echo "INFO: KONG_TAG=${KONG_TAG}"
 echo "INFO: PROJECT_NAME=${PROJECT_NAME}"
 
-echo Templating Dockerfile for test base and compose file...
+echo "INFO: Templating Dockerfile for test base and compose file..."
 
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' base/Dockerfile.template > base/Dockerfile
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-kong-adapter/Dockerfile.template > portal-kong-adapter/Dockerfile
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-kong-adapter/kong-adapter-tests-compose.yml.template > portal-kong-adapter/kong-adapter-tests-compose.yml
 
 if [ -z "$buildLocal" ]; then 
-    echo Using prebuilt images: Pulling images...
+    echo "INFO: Using prebuilt images: Pulling images..."
+    separator
     docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml pull
     docker pull ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE}
+    separator
 fi
 
-echo Building Test base container...
-pushd base
-docker build -t ${PROJECT_NAME}_test-base . >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
-popd
+echo "INFO: Building Test base container..."
+pushd base > /dev/null
+docker build -t ${PROJECT_NAME}_test-base . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+popd > /dev/null
 
-echo Building Test container...
-docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml build >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
-echo Running Kong Adapter test containers...
+echo "INFO: Building Test container..."
+docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml build >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+
+fat_separator
+echo "INFO: Running Kong Adapter test containers..."
+separator
+
 failedTests=""
-if ! docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml up --abort-on-container-exit > logs/kong-adapter-test${BUILD_ALPINE}.log; then
-    echo WARNING: docker-compose exited with a non-zero return code.
+if ! docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml up --abort-on-container-exit > logs/kong-adapter-test-${wickedStorage}${BUILD_ALPINE}.log; then
+    echo "WARNING: docker-compose exited with a non-zero return code."
     failedTests="true"
 fi
-echo Copying test results...
+echo "INFO: Copying test results..."
 if [ -d test_results ]; then
     echo "INFO: Cleaning up..."
     rm -rf test_results
 fi
 if ! docker cp ${PROJECT_NAME}_kong-adapter-test-data_1:/usr/src/app/test_results .; then
-    echo ERROR: The test results are not available.
+    echo "ERROR: The test results are not available."
     failedTests="true"
 fi
-echo Taking down Test containers...
-docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml down >> $thisPath/logs/docker-kong-adapter${BUILD_ALPINE}.log
+separator
+echo "INFO: Taking down Test containers..."
+separator
+docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml down >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
 
 if [ ! -z "$failedTests" ]; then
     exit 1
 fi
 
+cp test_results/kong-adapter-test.log logs/kong-adapter-test-${wickedStorage}${BUILD_ALPINE}-RESULT.log
 cat test_results/kong-adapter-test.log
 
-echo Detailed logs are in logs/kong-adapter-test${BUILD_ALPINE}.log.
+echo "INFO: Detailed logs are in logs/kong-adapter-test-${wickedStorage}${BUILD_ALPINE}.log."
 
-echo Cleaning up temporary images...
+echo "INFO: Cleaning up temporary images..."
+separator
 docker rmi ${PROJECT_NAME}_test-base
 docker rmi ${PROJECT_NAME}_kong-adapter-test-data
+
+fat_separator
 
 if [ -f test_results/KONG_FAILED ]; then
     echo "ERROR: Some test cases failed."
     exit 1
 fi
 
-echo Done.
+echo "INFO: SUCCESS"
+fat_separator

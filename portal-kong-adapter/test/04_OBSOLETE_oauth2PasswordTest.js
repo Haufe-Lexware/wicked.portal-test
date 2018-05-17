@@ -1,3 +1,12 @@
+'use strict';
+
+/* global it, describe, before, beforeEach, after, afterEach, slow */
+
+
+// These test cases do not apply to the Kong Adapter anymore, they
+// need to be ported to a portal-auth test suite instead.
+
+/*
 var assert = require('chai').assert;
 var request = require('request');
 var async = require('async');
@@ -218,3 +227,4 @@ describe('With oauth2 password grant APIs,', function () {
         });
     });
 });
+*/

@@ -1,31 +1,37 @@
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
+'use strict';
 
-var adapterUrl = consts.KONG_ADAPTER_URL;
-var kongUrl = consts.KONG_ADMIN_URL;
-var apiUrl = consts.BASE_URL;
+/* global it, describe, before, beforeEach, after, afterEach, slow */
 
-var adminUserId = '1'; // See test-config/globals.json
-var adminEmail = 'foo@bar.com';
-var devUserId = '11'; // Fred Flintstone
-var devEmail = 'fred@flintstone.com';
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-function adminHeaders() {
-    return utils.makeHeaders(adminUserId);
+const adapterUrl = consts.KONG_ADAPTER_URL;
+const kongUrl = consts.KONG_ADMIN_URL;
+const apiUrl = consts.BASE_URL;
+
+const adminUserId = '1'; // See test-config/globals.json
+const adminEmail = 'foo@bar.com';
+const devUserId = '11'; // Fred Flintstone
+const devEmail = 'fred@flintstone.com';
+
+function adminHeaders(scope) {
+    return utils.makeHeaders(adminUserId, scope);
 }
+
+const WEBHOOKS_SCOPE = 'webhooks';
 
 describe('After initialization,', function () {
     describe('portal-api', function () {
         it('should return an empty queue for kong-adapter', function (done) {
             request.get({
                 url: apiUrl + 'webhooks/events/kong-adapter',
-                headers: adminHeaders()
+                headers: adminHeaders(WEBHOOKS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body); // Has to be array
+                const jsonBody = utils.getJson(body); // Has to be array
                 assert.equal(0, jsonBody.length);
                 done();
             });
@@ -39,7 +45,7 @@ describe('After initialization,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode, 'Resync status code not 200');
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody.actions, 'Strange - resync response has no actions property');
                 if (0 !== jsonBody.actions.length) {
                     console.log(JSON.stringify(jsonBody, 0, 2));
@@ -57,7 +63,7 @@ describe('After initialization,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody.total > 0);
                 done();
             });
@@ -89,7 +95,7 @@ describe('After initialization,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var plugins = utils.getJson(body);
+                const plugins = utils.getJson(body);
                 assert.equal(3, plugins.total);
                 done();
             });
@@ -101,13 +107,13 @@ describe('After initialization,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var plugins = utils.getJson(body);
-                var rateLimiting = utils.findWithName(plugins.data, 'rate-limiting');
+                const plugins = utils.getJson(body);
+                const rateLimiting = utils.findWithName(plugins.data, 'rate-limiting');
                 assert.isOk(rateLimiting, 'rate-limiting is present');
                 assert.isOk(rateLimiting.config.fault_tolerant, 'fault_tolerant is set'); // This is actually also a test of the update of the static config, see oct2016_updatePlugin
-                var acl = utils.findWithName(plugins.data, 'acl');
+                const acl = utils.findWithName(plugins.data, 'acl');
                 assert.isOk(acl, 'acl plugin is present');
-                var keyAuth = utils.findWithName(plugins.data, 'key-auth');
+                const keyAuth = utils.findWithName(plugins.data, 'key-auth');
                 assert.isOk(keyAuth, 'key-auth is present');
                 done();
             });
@@ -119,8 +125,8 @@ describe('After initialization,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode, 'could not retrieve plugins');
-                var plugins = utils.getJson(body);
-                var oauth2 = utils.findWithName(plugins.data, 'oauth2');
+                const plugins = utils.getJson(body);
+                const oauth2 = utils.findWithName(plugins.data, 'oauth2');
                 assert.isOk(oauth2, 'superduper did not have valid oauth2 plugin');
                 assert.equal(1800, oauth2.config.token_expiration, 'token_expiration not set to 1800 (see config)');
                 done();
@@ -133,8 +139,8 @@ describe('After initialization,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode, 'could not retrieve plugins');
-                var plugins = utils.getJson(body);
-                var oauth2 = utils.findWithName(plugins.data, 'oauth2');
+                const plugins = utils.getJson(body);
+                const oauth2 = utils.findWithName(plugins.data, 'oauth2');
                 assert.isOk(oauth2, 'mobile did not have valid oauth2 plugin');
                 assert.equal(3600, oauth2.config.token_expiration, 'token_expiration not set to 1800 (see config)');
                 assert.isOk(oauth2.config.scopes, 'api does not have specified scopes');
@@ -150,8 +156,8 @@ describe('After initialization,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err, 'something went wrong when querying kong');
                 assert.equal(200, res.statusCode, 'could not retrieve plugins');
-                var plugins = utils.getJson(body);
-                var oauth2 = utils.findWithName(plugins.data, 'oauth2');
+                const plugins = utils.getJson(body);
+                const oauth2 = utils.findWithName(plugins.data, 'oauth2');
                 assert.isOk(oauth2, 'partner did not have valid oauth2 plugin');
                 assert.isOk(oauth2.config.scopes, 'api does not have specified scopes');
                 assert.equal(2, oauth2.config.scopes.length, 'scope count does not match');
@@ -166,7 +172,7 @@ describe('After initialization,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var apiConfig = utils.getJson(body);
+                const apiConfig = utils.getJson(body);
                 assert.isOk(apiConfig.uris, 'API did not have uris defined');
                 assert.equal('/brilliant', apiConfig.uris[0], 'mismatched uri path');
                 done();
@@ -179,72 +185,75 @@ describe('After initialization,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var apiConfig = utils.getJson(body);
+                const apiConfig = utils.getJson(body);
                 assert.isOk(apiConfig.strip_uri, 'API did not have strip_uri defined');
                 assert.equal('/mobile', apiConfig.uris[0]);
                 done();
             });
         });
 
-        
+        // These tests are obsolete - There are no consumers specifically
+        // for the portal-api anymore, and the portal API is no longer exposed
+        // via the "old" client credentials flow anymore, only over the generic
+        // OAuth2 access.
 
-        describe('consumers', function () {
-            it('should have been inserted (five)', function (done) { // see globals.json
-                request.get({
-                    url: kongUrl + 'consumers'
-                }, function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(200, res.statusCode);
-                    var consumers = utils.getJson(body);
-                    assert.equal(5, consumers.total);
-                    done();
-                });
-            });
+        // describe('consumers', function () {
+        //     it('should have been inserted (five)', function (done) { // see globals.json
+        //         request.get({
+        //             url: kongUrl + 'consumers'
+        //         }, function (err, res, body) {
+        //             assert.isNotOk(err);
+        //             assert.equal(200, res.statusCode);
+        //             const consumers = utils.getJson(body);
+        //             assert.equal(5, consumers.total);
+        //             done();
+        //         });
+        //     });
 
-            it('should have an oauth2 plugin configured for the portal-api', function (done) {
-                request.get({
-                    url: kongUrl + 'consumers/' + adminEmail + '/oauth2'
-                }, function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(200, res.statusCode);
-                    var consumerOAuth2 = utils.getJson(body);
-                    assert.equal(1, consumerOAuth2.total);
-                    assert.isOk(consumerOAuth2.data[0].client_id);
-                    assert.isOk(consumerOAuth2.data[0].client_secret);
-                    done();
-                });
-            });
+        //     it('should have an oauth2 plugin configured for the portal-api', function (done) {
+        //         request.get({
+        //             url: kongUrl + 'consumers/' + adminEmail + '/oauth2'
+        //         }, function (err, res, body) {
+        //             assert.isNotOk(err);
+        //             assert.equal(200, res.statusCode);
+        //             const consumerOAuth2 = utils.getJson(body);
+        //             assert.equal(1, consumerOAuth2.total);
+        //             assert.isOk(consumerOAuth2.data[0].client_id);
+        //             assert.isOk(consumerOAuth2.data[0].client_secret);
+        //             done();
+        //         });
+        //     });
 
-            it('should have an entry to the ACL of the portal-api', function (done) {
-                request.get({
-                    url: kongUrl + 'consumers/' + adminEmail + '/acls'
-                }, function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(200, res.statusCode);
-                    var acls = utils.getJson(body);
-                    assert.isOk(acls.data);
-                    assert.equal(1, acls.total, 'consumer has exactly one ACL entry');
-                    var portalGroup = acls.data.find(g => g.group === 'portal-api-internal');
-                    assert.isOk(portalGroup, 'consumer needs ACL group portal-api-internal');
-                    done();
-                });
-            });
+        //     it('should have an entry to the ACL of the portal-api', function (done) {
+        //         request.get({
+        //             url: kongUrl + 'consumers/' + adminEmail + '/acls'
+        //         }, function (err, res, body) {
+        //             assert.isNotOk(err);
+        //             assert.equal(200, res.statusCode);
+        //             const acls = utils.getJson(body);
+        //             assert.isOk(acls.data);
+        //             assert.equal(1, acls.total, 'consumer has exactly one ACL entry');
+        //             const portalGroup = acls.data.find(g => g.group === 'portal-api-internal');
+        //             assert.isOk(portalGroup, 'consumer needs ACL group portal-api-internal');
+        //             done();
+        //         });
+        //     });
 
-            it('should still not trigger any changing actions to the Kong API', function (done) {
-                request.post({
-                    url: adapterUrl + 'resync'
-                }, function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(200, res.statusCode, 'Resync status code not 200');
-                    var jsonBody = utils.getJson(body);
-                    assert.isOk(jsonBody.actions, 'Strange - resync response has no actions property');
-                    if (0 !== jsonBody.actions.length) {
-                        console.log(JSON.stringify(jsonBody, 0, 2));
-                    }
-                    assert.equal(0, jsonBody.actions.length, 'There were API actions done at resync, must be empty');
-                    done();
-                });
-            });
-        });
+        //     it('should still not trigger any changing actions to the Kong API', function (done) {
+        //         request.post({
+        //             url: adapterUrl + 'resync'
+        //         }, function (err, res, body) {
+        //             assert.isNotOk(err);
+        //             assert.equal(200, res.statusCode, 'Resync status code not 200');
+        //             const jsonBody = utils.getJson(body);
+        //             assert.isOk(jsonBody.actions, 'Strange - resync response has no actions property');
+        //             if (0 !== jsonBody.actions.length) {
+        //                 console.log(JSON.stringify(jsonBody, 0, 2));
+        //             }
+        //             assert.equal(0, jsonBody.actions.length, 'There were API actions done at resync, must be empty');
+        //             done();
+        //         });
+        //     });
+        // });
     });
 });

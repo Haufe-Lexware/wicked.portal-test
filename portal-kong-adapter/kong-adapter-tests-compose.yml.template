@@ -11,10 +11,15 @@ services:
   portal-api:
     env_file: ../variables.env  
     image: ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE}
+    links:
+    - postgres:postgres
     volumes_from:
     - "kong-adapter-test-data"
     environment:
     - "PORTAL_API_HOOK_INTERVAL=200"
+    - WICKED_STORAGE
+    - PORTAL_STORAGE_PGHOST=postgres
+    - PORTAL_STORAGE_PGPORT=5432
 
   portal-kong-adapter:
     env_file: ../variables.env
@@ -23,8 +28,8 @@ services:
     - portal-api
     - kong
   
-  kong-database:
-    image: postgres:9.6
+  postgres:
+    image: postgres:9.6.8
     environment:
     - "POSTGRES_USER=kong"
     - "POSTGRES_PASSWORD=kong"
@@ -32,8 +37,10 @@ services:
   kong:
     image: ${DOCKER_PREFIX}kong:${KONG_TAG}
     depends_on:
-    - "kong-database"
+    - "postgres"
     links:
-    - kong-database:kong-database
+    - postgres:postgres
+    environment:
+    - "KONG_PG_HOST=postgres"
     security_opt:
     - seccomp:unconfined

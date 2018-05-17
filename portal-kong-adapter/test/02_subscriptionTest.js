@@ -1,22 +1,26 @@
-var assert = require('chai').assert;
-var request = require('request');
-var async = require('async');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
+'use strict';
 
-var adapterUrl = consts.KONG_ADAPTER_URL;
-var kongUrl = consts.KONG_ADMIN_URL;
-var apiUrl = consts.BASE_URL;
+/* global it, describe, before, beforeEach, after, afterEach, slow */
 
-var adminUserId = '1'; // See test-config/globals.json
-var adminEmail = 'foo@bar.com';
-var devUserId = '11'; // Fred Flintstone
-var devEmail = 'fred@flintstone.com';
+const assert = require('chai').assert;
+const request = require('request');
+const async = require('async');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var keyAuthApi = 'brilliant';
-var oauth2Api = 'superduper';
+const adapterUrl = consts.KONG_ADAPTER_URL;
+const kongUrl = consts.KONG_ADMIN_URL;
+const apiUrl = consts.BASE_URL;
 
-var adapterQueue = 'kong-adapter';
+const adminUserId = '1'; // See test-config/globals.json
+const adminEmail = 'foo@bar.com';
+const devUserId = '11'; // Fred Flintstone
+const devEmail = 'fred@flintstone.com';
+
+const keyAuthApi = 'brilliant';
+const oauth2Api = 'superduper';
+
+const adapterQueue = 'kong-adapter';
 
 function kongConsumer(appId, apiId) {
     return appId + '$' + apiId;
@@ -29,8 +33,8 @@ describe('With subscriptions,', function () {
 
     describe('the kong adapter', function () {
 
-        var appId = 'some-app';
-        var appName = 'Some Application';
+        const appId = 'some-app';
+        const appName = 'Some Application';
 
         beforeEach(function (done) {
             utils.createApplication(appId, appName, devUserId, done);
@@ -41,7 +45,7 @@ describe('With subscriptions,', function () {
         });
 
         it('should write API keys correctly', function (done) {
-            var consumer = kongConsumer(appId, keyAuthApi);
+            const consumer = kongConsumer(appId, keyAuthApi);
             utils.addSubscription(appId, devUserId, keyAuthApi, 'basic', null, function (err, subsInfo) {
                 assert.isNotOk(err);
                 utils.awaitEmptyQueue(adapterQueue, adminUserId, function (err) {
@@ -52,12 +56,12 @@ describe('With subscriptions,', function () {
                         getKeyAuth: callback => utils.kongGet('consumers/' + consumer + '/key-auth', callback)
                     }, function (err, results) {
                         assert.isNotOk(err);
-                        var kongConsumer = results.getConsumer.body;
+                        const kongConsumer = results.getConsumer.body;
                         assert.isOk(kongConsumer);
-                        var kongAcls = results.getAcls.body;
+                        const kongAcls = results.getAcls.body;
                         assert.isOk(kongAcls.total >= 1, 'consumer must have an ACL group');
                         assert.equal(kongAcls.data[0].group, keyAuthApi, 'consumer ACL must match API name');
-                        var kongKeyAuth = results.getKeyAuth.body;
+                        const kongKeyAuth = results.getKeyAuth.body;
                         assert.isOk(kongKeyAuth.total >= 1, 'consumer must have key-auth setting');
                         assert.equal(kongKeyAuth.data[0].key, subsInfo.apikey, 'API keys must match');
                         done();
@@ -67,7 +71,7 @@ describe('With subscriptions,', function () {
         });
 
         it('resync with subscription should not change anything', function (done) {
-            var consumer = kongConsumer(appId, keyAuthApi);
+            const consumer = kongConsumer(appId, keyAuthApi);
             utils.addSubscription(appId, devUserId, keyAuthApi, 'basic', null, function (err, subsInfo) {
                 assert.isNotOk(err);
                 utils.awaitEmptyQueue(adapterQueue, adminUserId, function (err) {
@@ -77,7 +81,7 @@ describe('With subscriptions,', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode, 'Resync status code not 200');
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.isOk(jsonBody.actions, 'Strange - resync response has no actions property');
                         if (0 !== jsonBody.actions.length) {
                             console.log(JSON.stringify(jsonBody, 0, 2));
@@ -92,7 +96,7 @@ describe('With subscriptions,', function () {
 
         // After each, the application is deleted and re-added; should remove subscriptions
         it('should clean up keys after deleting an application', function (done) {
-            var consumer = kongConsumer(appId, keyAuthApi);
+            const consumer = kongConsumer(appId, keyAuthApi);
             utils.awaitEmptyQueue(adapterQueue, adminUserId, function (err) {
                 assert.isNotOk(err, 'Waiting for empty queue failed: ' + err);
                 utils.kongGet('consumers/' + consumer, 404, function (err, apiRes) {
@@ -104,7 +108,7 @@ describe('With subscriptions,', function () {
         });
 
         it('should clean up keys after deleting a subscription', function (done) {
-            var consumer = kongConsumer(appId, keyAuthApi);
+            const consumer = kongConsumer(appId, keyAuthApi);
             async.series({
                 subsInfo: callback => utils.addSubscription(appId, devUserId, keyAuthApi, 'basic', null, callback),
                 queue1: callback => utils.awaitEmptyQueue(adapterQueue, adminUserId, callback),
@@ -122,7 +126,7 @@ describe('With subscriptions,', function () {
         });
 
         it('should write client ID and secret correctly', function (done) {
-            var consumer = kongConsumer(appId, oauth2Api);
+            const consumer = kongConsumer(appId, oauth2Api);
             async.series({
                 addSubs: callback => utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, callback),
                 queue1: callback => utils.awaitEmptyQueue(adapterQueue, adminUserId, callback),
@@ -131,14 +135,14 @@ describe('With subscriptions,', function () {
                 getOAuth2: callback => utils.kongGet('consumers/' + consumer + '/oauth2', callback)
             }, function (err, results) {
                 assert.isNotOk(err);
-                var subsInfo = results.addSubs;
+                const subsInfo = results.addSubs;
                 assert.isOk(subsInfo);
-                var kongConsumer = results.getConsumer.body;
+                const kongConsumer = results.getConsumer.body;
                 assert.isOk(kongConsumer);
-                var kongAcls = results.getAcls.body;
+                const kongAcls = results.getAcls.body;
                 assert.isOk(kongAcls.total >= 1, 'consumer must have an ACL group');
                 assert.equal(kongAcls.data[0].group, oauth2Api, 'consumer ACL must match API name');
-                var kongOAuth2 = results.getOAuth2.body;
+                const kongOAuth2 = results.getOAuth2.body;
                 assert.isOk(kongOAuth2.total >= 1, 'consumer must have oauth2 setting');
                 assert.equal(kongOAuth2.data[0].client_id, subsInfo.clientId, 'client_id must match');
                 assert.equal(kongOAuth2.data[0].client_secret, subsInfo.clientSecret, 'client_secret must match');
@@ -147,7 +151,7 @@ describe('With subscriptions,', function () {
         });
 
         it('should not trigger changes at resync for client id and secret either', function (done) {
-            var consumer = kongConsumer(appId, oauth2Api);
+            const consumer = kongConsumer(appId, oauth2Api);
             async.series({
                 addSubs: callback => utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, callback),
                 queue1: callback => utils.awaitEmptyQueue(adapterQueue, adminUserId, callback)
@@ -158,7 +162,7 @@ describe('With subscriptions,', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode, 'Resync status code not 200');
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.actions, 'Strange - resync response has no actions property');
                     if (0 !== jsonBody.actions.length) {
                         console.log(JSON.stringify(jsonBody, 0, 2));

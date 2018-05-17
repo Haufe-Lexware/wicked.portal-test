@@ -1,6 +1,6 @@
 {
-    "id": "sample-server",
-    "name": "sample-server",
+    "id": "sample-auth",
+    "name": "sample-auth",
     "desc": "Sample Authorization Server",
     "authMethods": [
         {

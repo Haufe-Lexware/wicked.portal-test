@@ -1,39 +1,47 @@
-var assert = require('chai').assert;
-var request = require('request');
-var async = require('async');
-var http = require('http');
-var URL = require('url');
-var qs = require('querystring');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
+'use strict';
 
-var adapterUrl = consts.KONG_ADAPTER_URL;
-var kongUrl = consts.KONG_ADMIN_URL;
-var gatewayUrl = consts.KONG_GATEWAY_URL;
-var apiUrl = consts.BASE_URL;
-var internalApiUrl = 'http://kong-adapter-test-data:3003/';
-var INTERNAL_API_PORT = 3003;
+/* global it, describe, before, beforeEach, after, afterEach, slow */
 
-var adminUserId = '1'; // See test-config/globals.json
-var adminEmail = 'foo@bar.com';
-var devUserId = '11'; // Fred Flintstone
-var devEmail = 'fred@flintstone.com';
+// These test cases do not apply to the Kong Adapter anymore, they
+// need to be ported to a portal-auth test suite instead.
 
-var oauth2Api = 'superduper';
+/*
+const assert = require('chai').assert;
+const request = require('request');
+const async = require('async');
+const http = require('http');
+const URL = require('url');
+const qs = require('querystring');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var adapterQueue = 'kong-adapter';
+const adapterUrl = consts.KONG_ADAPTER_URL;
+const kongUrl = consts.KONG_ADMIN_URL;
+const gatewayUrl = consts.KONG_GATEWAY_URL;
+const apiUrl = consts.BASE_URL;
+const internalApiUrl = 'http://kong-adapter-test-data:3003/';
+const INTERNAL_API_PORT = 3003;
+
+const adminUserId = '1'; // See test-config/globals.json
+const adminEmail = 'foo@bar.com';
+const devUserId = '11'; // Fred Flintstone
+const devEmail = 'fred@flintstone.com';
+
+const oauth2Api = 'superduper';
+
+const adapterQueue = 'kong-adapter';
 
 function getAuthorizationCode(authenticated_userid, api_id, client_id, scope, auth_server, callback) {
     if (typeof (auth_server) === 'function' && !callback)
         callback = auth_server;
     else if (typeof (scope) === 'function' && !auth_server && !callback)
         callback = scope;
-    var registerUrl = adapterUrl + 'oauth2/token/code';
+    const registerUrl = adapterUrl + 'oauth2/token/code';
 
-    var correlationId = utils.createRandomId();
+    const correlationId = utils.createRandomId();
     console.log('getAuthorizationCode, correlation id=' + correlationId);
 
-    var reqBody = {
+    const reqBody = {
         authenticated_userid: authenticated_userid,
         api_id: api_id,
         client_id: client_id
@@ -57,18 +65,18 @@ function getAuthorizationCode(authenticated_userid, api_id, client_id, scope, au
         //assert.isNotOk(err);
         if (200 !== res.statusCode)
             return callback(new Error('/oauth2/token/code did not return 200: ' + res.statusCode));
-        var jsonBody = utils.getJson(body);
+        const jsonBody = utils.getJson(body);
         //console.log('getAuthorizationCode(), jsonBody:');
         //console.log(jsonBody);
         if (!jsonBody.redirect_uri) {
             return callback(new Error('/oauth2/token/implicit did not return a redirect_uri'));
         }
         try {
-            var redirectUriString = jsonBody.redirect_uri;
-            var redirectUri = URL.parse(redirectUriString);
-            var query = redirectUri.query;
+            const redirectUriString = jsonBody.redirect_uri;
+            const redirectUri = URL.parse(redirectUriString);
+            const query = redirectUri.query;
             //console.log('query: ' + query);
-            var queryParams = qs.parse(query);
+            const queryParams = qs.parse(query);
             //console.log(queryParams);
             //console.log('Code: ' + queryParams.code);
             //console.log('callback: ' + callback);
@@ -86,7 +94,7 @@ function getAccessToken(code, client_id, client_secret, api_id, callback) {
     const headers = {
         'X-Forwarded-Proto': 'https'
     };
-    var tokenRequest = {
+    const tokenRequest = {
         grant_type: 'authorization_code',
         code: code,
         client_id: client_id,
@@ -105,15 +113,15 @@ function getAccessToken(code, client_id, client_secret, api_id, callback) {
             return callback(new Error('/oauth2/token/code did not return 200: ' + res.statusCode));
         //console.log('getAccessToken(), body:');
         //console.log(body);
-        var jsonBody = utils.getJson(body);
+        const jsonBody = utils.getJson(body);
         //console.log(jsonBody);
         callback(null, jsonBody.access_token);
     });
 }
 
 describe('Using the Authorization Code grant,', function () {
-    var badAppId = 'bad_app';
-    var appId = 'good_app';
+    const badAppId = 'bad_app';
+    const appId = 'good_app';
 
     before(function (done) {
         async.series([
@@ -136,9 +144,9 @@ describe('Using the Authorization Code grant,', function () {
     });
 
     // This will be updated each time.
-    var clientId = null;
-    var clientSecret = null;
-    var badClientId = null;
+    let clientId = null;
+    let clientSecret = null;
+    let badClientId = null;
 
     beforeEach(function (done) {
         // Reset before each test
@@ -212,3 +220,4 @@ describe('Using the Authorization Code grant,', function () {
         });
     });
 });
+*/

@@ -10,6 +10,13 @@
         "kongAdapterUrl": "http://portal-kong-adapter:3002/",
         "kongAdminUrl": "http://kong:8001/"
     },
+    "storage": {
+        "type": "${WICKED_STORAGE}",
+        "pgHost": "${PORTAL_STORAGE_PGHOST}",
+        "pgPort": "${PORTAL_STORAGE_PGPORT}",
+        "pgUser": "kong",
+        "pgPassword": "kong"
+    },
     "validatedUserGroup": "dev",
     "api": {
         "headerName": "X-ApiKey",

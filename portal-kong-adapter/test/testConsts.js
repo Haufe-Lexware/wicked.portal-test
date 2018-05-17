@@ -1,4 +1,6 @@
-consts = {};
+'use strict';
+
+const consts = {};
 
 consts.BASE_URL = 'http://portal-api:3001/';
 consts.KONG_ADAPTER_URL = 'http://portal-kong-adapter:3002/';

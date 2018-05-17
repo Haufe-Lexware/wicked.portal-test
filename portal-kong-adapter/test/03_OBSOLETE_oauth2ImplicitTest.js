@@ -1,31 +1,41 @@
-var assert = require('chai').assert;
-var request = require('request');
-var async = require('async');
-var http = require('http');
-var URL = require('url');
-var qs = require('querystring');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-var enableDestroy = require('server-destroy');
+'use strict';
 
-var adapterUrl = consts.KONG_ADAPTER_URL;
-var kongUrl = consts.KONG_ADMIN_URL;
-var gatewayUrl = consts.KONG_GATEWAY_URL;
-var apiUrl = consts.BASE_URL;
-var internalApiUrl = 'http://kong-adapter-test-data:3003/';
-var INTERNAL_API_PORT = 3003;
+/* global it, describe, before, beforeEach, after, afterEach, slow */
 
-var adminUserId = '1'; // See test-config/globals.json
-var adminEmail = 'foo@bar.com';
-var devUserId = '11'; // Fred Flintstone
-var devEmail = 'fred@flintstone.com';
+// These test cases do not apply to the Kong Adapter anymore, they
+// need to be ported to a portal-auth test suite instead.
 
-var oauth2Api = 'mobile';
+/*
+const assert = require('chai').assert;
+const request = require('request');
+const async = require('async');
+const http = require('http');
+const URL = require('url');
+const qs = require('querystring');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
+const enableDestroy = require('server-destroy');
 
-var adapterQueue = 'kong-adapter';
+const adapterUrl = consts.KONG_ADAPTER_URL;
+const kongUrl = consts.KONG_ADMIN_URL;
+const gatewayUrl = consts.KONG_GATEWAY_URL;
+const apiUrl = consts.BASE_URL;
+const internalApiUrl = 'http://kong-adapter-test-data:3003/';
+const INTERNAL_API_PORT = 3003;
 
-var __server = null;
-var __reqHandler = null;
+const adminUserId = '1'; // See test-config/globals.json
+const adminEmail = 'foo@bar.com';
+const devUserId = '11'; // Fred Flintstone
+const devEmail = 'fred@flintstone.com';
+
+const oauth2Api = 'mobile';
+
+const adapterQueue = 'kong-adapter';
+
+let __server = null;
+let __reqHandler = null;
+
+const WRITE_SUBS_SCOPE = 'write_subscriptions';
 
 function hookServer(serverListening) {
     if (__server)
@@ -63,12 +73,12 @@ function getAccessToken(authenticated_userid, api_id, client_id, scope, auth_ser
         callback = auth_server;
     else if (typeof (scope) === 'function' && !auth_server && !callback)
         callback = scope;
-    var registerUrl = adapterUrl + 'oauth2/token/implicit';
+    const registerUrl = adapterUrl + 'oauth2/token/implicit';
 
-    var correlationId = utils.createRandomId();
+    const correlationId = utils.createRandomId();
     console.log('getAccessToken, correlation id=' + correlationId);
 
-    var reqBody = {
+    const reqBody = {
         authenticated_userid: authenticated_userid,
         api_id: api_id,
         client_id: client_id
@@ -93,18 +103,18 @@ function getAccessToken(authenticated_userid, api_id, client_id, scope, auth_ser
         if (200 !== res.statusCode)
             return callback(new Error('/oauth2/token/implicit did not return 200: ' + res.statusCode));
         //assert.equal(200, res.statusCode);
-        var jsonBody = utils.getJson(body);
+        const jsonBody = utils.getJson(body);
         //console.log('getAccessToken(), jsonBody:');
         //console.log(jsonBody);
         if (!jsonBody.redirect_uri)
             return callback(new Error('/oauth2/token/implicit did not return a redirect_uri'));
         try {
-            var redirectUriString = jsonBody.redirect_uri;
-            var redirectUri = URL.parse(redirectUriString);
+            const redirectUriString = jsonBody.redirect_uri;
+            const redirectUri = URL.parse(redirectUriString);
             //assert.isOk(redirectUri.hash, 'redirect_uri must have a hash (fragment)');
             //assert.isOk(redirectUri.hash.startsWith('#'), 'redirect_uri has must start with #');
-            var fragmentString = redirectUri.hash.substring(1); // Strip #
-            var queryParams = qs.parse(fragmentString);
+            const fragmentString = redirectUri.hash.substring(1); // Strip #
+            const queryParams = qs.parse(fragmentString);
             //assert.isOk(queryParams.access_token, 'access_token must be present');
             //assert.isOk(queryParams.expires_in, 'expires_in must be present');
             //assert.isOk(queryParams.token_type, 'token_type must be present');
@@ -126,7 +136,7 @@ function revokeAccessToken(accessToken, authenticatedUserId, callback) {
     else
         throw new Error('revokeAccessToken - either accessToken or authenticatedUserId must be non-null');
 
-    var correlationId = utils.createRandomId();
+    const correlationId = utils.createRandomId();
     console.log(`revokeAccessToken ${revokeUrl}, correlation id=${correlationId}`);
 
     request.delete({
@@ -146,10 +156,10 @@ describe('With oauth2 implicit grant APIs,', function () {
 
     this.timeout(5000);
 
-    var provisionKey = null;
+    let provisionKey = null;
 
-    var badAppId = 'bad_app';
-    var appId = 'good_app';
+    const badAppId = 'bad_app';
+    const appId = 'good_app';
 
     before(function (done) {
         async.series([
@@ -177,10 +187,10 @@ describe('With oauth2 implicit grant APIs,', function () {
             kongPlugins: callback => utils.kongGet('apis/' + oauth2Api + '/plugins', callback)
         }, function (err, results) {
             assert.isNotOk(err, 'some action went wrong: ' + err);
-            var plugins = results.kongPlugins.body;
+            const plugins = results.kongPlugins.body;
             //console.log(JSON.stringify(plugins, null, 2));
             assert.equal(3, plugins.total, 'api needs three plugins (oauth2, acl and correlation-id)');
-            var oauthPlugin = utils.findWithName(plugins.data, 'oauth2');
+            const oauthPlugin = utils.findWithName(plugins.data, 'oauth2');
             assert.isOk(oauthPlugin, 'oauth2 plugin must be present');
             provisionKey = oauthPlugin.config.provision_key;
             //console.log(oauthPlugin);
@@ -192,7 +202,7 @@ describe('With oauth2 implicit grant APIs,', function () {
     describe('with an application with redirect URI,', function (done) {
 
         // This will be updated each time.
-        var clientId = null;
+        let clientId = null;
 
         beforeEach(function (done) {
             // Reset before each test
@@ -220,7 +230,7 @@ describe('With oauth2 implicit grant APIs,', function () {
         });
 
         it('should be possible to get an access token', function (done) {
-            var registerUrl = adapterUrl + 'oauth2/token/implicit';
+            const registerUrl = adapterUrl + 'oauth2/token/implicit';
             //console.log(registerUrl);
             request.post({
                 url: registerUrl,
@@ -234,7 +244,7 @@ describe('With oauth2 implicit grant APIs,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 //console.log(jsonBody);
                 assert.isOk(jsonBody.redirect_uri);
                 done();
@@ -242,7 +252,7 @@ describe('With oauth2 implicit grant APIs,', function () {
         });
 
         it('should not be possible to get an access token without subscription', function (done) {
-            var registerUrl = adapterUrl + 'oauth2/token/implicit';
+            const registerUrl = adapterUrl + 'oauth2/token/implicit';
             //console.log(registerUrl);
             request.post({
                 url: registerUrl,
@@ -280,7 +290,7 @@ describe('With oauth2 implicit grant APIs,', function () {
         it('should not be possible to add a subscription', function (done) {
             request.post({
                 url: apiUrl + 'applications/' + badAppId + '/subscriptions',
-                headers: utils.makeHeaders(devUserId),
+                headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
                 json: true,
                 body: {
                     application: badAppId,
@@ -290,7 +300,7 @@ describe('With oauth2 implicit grant APIs,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(400, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.message, 'Application does not have a redirectUri');
                 done();
             });
@@ -309,7 +319,7 @@ describe('With oauth2 implicit grant APIs,', function () {
         });
 
         // This will be updated each time.
-        var clientId = null;
+        let clientId = null;
 
         beforeEach(function (done) {
             // Reset before each test
@@ -345,7 +355,7 @@ describe('With oauth2 implicit grant APIs,', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody.message);
                 done();
             });
@@ -458,7 +468,7 @@ describe('With oauth2 implicit grant APIs,', function () {
                 assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
                 //console.log('Access Token: ' + accessToken);
                 // This is called from the embedded server, before the call returns
-                var headers = null;
+                let headers = null;
                 useReqHandler(function (req) {
                     //console.log(req.headers);
                     headers = req.headers;
@@ -496,89 +506,85 @@ describe('With oauth2 implicit grant APIs,', function () {
             });
         });
 
-        
 
-        /*
-                it('Kong should return the desired additional headers', function (done) {
-                    getAccessToken('12347', oauth2Api, clientId, function (err, accessToken) {
-                        assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
-                        //console.log('Access Token: ' + accessToken);
-                        // This is called from the embedded server, before the call returns
-                        var headers = null;
-                        useReqHandler(function (req) {
-                            headers = req.headers;
-                        });
-                        request.get({
-                            url: gatewayUrl + 'mobile/',
-                            headers: { 'Authorization': 'Bearer ' + accessToken }
-                        }, function (err, res, body) {
-                            assert.isNotOk(err);
-                            assert.equal(200, res.statusCode);
-                            // 'X-Internal-Id': 'ABCDEF',
-                            // 'X-More-Headers': '123456'
-                            assert.isOk(headers, 'headers must have been collected');
-                            assert.isOk(headers['x-internal-id'], 'x-internal-id must be present');
-                            assert.equal(headers['x-internal-id'], 'ABCDEF', 'x-internal-id must match input');
-                            assert.isOk(headers['x-more-headers'], 'x-more-headers must be present');
-                            assert.equal(headers['x-more-headers'], '123456', 'x-more-headers must match input');
-                            done();
-                        });
-                    });
-                });
-        */
 
-        /*
-                it('Kong should have been configured with correct plugins for consumer', function (done) {
-                    getAccessToken('test4@test.com', '12348', oauth2Api, clientId, function (err, accessToken) {
-                        assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
-                        assert.isOk(accessToken);
-                        // 1. get consumer id from kong for custom_id
-                        // 2. get plugins for this consumer and API
-                        // 3. check that they are correct (see also plans.json, this is what goes in there)
-                        async.waterfall([
-                            function (callback) {
-                                request.get({
-                                    url: kongUrl + 'consumers?custom_id=12348'
-                                }, function (err, res, body) {
-                                    assert.isNotOk(err);
-                                    assert.equal(200, res.statusCode);
-                                    var consumers = utils.getJson(body);
-                                    assert.equal(1, consumers.total);
-                                    var consumerId = consumers.data[0].id;
-                                    return callback(null, consumerId);
-                                });
-                            },
-                            function (consumerId, callback) {
-                                request.get({
-                                    url: kongUrl + 'apis/' + oauth2Api + '/plugins?consumer_id=' + consumerId
-                                }, function (err, res, body) {
-                                    assert.isNotOk(err, 'getting consumer API plugins failed');
-                                    assert.equal(200, res.statusCode, 'status code was not 200');
-                                    var plugins = utils.getJson(body);
-                                    assert.isOk(plugins.data, 'plugin data was returned');
-                                    //assert.equal(2, plugins.total, 'plugin count for consumer has to be 2 (rate-limiting and request-transformer)');
-                                    return callback(null, plugins.data);
-                                });
-                            }
-                        ], function (err, consumerPlugins) {
-                            assert.isNotOk(err); // This is somewhat superfluous
-                            // This was defined in plans.json for basic plan, which is what the clientId
-                            // subscription is for.    
-                            var rateLimit = utils.findWithName(consumerPlugins, 'rate-limiting');
-                            assert.isOk(rateLimit, 'rate-limiting plugin was not found');
-                            var reqTransformer = utils.findWithName(consumerPlugins, 'request-transformer');
-                            assert.isOk(reqTransformer, 'request-transformer plugin was not found');
-                            done();
-                        });
-                    });
-                });
-        */
+        // it('Kong should return the desired additional headers', function (done) {
+        //     getAccessToken('12347', oauth2Api, clientId, function (err, accessToken) {
+        //         assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
+        //         //console.log('Access Token: ' + accessToken);
+        //         // This is called from the embedded server, before the call returns
+        //         var headers = null;
+        //         useReqHandler(function (req) {
+        //             headers = req.headers;
+        //         });
+        //         request.get({
+        //             url: gatewayUrl + 'mobile/',
+        //             headers: { 'Authorization': 'Bearer ' + accessToken }
+        //         }, function (err, res, body) {
+        //             assert.isNotOk(err);
+        //             assert.equal(200, res.statusCode);
+        //             // 'X-Internal-Id': 'ABCDEF',
+        //             // 'X-More-Headers': '123456'
+        //             assert.isOk(headers, 'headers must have been collected');
+        //             assert.isOk(headers['x-internal-id'], 'x-internal-id must be present');
+        //             assert.equal(headers['x-internal-id'], 'ABCDEF', 'x-internal-id must match input');
+        //             assert.isOk(headers['x-more-headers'], 'x-more-headers must be present');
+        //             assert.equal(headers['x-more-headers'], '123456', 'x-more-headers must match input');
+        //             done();
+        //         });
+        //     });
+        // });
+
+        // it('Kong should have been configured with correct plugins for consumer', function (done) {
+        //     getAccessToken('test4@test.com', '12348', oauth2Api, clientId, function (err, accessToken) {
+        //         assert.isNotOk(err, 'getAccessToken returned an error: ' + err);
+        //         assert.isOk(accessToken);
+        //         // 1. get consumer id from kong for custom_id
+        //         // 2. get plugins for this consumer and API
+        //         // 3. check that they are correct (see also plans.json, this is what goes in there)
+        //         async.waterfall([
+        //             function (callback) {
+        //                 request.get({
+        //                     url: kongUrl + 'consumers?custom_id=12348'
+        //                 }, function (err, res, body) {
+        //                     assert.isNotOk(err);
+        //                     assert.equal(200, res.statusCode);
+        //                     var consumers = utils.getJson(body);
+        //                     assert.equal(1, consumers.total);
+        //                     var consumerId = consumers.data[0].id;
+        //                     return callback(null, consumerId);
+        //                 });
+        //             },
+        //             function (consumerId, callback) {
+        //                 request.get({
+        //                     url: kongUrl + 'apis/' + oauth2Api + '/plugins?consumer_id=' + consumerId
+        //                 }, function (err, res, body) {
+        //                     assert.isNotOk(err, 'getting consumer API plugins failed');
+        //                     assert.equal(200, res.statusCode, 'status code was not 200');
+        //                     var plugins = utils.getJson(body);
+        //                     assert.isOk(plugins.data, 'plugin data was returned');
+        //                     //assert.equal(2, plugins.total, 'plugin count for consumer has to be 2 (rate-limiting and request-transformer)');
+        //                     return callback(null, plugins.data);
+        //                 });
+        //             }
+        //         ], function (err, consumerPlugins) {
+        //             assert.isNotOk(err); // This is somewhat superfluous
+        //             // This was defined in plans.json for basic plan, which is what the clientId
+        //             // subscription is for.    
+        //             var rateLimit = utils.findWithName(consumerPlugins, 'rate-limiting');
+        //             assert.isOk(rateLimit, 'rate-limiting plugin was not found');
+        //             var reqTransformer = utils.findWithName(consumerPlugins, 'request-transformer');
+        //             assert.isOk(reqTransformer, 'request-transformer plugin was not found');
+        //             done();
+        //         });
+        //     });
+        // });
     });
 
     describe('when dealing with scopes,', function () {
         // This will be updated each time.
-        var mobileClientId = null;
-        var partnerClientId = null;
+        let mobileClientId = null;
+        let partnerClientId = null;
 
         beforeEach(function (done) {
             // Reset before each test
@@ -589,14 +595,14 @@ describe('With oauth2 implicit grant APIs,', function () {
                 mobile: callback => utils.addSubscription(appId, devUserId, 'mobile', 'basic', null, function (err, subsInfo) {
                     //console.log(subsInfo);
                     assert.isNotOk(err);
-                    var clientId = subsInfo.clientId;
+                    const clientId = subsInfo.clientId;
                     assert.isOk(clientId);
                     callback(null, clientId);
                 }),
                 partner: callback => utils.addSubscription(appId, devUserId, 'partner', 'basic', null, function (err, subsInfo) {
                     //console.log(subsInfo);
                     assert.isNotOk(err);
-                    var clientId = subsInfo.clientId;
+                    const clientId = subsInfo.clientId;
                     assert.isOk(clientId);
                     callback(null, clientId);
                 })
@@ -668,8 +674,8 @@ describe('With oauth2 implicit grant APIs,', function () {
         });
 
         it('should be possible to get a token with scopes as a huge array (500 scopes)', function (done) {
-            var manyScopes = [];
-            for (var i=0; i<500; ++i)
+            const manyScopes = [];
+            for (let i = 0; i < 500; ++i)
                 manyScopes.push('scope_' + i);
             getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
                 assert.isNotOk(err, 'an access token could not be retrieved');
@@ -679,8 +685,8 @@ describe('With oauth2 implicit grant APIs,', function () {
         });
 
         it('should be possible to get a token with scopes as a huge array (1000 scopes)', function (done) {
-            var manyScopes = [];
-            for (var i=0; i<1000; ++i)
+            const manyScopes = [];
+            for (let i = 0; i < 1000; ++i)
                 manyScopes.push('scope_' + i);
             getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
                 assert.isNotOk(err, 'an access token could not be retrieved');
@@ -691,28 +697,27 @@ describe('With oauth2 implicit grant APIs,', function () {
 
 
         // Re-enable this when Bug is fixed
-        /*
-        it('should be possible to get a token with scopes as a huge array (2500 scopes)', function (done) {
-            var manyScopes = [];
-            for (var i=0; i<2500; ++i)
-                manyScopes.push('scope_' + i);
-            getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
-                assert.isNotOk(err, 'an access token could not be retrieved');
-                assert.isOk(accessToken, 'an access token could not be retrieved');
-                done();
-            });
-        });
+        // it('should be possible to get a token with scopes as a huge array (2500 scopes)', function (done) {
+        //     const manyScopes = [];
+        //     for (let i=0; i<2500; ++i)
+        //         manyScopes.push('scope_' + i);
+        //     getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
+        //         assert.isNotOk(err, 'an access token could not be retrieved');
+        //         assert.isOk(accessToken, 'an access token could not be retrieved');
+        //         done();
+        //     });
+        // });
 
-        it('should be possible to get a token with scopes as a huge array (5000 scopes)', function (done) {
-            var manyScopes = [];
-            for (var i=0; i<5000; ++i)
-                manyScopes.push('scope_' + i);
-            getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
-                assert.isNotOk(err, 'an access token could not be retrieved');
-                assert.isOk(accessToken, 'an access token could not be retrieved');
-                done();
-            });
-        });
-        */
+        // it('should be possible to get a token with scopes as a huge array (5000 scopes)', function (done) {
+        //     const manyScopes = [];
+        //     for (let i=0; i<5000; ++i)
+        //         manyScopes.push('scope_' + i);
+        //     getAccessToken('98765', 'mobile', mobileClientId, manyScopes, function (err, accessToken) {
+        //         assert.isNotOk(err, 'an access token could not be retrieved');
+        //         assert.isOk(accessToken, 'an access token could not be retrieved');
+        //         done();
+        //     });
+        // });
     });
 });
+*/

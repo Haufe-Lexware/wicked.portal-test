@@ -74,46 +74,72 @@ node('docker') {
 
     stage('Portal Tests') {
 
-        env.BUILD_ALPINE = '';
-        env.REDIS_SESSIONS = '';
-        sh './run-portal-tests.sh'
+        echo 'Skipping (not yet implemented)'
+
+        // env.BUILD_ALPINE = '';
+        // env.REDIS_SESSIONS = '';
+        // sh './run-portal-tests.sh'
 
     }
 
     stage('Portal Tests (alpine)') {
 
-        env.BUILD_ALPINE = '-alpine';
-        env.REDIS_SESSIONS = '';
-        sh './run-portal-tests.sh'
+        echo 'Skipping (not yet implemented)'
+
+        // env.BUILD_ALPINE = '-alpine';
+        // env.REDIS_SESSIONS = '';
+        // sh './run-portal-tests.sh'
 
     }
 
     stage('Portal Tests (redis)') {
 
-        env.BUILD_ALPINE = '';
-        env.REDIS_SESSIONS = 'true';
-        sh './run-portal-tests.sh'
+        echo 'Skipping (not yet implemented)'
+
+        // env.BUILD_ALPINE = '';
+        // env.REDIS_SESSIONS = 'true';
+        // sh './run-portal-tests.sh'
 
     }
 
     stage('Portal Tests (redis, alpine)') {
 
-        env.BUILD_ALPINE = '-alpine';
-        env.REDIS_SESSIONS = 'true';
-        sh './run-portal-tests.sh'
+        echo 'Skipping (not yet implemented)'
+
+        // env.BUILD_ALPINE = '-alpine';
+        // env.REDIS_SESSIONS = 'true';
+        // sh './run-portal-tests.sh'
 
     }
 
     stage('Kong Adapter Tests') {
 
-        env.BUILD_ALPINE = '';
+        env.BUILD_ALPINE = ''
+        env.BUILD_POSTGRES = ''
         sh './run-kong-adapter-tests.sh'
 
     }
 
     stage('Kong Adapter Tests (alpine)') {
 
-        env.BUILD_ALPINE = '-alpine';
+        env.BUILD_ALPINE = '-alpine'
+        env.BUILD_POSTGRES = ''
+        sh './run-kong-adapter-tests.sh'
+
+    }
+
+    stage('Kong Adapter Tests (postgres)') {
+
+        env.BUILD_ALPINE = ''
+        env.BUILD_POSTGRES = 'true'
+        sh './run-kong-adapter-tests.sh'
+
+    }
+
+    stage('Kong Adapter Tests (postgres, alpine)') {
+
+        env.BUILD_ALPINE = '-alpine'
+        env.BUILD_POSTGRES = 'true'
         sh './run-kong-adapter-tests.sh'
 
     }
