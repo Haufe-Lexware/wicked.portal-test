@@ -58,7 +58,7 @@ describe('/auth-server', function () {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 200);
                 var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.name, 'sample-server');
+                assert.equal(jsonBody.name, 'sample-auth');
                 done();
             });
         });
@@ -71,7 +71,7 @@ describe('/auth-server', function () {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 200);
                 var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.name, 'sample-server');
+                assert.equal(jsonBody.name, 'sample-auth');
                 assert.isOk(jsonBody.authMethods, 'Missing property authMethods');
                 assert.isOk(jsonBody.config, 'Missing config property');
                 assert.isOk(jsonBody.config.api, 'Missing config.api property');
@@ -90,7 +90,7 @@ describe('/auth-server', function () {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 200);
                 var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.name, 'sample-server');
+                assert.equal(jsonBody.name, 'sample-auth');
                 assert.isOk(jsonBody.authMethods, 'Missing property authMethods');
                 assert.isOk(jsonBody.config, 'Missing config property');
                 assert.isOk(jsonBody.config.api, 'Missing config.api property');
