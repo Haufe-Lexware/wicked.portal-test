@@ -2,18 +2,20 @@
 
 /* global it, describe, before, beforeEach, after, afterEach, slow */
 
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 const READ_VERIF_SCOPE = 'read_verifications';
 const WRITE_VERIF_SCOPE = 'write_verifications';
 const READ_USERS_SCOPE = 'read_users';
 const WRITE_USERS_SCOPE = 'write_users';
 const INVALID_SCOPE = 'invalid_verifications';
+const DUMMY_LINK = 'http://dummy.com/{{id}}';
+const BAD_LINK = 'http://dummy.com/';
 
 describe('/verifications', function () {
     it('should return a 403 if creating a new email verification with wrong scope', function (done) {
@@ -23,7 +25,8 @@ describe('/verifications', function () {
             body: {
                 type: 'email',
                 email: 'unvalidated@user.com',
-                userId: '9876543210'
+                userId: '9876543210',
+                link: DUMMY_LINK
             },
             json: true
         }, function (err, res, body) {
@@ -40,12 +43,52 @@ describe('/verifications', function () {
             body: {
                 type: 'email',
                 email: 'unvalidated@user.com',
-                userId: '9876543210'
+                userId: '9876543210',
+                link: DUMMY_LINK
             },
             json: true
         }, function (err, res, body) {
             assert.isNotOk(err);
             assert.equal(204, res.statusCode);
+            done();
+        });
+    });
+
+    it('should return a 400 if a link is not passed in', function (done) {
+        request.post({
+            url: baseUrl + 'verifications',
+            headers: utils.makeHeaders('1', WRITE_VERIF_SCOPE),
+            body: {
+                type: 'email',
+                email: 'unvalidated@user.com',
+                userId: '9876543210'
+            },
+            json: true
+        }, function (err, res, body) {
+            assert.isNotOk(err);
+            assert.equal(400, res.statusCode);
+            const jsonBody = utils.getJson(body);
+            assert.include(jsonBody.message, 'is missing', 'Wrong error message');
+            done();
+        });
+    });
+
+    it('should return a 400 if the link doesn\'t contain a {{id}} template', function (done) {
+        request.post({
+            url: baseUrl + 'verifications',
+            headers: utils.makeHeaders('1', WRITE_VERIF_SCOPE),
+            body: {
+                type: 'email',
+                email: 'unvalidated@user.com',
+                userId: '9876543210',
+                link: BAD_LINK
+            },
+            json: true
+        }, function (err, res, body) {
+            assert.isNotOk(err);
+            assert.equal(400, res.statusCode);
+            const jsonBody = utils.getJson(body);
+            assert.include(jsonBody.message, 'link must contain a mustache placeholder', 'Wrong error message');
             done();
         });
     });
@@ -61,7 +104,7 @@ describe('/verifications', function () {
         });
     });
 
-    var verifId;
+    let verifId;
 
     it('should, as an admin, be possible to retrieve the verifications', function (done) {
         request.get({
@@ -70,9 +113,26 @@ describe('/verifications', function () {
         }, function (err, res, body) {
             assert.isNotOk(err);
             assert.equal(200, res.statusCode);
-            var jsonBody = utils.getJson(body);
+            const jsonBody = utils.getJson(body);
             assert.equal(1, jsonBody.length);
             verifId = jsonBody[0].id;
+            done();
+        });
+    });
+
+    it('should when retrieving contain the link which was passed in', function (done) {
+        request.get({
+            url: baseUrl + 'verifications',
+            headers: utils.makeHeaders('1', READ_VERIF_SCOPE)
+        }, function (err, res, body) {
+            assert.isNotOk(err);
+            assert.equal(200, res.statusCode);
+            const jsonBody = utils.getJson(body);
+            assert.equal(1, jsonBody.length);
+            verifId = jsonBody[0].id;
+            const link = jsonBody[0].link;
+            assert.isOk(link, 'Verification link not present');
+            assert.equal(link, DUMMY_LINK, 'Verification link wrong');
             done();
         });
     });
@@ -130,7 +190,7 @@ describe('/verifications', function () {
         }, function (err, res, body) {
             assert.isNotOk(err);
             assert.equal(200, res.statusCode);
-            var jsonBody = utils.getJson(body);
+            const jsonBody = utils.getJson(body);
             assert.equal(true, jsonBody.validated);
             done();
         });
