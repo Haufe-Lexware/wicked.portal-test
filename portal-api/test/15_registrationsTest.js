@@ -192,9 +192,9 @@ describe('/registrations', () => {
                 });
             });
 
-            it('should return a filtered list of registrations (name_filter)', (done) => {
+            it('should return a filtered list of registrations (filter)', (done) => {
                 request.get({
-                    url: baseUrl + 'pools/' + poolId + '?name_filter=Developer',
+                    url: baseUrl + 'pools/' + poolId + '?' + utils.makeFilter({ name: 'Developer' }),
                     headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
@@ -223,7 +223,7 @@ describe('/registrations', () => {
 
             it('should return a filtered list of registrations (namespace+name filter)', (done) => {
                 request.get({
-                    url: baseUrl + 'pools/' + poolId + '?namespace=ns1&name_filter=Developer',
+                    url: baseUrl + 'pools/' + poolId + '?namespace=ns1&' + utils.makeFilter({ name: 'Developer' }),
                     headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
@@ -238,7 +238,7 @@ describe('/registrations', () => {
 
             it('should return an empty filtered list of registrations (namespace+name filter, no match)', (done) => {
                 request.get({
-                    url: baseUrl + 'pools/' + poolId + '?namespace=ns2&name_filter=Developer',
+                    url: baseUrl + 'pools/' + poolId + '?namespace=ns2&' + utils.makeFilter({ name: 'Developer' }),
                     headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);

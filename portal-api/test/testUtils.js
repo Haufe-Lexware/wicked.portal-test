@@ -5,6 +5,7 @@
 const assert = require('chai').assert;
 const crypto = require('crypto');
 const request = require('request');
+const qs = require('querystring');
 const consts = require('./testConsts');
 
 const utils = {};
@@ -69,6 +70,10 @@ utils.makeHeaders = function (userId, scopes) {
         headers['Correlation-Id'] = utils.correlationId;
 
     return headers;
+};
+
+utils.makeFilter = function (filter) {
+    return `filter=${qs.escape(JSON.stringify(filter))}`;
 };
 
 utils.onlyScope = function (scopes) {
