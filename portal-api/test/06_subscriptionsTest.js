@@ -779,9 +779,12 @@ describe('/applications/<appId>/subscriptions', function () {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
                         var jsonBody = utils.getJson(body);
-                        assert.equal(1, jsonBody.length);
-                        assert.equal(jsonBody[0].application, appId);
-                        assert.equal(jsonBody[0].plan, 'basic');
+                        assert.isOk(jsonBody.items);
+                        assert.isArray(jsonBody.items);
+                        assert.equal(jsonBody.items.length, 1);
+                        assert.equal(jsonBody.count, 1);
+                        assert.equal(jsonBody.items[0].application, appId);
+                        assert.equal(jsonBody.items[0].plan, 'basic');
                         done();
                     });
                 });
@@ -801,7 +804,9 @@ describe('/applications/<appId>/subscriptions', function () {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
-                    assert.equal(0, jsonBody.length);
+                    assert.isOk(jsonBody.items);
+                    assert.isArray(jsonBody.items);
+                    assert.equal(0, jsonBody.items.length);
                     done();
                 });
             });
@@ -821,7 +826,9 @@ describe('/applications/<appId>/subscriptions', function () {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
                     var jsonBody = utils.getJson(body);
-                    assert.equal(0, jsonBody.length);
+                    assert.isOk(jsonBody.items);
+                    assert.isArray(jsonBody.items);
+                    assert.equal(0, jsonBody.items.length);
                     done();
                 });
             });

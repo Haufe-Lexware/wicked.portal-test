@@ -197,8 +197,12 @@ describe('/users', function () {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
                 const jsonBody = utils.getJson(body);
+                assert.isOk(jsonBody.items);
+                assert.isArray(jsonBody.items);
                 // Admin and three Initial Users are predefined, we added three users
-                assert.equal(7, jsonBody.length);
+                assert.equal(jsonBody.count, 7);
+                assert.isTrue(jsonBody.hasOwnProperty('count_cached'));
+                assert.equal(jsonBody.items.length, 7);
                 done();
             });
         });

@@ -121,6 +121,7 @@ describe('/registrations', () => {
                     const jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.items, 'answer did not contain an "items" property');
                     assert.equal(0, jsonBody.items.length);
+                    assert.equal(0, jsonBody.count);
                     done();
                 });
             });
@@ -185,6 +186,8 @@ describe('/registrations', () => {
                     const jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.items, 'answer did not contain an "items" property');
                     assert.equal(3, jsonBody.items.length);
+                    assert.equal(3, jsonBody.count);
+                    assert.isTrue(jsonBody.hasOwnProperty('count_cached'));
                     done();
                 });
             });

@@ -357,6 +357,33 @@ describe('/applications', function () {
                     done();
                 });
         });
+
+        it('should let an admin retrieve a list of all applications', function (done) {
+            request.get({
+                url: baseUrl + 'applications',
+                headers: utils.makeHeaders(adminUserId, READ_APPS_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 200, 'Unexpected status code');
+                const jsonBody = utils.getJson(body);
+                assert.isOk(jsonBody.items);
+                assert.isOk(jsonBody.count);
+                assert.isTrue(jsonBody.hasOwnProperty('count_cached'));
+                assert.isArray(jsonBody.items);
+                done();
+            });
+        });
+
+        it('should not let a non-admin retrieve a list of all applications', function (done) {
+            request.get({
+                url: baseUrl + 'applications',
+                headers: utils.makeHeaders(devUserId, READ_APPS_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 403, 'Unexpected status code');
+                done();
+            });
+        });
     }); // GET
 
     describe('PATCH', function () {
