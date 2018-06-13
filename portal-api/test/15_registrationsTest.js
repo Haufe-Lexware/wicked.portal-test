@@ -178,7 +178,7 @@ describe('/registrations', () => {
 
             it('should return a list of registrations', (done) => {
                 request.get({
-                    url: baseUrl + 'pools/' + poolId,
+                    url: baseUrl + 'pools/' + poolId + '?no_cache=1',
                     headers: utils.makeHeaders(adminUserId, READ_SCOPE)
                 }, (err, res, body) => {
                     assert.isNotOk(err);
