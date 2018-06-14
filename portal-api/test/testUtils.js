@@ -126,11 +126,14 @@ utils.setGroups = function (userId, groups, callback) {
 utils.createApplication = function (appId, appInfo, userId, callback) {
     let appName = appInfo;
     let redirectUri = null;
+    let mainUrl = null;
     if (typeof (appInfo) === 'object') {
         if (appInfo.name)
             appName = appInfo.name;
         if (appInfo.redirectUri)
             redirectUri = appInfo.redirectUri;
+        if (appInfo.mainUrl)
+            mainUrl = appInfo.mainUrl;
     }
     request.post({
         url: consts.BASE_URL + 'applications',
@@ -139,7 +142,8 @@ utils.createApplication = function (appId, appInfo, userId, callback) {
         body: {
             id: appId,
             name: appName,
-            redirectUri: redirectUri
+            redirectUri: redirectUri,
+            mainUrl: mainUrl
         }
     }, function (err, res, body) {
         assert.isNotOk(err);
