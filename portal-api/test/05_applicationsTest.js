@@ -35,7 +35,7 @@ describe('/applications', function () {
         });
     });
 
-    // And delete them afterwards    
+    // And delete them afterwards
     after(function (done) {
         utils.deleteUser(noobUserId, function () {
             utils.deleteUser(adminUserId, function () {
@@ -806,6 +806,7 @@ describe('/applications', function () {
             return {
                 id: appId,
                 name: appId,
+                description: appId,
                 mainUrl: `https://${appId}.wicked.com`
             };
         }
@@ -883,6 +884,24 @@ describe('/applications', function () {
         it('should be possible to filter for name', function (done) {
             request.get({
                 url: baseUrl + 'applications?embed=1&' + utils.makeFilter({ name: 'hello' }) + '&order_by=id&no_cache=1',
+                headers: utils.makeHeaders(adminUserId, 'read_applications')
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 200);
+                const jsonBody = utils.getJson(body);
+                // console.log(JSON.stringify(jsonBody, null, 2));
+                assert.isOk(jsonBody.items);
+                assert.isArray(jsonBody.items);
+                assert.equal(jsonBody.count, 2);
+                assert.equal(jsonBody.items[0].id, 'abcde-hello');
+                assert.equal(jsonBody.items[1].id, 'fghij-hello');
+                done();
+            });
+        });
+
+        it('should be possible to filter for description', function (done) {
+            request.get({
+                url: baseUrl + 'applications?embed=1&' + utils.makeFilter({ description: 'hello' }) + '&order_by=id&no_cache=1',
                 headers: utils.makeHeaders(adminUserId, 'read_applications')
             }, function (err, res, body) {
                 assert.isNotOk(err);

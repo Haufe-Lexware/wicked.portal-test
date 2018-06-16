@@ -127,6 +127,7 @@ utils.createApplication = function (appId, appInfo, userId, callback) {
     let appName = appInfo;
     let redirectUri = null;
     let mainUrl = null;
+    let description = null;
     if (typeof (appInfo) === 'object') {
         if (appInfo.name)
             appName = appInfo.name;
@@ -134,6 +135,8 @@ utils.createApplication = function (appId, appInfo, userId, callback) {
             redirectUri = appInfo.redirectUri;
         if (appInfo.mainUrl)
             mainUrl = appInfo.mainUrl;
+        if (appInfo.description)
+            description = appInfo.description;
     }
     request.post({
         url: consts.BASE_URL + 'applications',
@@ -143,6 +146,7 @@ utils.createApplication = function (appId, appInfo, userId, callback) {
             id: appId,
             name: appName,
             redirectUri: redirectUri,
+            description: description,
             mainUrl: mainUrl
         }
     }, function (err, res, body) {
