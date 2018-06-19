@@ -899,6 +899,58 @@ describe('/applications', function () {
             });
         });
 
+        it('should be possible to filter for id', function (done) {
+            request.get({
+                url: baseUrl + 'applications?embed=1&' + utils.makeFilter({ id: 'hello' }) + '&order_by=id&no_cache=1',
+                headers: utils.makeHeaders(adminUserId, 'read_applications')
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 200);
+                const jsonBody = utils.getJson(body);
+                // console.log(JSON.stringify(jsonBody, null, 2));
+                assert.isOk(jsonBody.items);
+                assert.isArray(jsonBody.items);
+                assert.equal(jsonBody.count, 2);
+                assert.equal(jsonBody.items[0].id, 'abcde-hello');
+                assert.equal(jsonBody.items[1].id, 'fghij-hello');
+                done();
+            });
+        });
+
+        it('should be possible to filter for ownerEmail', function (done) {
+            request.get({
+                url: baseUrl + 'applications?embed=1&' + utils.makeFilter({ ownerEmail: 'dev@random.org' }) + '&order_by=id&no_cache=1',
+                headers: utils.makeHeaders(adminUserId, 'read_applications')
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 200);
+                const jsonBody = utils.getJson(body);
+                // console.log(JSON.stringify(jsonBody, null, 2));
+                assert.isOk(jsonBody.items);
+                assert.isArray(jsonBody.items);
+                assert.equal(jsonBody.count, 1);
+                assert.equal(jsonBody.items[0].id, appId);
+                done();
+            });
+        });
+
+        it('should be possible to filter for ownerEmail and id', function (done) {
+            request.get({
+                url: baseUrl + 'applications?embed=1&' + utils.makeFilter({ id: appId, ownerEmail: 'dev@random.org' }) + '&order_by=id&no_cache=1',
+                headers: utils.makeHeaders(adminUserId, 'read_applications')
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 200);
+                const jsonBody = utils.getJson(body);
+                // console.log(JSON.stringify(jsonBody, null, 2));
+                assert.isOk(jsonBody.items);
+                assert.isArray(jsonBody.items);
+                assert.equal(jsonBody.count, 1);
+                assert.equal(jsonBody.items[0].id, appId);
+                done();
+            });
+        });
+
         it('should be possible to filter for description', function (done) {
             request.get({
                 url: baseUrl + 'applications?embed=1&' + utils.makeFilter({ description: 'hello' }) + '&order_by=id&no_cache=1',
