@@ -632,7 +632,25 @@ describe('/applications', function () {
                     });
                 });
             });
-        }); // DELETE
+        });
+        
+        it('should remove application from index', function (done) {
+            utils.createApplication('otherapp', 'My Application', noobUserId, function () {
+                utils.deleteApplication('otherapp', noobUserId, function () {
+                    request({
+                        url: baseUrl + 'applications',
+                        headers: utils.makeHeaders(adminUserId, READ_APPS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        const jsonBody = utils.getJson(body);
+                        const expectNothing = jsonBody.items.find(a => a.id === 'otherapp');
+                        assert.isNotOk(expectNothing, 'Application was not deleted from index');
+                        done();
+                    });
+                });
+            });
+        });// DELETE
     }); // /applications
 
     describe('/roles', function () {
