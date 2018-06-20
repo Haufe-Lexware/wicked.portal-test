@@ -117,6 +117,22 @@ describe('/applications', function () {
             });
         });
 
+        it('should not be possible to add a duplicate appId (differing in case)', function (done) {
+            request.post({
+                url: baseUrl + 'applications',
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: appId,
+                    name: appName.toUpperCase()
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(409, res.statusCode);
+                done();
+            });
+        });
+
         it('should not be possible to create a new application without user', function (done) {
             request.post({
                 url: baseUrl + 'applications',
