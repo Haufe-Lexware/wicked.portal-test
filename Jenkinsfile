@@ -20,6 +20,7 @@ properties([
             "wicked.portal/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
             "wicked.portal-api/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
             "wicked.portal-kong-adapter/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
+            "wicked.portal-auth/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
             "wicked.kong/" + env.BRANCH_NAME.replaceAll("/", "%2F"),
             threshold: hudson.model.Result.SUCCESS]
     ])
