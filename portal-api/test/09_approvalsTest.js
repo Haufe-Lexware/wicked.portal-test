@@ -2,12 +2,12 @@
 
 /* global it, describe, before, beforeEach, after, afterEach, slow */
 
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 const READ_SUBS_SCOPE = 'read_subscriptions';
 const WRITE_SUBS_SCOPE = 'write_subscriptions';
@@ -17,17 +17,17 @@ const INVALID_SCOPE = 'invalid_approvals';
 
 describe('/approvals', function () {
 
-    var devUserId = '';
-    var superDevUserId = '';
-    var adminUserId = '';
-    var noobUserId = '';
-    var approverUserId = '';
+    let devUserId = '';
+    let superDevUserId = '';
+    let adminUserId = '';
+    let noobUserId = '';
+    let approverUserId = '';
 
-    var appId = 'approval-test';
-    var superAppId = 'super-approval-test';
-    var publicApi = 'superduper';
-    var privateApi = 'partner';
-    var veryPrivateApi = 'restricted';
+    const appId = 'approval-test';
+    const superAppId = 'super-approval-test';
+    const publicApi = 'superduper';
+    const privateApi = 'partner';
+    const veryPrivateApi = 'restricted';
 
     // Let's create some users and an application to play with
     before(function (done) {
@@ -91,11 +91,71 @@ describe('/approvals', function () {
                     utils.deleteSubscription(appId, devUserId, privateApi, function () {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(1, jsonBody.length);
                         done();
                     });
                 });
+            });
+        });
+
+        it('should be possible to retrieve an approval request by id', function (done) {
+            utils.addSubscription(appId, devUserId, privateApi, 'unlimited', null, function () {
+                request({
+                    url: baseUrl + 'approvals',
+                    headers: utils.makeHeaders(adminUserId, READ_APPROVALS_SCOPE)
+                }, function (err, res, body) {
+                    const jsonBody = utils.getJson(body);
+                    const approvalId = jsonBody[0].id;
+                    request({
+                        url: baseUrl + `approvals/${approvalId}`,
+                        headers: utils.makeHeaders(adminUserId, READ_APPROVALS_SCOPE)
+                    }, function (err, res2, body2) {
+                        utils.deleteSubscription(appId, devUserId, privateApi, function () {
+                            assert.isNotOk(err);
+                            assert.equal(200, res.statusCode);
+                            assert.equal(1, jsonBody.length);
+                            assert.equal(200, res2.statusCode);
+                            const jsonBody2 = utils.getJson(body2);
+                            assert.equal(jsonBody2.id, approvalId);
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+
+        it('should return a 404 if an approval was not found', function (done) {
+            request({
+                url: `${baseUrl}approvals/invalidapprovalid`,
+                headers: utils.makeHeaders(adminUserId, READ_APPROVALS_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 404);
+                done();
+            });
+        });
+
+        it('should return a 403 if using a non-admin user id', function (done) {
+            request({
+                url: `${baseUrl}approvals/invalidapprovalid`,
+                headers: utils.makeHeaders(devUserId, READ_APPROVALS_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 403);
+                utils.assertNotScopeReject(res, body);
+                done();
+            });
+        });
+
+        it('should return a 403 if using an invalid scope', function (done) {
+            request({
+                url: `${baseUrl}approvals/invalidapprovalid`,
+                headers: utils.makeHeaders(devUserId, INVALID_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                utils.assertScopeReject(res, body);
+                done();
             });
         });
 
@@ -114,8 +174,8 @@ describe('/approvals', function () {
                             assert.isNotOk(adminErr);
                             assert.equal(200, res.statusCode);
                             assert.equal(200, adminRes.statusCode);
-                            var jsonBody = utils.getJson(body);
-                            var adminJsonBody = utils.getJson(adminBody);
+                            const jsonBody = utils.getJson(body);
+                            const adminJsonBody = utils.getJson(adminBody);
                             assert.equal(0, jsonBody.length);
                             assert.equal(1, adminJsonBody.length);
                             done();
@@ -134,7 +194,7 @@ describe('/approvals', function () {
                     utils.deleteSubscription(appId, devUserId, privateApi, function () {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(0, jsonBody.length);
                         done();
                     });
@@ -157,7 +217,7 @@ describe('/approvals', function () {
                         utils.deleteSubscription(appId, devUserId, privateApi, function () {
                             assert.isNotOk(err);
                             assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
+                            const jsonBody = utils.getJson(body);
                             assert.equal(0, jsonBody.length);
                             done();
                         });
@@ -181,7 +241,7 @@ describe('/approvals', function () {
                         utils.deleteSubscription(appId, devUserId, privateApi, function () {
                             assert.isNotOk(err);
                             assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
+                            const jsonBody = utils.getJson(body);
                             assert.equal(0, jsonBody.length);
                             done();
                         });
@@ -222,7 +282,7 @@ describe('/approvals', function () {
                         utils.deleteSubscription(appId, devUserId, privateApi, function () {
                             assert.isNotOk(err);
                             assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
+                            const jsonBody = utils.getJson(body);
                             assert.isOk(jsonBody.approved);
                             assert.isOk(jsonBody.apikey, "After approval, subscription must have an API key");
                             done();
@@ -241,7 +301,7 @@ describe('/approvals', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(0, jsonBody.length);
                         done();
                     });
@@ -259,7 +319,7 @@ describe('/approvals', function () {
                         }, function (err, res, body) {
                             assert.isNotOk(err);
                             assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
+                            const jsonBody = utils.getJson(body);
                             assert.equal(0, jsonBody.length);
                             done();
                         });
