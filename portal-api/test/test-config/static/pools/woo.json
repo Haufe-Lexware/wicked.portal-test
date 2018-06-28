@@ -1,27 +1,30 @@
 {
     "id": "woo",
     "name": "Woo Users",
-    "properties": {
-        "name": {
+    "properties": [
+        {
+            "id": "name",
             "description": "Full name of the user",
             "type": "string",
             "maxLength": 255,
             "minLength": 1,
             "required": true
         },
-        "company": {
+        {
+            "id": "company",
             "description": "Company",
             "type": "string",
             "maxLength": 255,
             "minLength": 0,
             "required": false
         },
-        "phone": {
+        {
+            "id": "phone",
             "description": "Telephone number",
             "type": "string",
             "maxLength": 63,
             "minLength": 0,
             "required": false
         }
-    }
+    ]
 }
