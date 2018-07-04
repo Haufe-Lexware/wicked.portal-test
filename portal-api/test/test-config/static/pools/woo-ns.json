@@ -1,7 +1,7 @@
 {
-    "id": "woo",
+    "id": "woo-ns",
     "name": "Woo Users",
-    "requiresNamespace": false,
+    "requiresNamespace": true,
     "properties": [
         {
             "id": "name",
