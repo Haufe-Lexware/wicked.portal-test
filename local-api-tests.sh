@@ -103,7 +103,7 @@ while [[ -n "$1" ]]; do
         "--grep")
             shift 1
             grepFilter="$1"
-            echo "Filtering test cases for '${grepFilter}''"
+            echo "Filtering test cases for '${grepFilter}'"
             ;;
     esac
     shift 1

@@ -907,4 +907,103 @@ describe('/registrations', () => {
             });
         });
     });
+
+    describe('/registrations with namespaces', () => {
+
+        before(done => {
+            async.series([
+                callback => addNamespaceIfNotPresent(poolId, 'more-ns1', callback),
+                callback => addNamespaceIfNotPresent(poolId, 'more-ns2', callback),
+            ], done);
+        });
+
+        it('should not be possible to create a registration for a non-existing namespace', (done) => {
+            request.put({
+                url: baseUrl + `pools/${poolId}/users/${devUserId}`,
+                headers: utils.makeHeaders(devUserId, WRITE_SCOPE),
+                body: {
+                    id: devUserId,
+                    name: 'Some Developer',
+                    namespace: 'non-existing-ns'
+                },
+                json: true
+            }, (err, res, body) => {
+                assert.isNotOk(err);
+                if (res.statusCode !== 400)
+                    console.error(body);
+                assert.equal(res.statusCode, 400);
+                done();
+            });
+        });
+
+        it('should be possible to create a registration for myself in one namespace', (done) => {
+            request.put({
+                url: baseUrl + `pools/${poolId}/users/${devUserId}`,
+                headers: utils.makeHeaders(devUserId, WRITE_SCOPE),
+                body: {
+                    id: devUserId,
+                    name: 'Some Developer',
+                    namespace: 'more-ns1'
+                },
+                json: true
+            }, (err, res, body) => {
+                assert.isNotOk(err);
+                if (res.statusCode !== 204)
+                    console.error(body);
+                assert.equal(res.statusCode, 204);
+                done();
+            });
+        });
+
+        it('should, as an admin, be possible to create a registration for another user in one namespace', (done) => {
+            request.put({
+                url: baseUrl + `pools/${poolId}/users/${devUserId}`,
+                headers: utils.makeHeaders(adminUserId, WRITE_SCOPE),
+                body: {
+                    id: devUserId,
+                    name: 'Some Developer',
+                    namespace: 'more-ns2'
+                },
+                json: true
+            }, (err, res, body) => {
+                assert.isNotOk(err);
+                if (res.statusCode !== 204)
+                    console.error(body);
+                assert.equal(res.statusCode, 204);
+                done();
+            });
+        });
+
+        it('should not, as a non-admin user, be possible to create a registration for another user', (done) => {
+            request.put({
+                url: baseUrl + `pools/${poolId}/users/${noobUserId}`,
+                headers: utils.makeHeaders(devUserId, WRITE_SCOPE),
+                body: {
+                    id: noobUserId,
+                    name: 'Noob Developer',
+                    namespace: 'more-ns1'
+                },
+                json: true
+            }, (err, res, body) => {
+                assert.isNotOk(err);
+                if (res.statusCode !== 403)
+                    console.error(body);
+                assert.equal(res.statusCode, 403);
+                done();
+            });
+        });
+
+        it('should be possible to retrieve both registrations as a user', (done) => {
+            request.get({
+                url: baseUrl + `pools/${poolId}/users/${devUserId}`,
+                headers: utils.makeHeaders(devUserId, READ_SCOPE)
+            }, (err, res, body) => {
+                assert.isNotOk(err);
+                const jsonBody = utils.getJson(body);
+                assert.isOk(jsonBody.items);
+                assert.equal(jsonBody.items.length, 2);
+                done();
+            });
+        });
+    });
 });
