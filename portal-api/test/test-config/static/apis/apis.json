@@ -25,7 +25,8 @@
             "tags": [
                 "Super"
             ],
-            "auth": "oauth2"
+            "auth": "oauth2",
+            "authMethods": ["default:local", "sample-server:local"]
         },
         {
             "name": "User Management API",
@@ -88,9 +89,7 @@
             ],
             "desc": "This is an OAuth2 Implicit Flow secured API",
             "tags": [],
-            "authServers": [
-                "auth-server"
-            ],
+            "authMethods": ["default:local", "sample-server:local"],
             "auth": "oauth2",
             "settings": {
                 "enable_implicit_grant": true
@@ -120,6 +119,7 @@
             "tags": [],
             "requiredGroup": "dev",
             "auth": "oauth2",
+            "authMethods": ["default:local", "sample-server:local"],
             "settings": {
                 "enable_client_credentials": true,
                 "enable_implicit_grant": true,

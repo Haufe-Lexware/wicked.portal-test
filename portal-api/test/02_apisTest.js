@@ -88,7 +88,7 @@ describe('/apis', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 var jsonBody = utils.getJson(body);
-                assert.equal(9, jsonBody.apis.length);
+                assert.equal(10, jsonBody.apis.length);
                 assert.equal(200, res.statusCode);
                 done();
             });
@@ -101,7 +101,7 @@ describe('/apis', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 var jsonBody = utils.getJson(body);
-                assert.equal(4, jsonBody.apis.length);
+                assert.equal(5, jsonBody.apis.length);
                 assert.equal(200, res.statusCode);
                 done();
             });
@@ -114,7 +114,7 @@ describe('/apis', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 var jsonBody = utils.getJson(body);
-                assert.equal(4, jsonBody.apis.length);
+                assert.equal(5, jsonBody.apis.length);
                 assert.equal(200, res.statusCode);
                 done();
             });
