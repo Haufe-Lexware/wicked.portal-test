@@ -10,6 +10,11 @@ if nc -z localhost ${apiPort}; then
     echo "*** ERROR: Port ${apiPort} is already open."
     exit 1
 fi
+echoPort=3309
+if nc -z localhost ${echoPort}; then
+    echo "*** ERROR: Port ${echoPost} is already open (echo server)."
+    exit 1
+fi
 
 tmpDir=test-$(date +%Y%m%d%H%M%S)
 mkdir -p ./tmp/$tmpDir
@@ -86,6 +91,7 @@ export PORTAL_KONG_ADAPTER_URL=http://localhost:3002
 export PORTAL_KONG_ADMIN_URL=http://localhost:8001
 export PORTAL_MAILER_URL=http://localhost:3003
 export PORTAL_CHATBOT_URL=http://localhost:3004
+export ECHO_PORT=${echoPort}
 
 export HOOK_PORT=3111
 export HOOK_HOST=localhost
