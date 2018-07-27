@@ -57,31 +57,63 @@ describe('After initialization,', function () {
     });
 
     describe('kong', function () {
-        it('should have several API end points', function (done) {
+        it('should have several services defined', function (done) {
             request.get({
-                url: kongUrl + 'apis'
+                url: kongUrl + 'services'
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
                 const jsonBody = utils.getJson(body);
-                assert.isOk(jsonBody.total > 0);
+                //console.log(JSON.stringify(jsonBody, null, 2));
+                assert.isArray(jsonBody.data);
+                assert.isOk(jsonBody.data.length > 0);
                 done();
             });
         });
 
-        it('should have an API called brilliant', function (done) {
+        it('should have several routes defined', function (done) {
             request.get({
-                url: kongUrl + 'apis/brilliant'
+                url: kongUrl + 'routes'
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                assert.isArray(jsonBody.data);
+                assert.isOk(jsonBody.data.length > 0);
                 done();
             });
         });
 
-        it('should have an API called sample-server (the auth server)', function (done) {
+        let brilliantId;
+        it('should have a service called brilliant', function (done) {
             request.get({
-                url: kongUrl + 'apis/sample-server'
+                url: kongUrl + 'services/brilliant'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                brilliantId = jsonBody.id;
+                done();
+            });
+        });
+
+        it('should have a route attached to the service brilliant', function (done) {
+            request.get({
+                url: kongUrl + 'services/brilliant/routes'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                const routeJson = utils.getJson(body);
+                assert.isArray(routeJson.data);
+                assert.isTrue(routeJson.data.length > 0);
+                assert.equal(routeJson.data[0].service.id, brilliantId);
+                done();
+            });
+        });
+
+        it('should have an API called sample-server-auth (the auth server)', function (done) {
+            request.get({
+                url: kongUrl + 'services/sample-server-auth'
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -91,19 +123,20 @@ describe('After initialization,', function () {
 
         it('should have three plugins for the brilliant API', function (done) {
             request.get({
-                url: kongUrl + 'apis/brilliant/plugins'
+                url: kongUrl + 'services/brilliant/plugins'
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
                 const plugins = utils.getJson(body);
-                assert.equal(3, plugins.total);
+                assert.isArray(plugins.data);
+                assert.equal(3, plugins.data.length);
                 done();
             });
         });
 
         it('should have a correct configuration of the brilliant plugins (rate-limiting, acl and key-auth)', function (done) {
             request.get({
-                url: kongUrl + 'apis/brilliant/plugins'
+                url: kongUrl + 'services/brilliant/plugins'
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
@@ -121,7 +154,7 @@ describe('After initialization,', function () {
 
         it('should have a correct oauth2 setting for the superduper API', function (done) {
             request.get({
-                url: kongUrl + 'apis/superduper/plugins'
+                url: kongUrl + 'services/superduper/plugins'
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode, 'could not retrieve plugins');
@@ -135,7 +168,7 @@ describe('After initialization,', function () {
 
         it('should have a correct oauth2 setting for the mobile API', function (done) {
             request.get({
-                url: kongUrl + 'apis/mobile/plugins'
+                url: kongUrl + 'services/mobile/plugins'
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode, 'could not retrieve plugins');
@@ -144,7 +177,7 @@ describe('After initialization,', function () {
                 assert.isOk(oauth2, 'mobile did not have valid oauth2 plugin');
                 assert.equal(3600, oauth2.config.token_expiration, 'token_expiration not set to 1800 (see config)');
                 assert.isOk(oauth2.config.scopes, 'api does not have specified scopes');
-                assert.equal(5002, oauth2.config.scopes.length, 'scope count does not match'); // Yes, we have 5002 scopes.
+                assert.equal(5002+3, oauth2.config.scopes.length, 'scope count does not match'); // Yes, we have 5002+3 scopes.
                 assert.equal(false, oauth2.config.mandatory_scope, 'mandatory_scope does not match');
                 done();
             });
@@ -152,7 +185,7 @@ describe('After initialization,', function () {
 
         it('should have a correct oauth2 setting for the partner API', function (done) {
             request.get({
-                url: kongUrl + 'apis/partner/plugins'
+                url: kongUrl + 'services/partner/plugins'
             }, function (err, res, body) {
                 assert.isNotOk(err, 'something went wrong when querying kong');
                 assert.equal(200, res.statusCode, 'could not retrieve plugins');
@@ -160,34 +193,34 @@ describe('After initialization,', function () {
                 const oauth2 = utils.findWithName(plugins.data, 'oauth2');
                 assert.isOk(oauth2, 'partner did not have valid oauth2 plugin');
                 assert.isOk(oauth2.config.scopes, 'api does not have specified scopes');
-                assert.equal(2, oauth2.config.scopes.length, 'scope count does not match');
+                assert.equal(2+3, oauth2.config.scopes.length, 'scope count does not match'); // scopes + group scopes
                 assert.equal(true, oauth2.config.mandatory_scope, 'mandatory_scope setting not correct');
                 done();
             });
         });
 
-        it('should have a correct uris parameter for the brilliant API', function (done) {
+        it('should have a correct uris parameter for the brilliant API (route)', function (done) {
             request.get({
-                url: kongUrl + 'apis/brilliant'
+                url: kongUrl + 'services/brilliant/routes'
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                const apiConfig = utils.getJson(body);
-                assert.isOk(apiConfig.uris, 'API did not have uris defined');
-                assert.equal('/brilliant', apiConfig.uris[0], 'mismatched uri path');
+                const routeConfig = utils.getJson(body).data[0];
+                assert.isOk(routeConfig.paths, 'Route did not have paths defined');
+                assert.equal('/brilliant', routeConfig.paths[0], 'mismatched path');
                 done();
             });
         });
 
         it('should have a correct strip_uri parameter for the mobile API', function (done) {
             request.get({
-                url: kongUrl + 'apis/mobile'
+                url: kongUrl + 'services/mobile/routes'
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                const apiConfig = utils.getJson(body);
-                assert.isOk(apiConfig.strip_uri, 'API did not have strip_uri defined');
-                assert.equal('/mobile', apiConfig.uris[0]);
+                const routeConfig = utils.getJson(body).data[0];
+                assert.isOk(routeConfig.strip_path, 'API did not have strip_uri defined');
+                assert.equal('/mobile', routeConfig.paths[0]);
                 done();
             });
         });
