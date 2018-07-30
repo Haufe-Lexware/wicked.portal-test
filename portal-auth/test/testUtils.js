@@ -107,6 +107,116 @@ utils.destroyUsers = function (callback) {
     });
 };
 
+function createTrustedApp(echoPlan, callback) {
+    const appId = consts.APP_ID + '-trusted';
+    wicked.createApplication({
+        id: appId,
+        name: appId,
+        confidential: true,
+        redirectUri: consts.REDIRECT_URI
+    }, function (err, appInfo) {
+        if (err)
+            return callback(err);
+        wicked.createSubscription(appId, {
+            api: 'echo',
+            application: appId,
+            auth: 'oauth2',
+            plan: echoPlan,
+            trusted: true
+        }, function (err, subs) {
+            if (err)
+                return callback(err);
+            return callback(null, {
+                clientId: subs.clientId,
+                clientSecret: subs.clientSecret,
+                redirectUri: consts.REDIRECT_URI
+            });
+        });
+    });
+}
+
+function createConfidentialApp(echoPlan, callback) {
+    const appId = consts.APP_ID + '-confidential';
+    wicked.createApplication({
+        id: appId,
+        name: appId,
+        confidential: true,
+        redirectUri: consts.REDIRECT_URI
+    }, function (err, appInfo) {
+        if (err)
+            return callback(err);
+        wicked.createSubscription(appId, {
+            api: 'echo',
+            application: appId,
+            auth: 'oauth2',
+            plan: echoPlan,
+            trusted: false
+        }, function (err, subs) {
+            if (err)
+                return callback(err);
+            return callback(null, {
+                clientId: subs.clientId,
+                clientSecret: subs.clientSecret,
+                redirectUri: consts.REDIRECT_URI
+            });
+        });
+    });
+}
+
+function createPublicApp(echoPlan, callback) {
+    const appId = consts.APP_ID + '-public';
+    wicked.createApplication({
+        id: appId,
+        name: appId,
+        confidential: false,
+        redirectUri: consts.REDIRECT_URI
+    }, function (err, appInfo) {
+        if (err)
+            return callback(err);
+        wicked.createSubscription(appId, {
+            api: 'echo',
+            application: appId,
+            auth: 'oauth2',
+            plan: echoPlan,
+            trusted: false
+        }, function (err, subs) {
+            if (err)
+                return callback(err);
+            return callback(null, {
+                clientId: subs.clientId,
+                clientSecret: subs.clientSecret,
+                redirectUri: consts.REDIRECT_URI
+            });
+        });
+    });
+}
+
+function createWithoutUriApp(echoPlan, callback) {
+    const appId = consts.APP_ID + '-withouturi';
+    wicked.createApplication({
+        id: appId,
+        name: appId,
+        confidential: true
+    }, function (err, appInfo) {
+        if (err)
+            return callback(err);
+        wicked.createSubscription(appId, {
+            api: 'echo',
+            application: appId,
+            auth: 'oauth2',
+            plan: echoPlan,
+            trusted: false
+        }, function (err, subs) {
+            if (err)
+                return callback(err);
+            return callback(null, {
+                clientId: subs.clientId,
+                clientSecret: subs.clientSecret
+            });
+        });
+    });
+}
+
 utils.initAppsAndSubscriptions = function (callback) {
     let now = new Date().getTime();
     utils.destroyAppsAndSubcriptions(function (err) {
@@ -115,90 +225,18 @@ utils.initAppsAndSubscriptions = function (callback) {
         getEchoPlan(function (err, echoPlan) {
             async.series({
                 users: callback => utils.createUsers(callback),
-                trusted: function (callback) {
-                    const appId = consts.APP_ID + '-trusted';
-                    wicked.createApplication({
-                        id: appId,
-                        name: appId,
-                        confidential: true,
-                        redirectUri: consts.REDIRECT_URI
-                    }, function (err, appInfo) {
-                        if (err)
-                            return callback(err);
-                        wicked.createSubscription(appId, {
-                            api: 'echo',
-                            application: appId,
-                            auth: 'oauth2',
-                            plan: echoPlan,
-                            trusted: true
-                        }, function (err, subs) {
-                            if (err)
-                                return callback(err);
-                            return callback(null, {
-                                clientId: subs.clientId,
-                                clientSecret: subs.clientSecret
-                            });
-                        });
-                    });
-                },
-                confidential: function (callback) {
-                    const appId = consts.APP_ID + '-confidential';
-                    wicked.createApplication({
-                        id: appId,
-                        name: appId,
-                        confidential: true,
-                        redirectUri: consts.REDIRECT_URI
-                    }, function (err, appInfo) {
-                        if (err)
-                            return callback(err);
-                        wicked.createSubscription(appId, {
-                            api: 'echo',
-                            application: appId,
-                            auth: 'oauth2',
-                            plan: echoPlan,
-                            trusted: false
-                        }, function (err, subs) {
-                            if (err)
-                                return callback(err);
-                            return callback(null, {
-                                clientId: subs.clientId,
-                                clientSecret: subs.clientSecret
-                            });
-                        });
-                    });
-                },
-                public: function (callback) {
-                    const appId = consts.APP_ID + '-public';
-                    wicked.createApplication({
-                        id: appId,
-                        name: appId,
-                        confidential: false,
-                        redirectUri: consts.REDIRECT_URI
-                    }, function (err, appInfo) {
-                        if (err)
-                            return callback(err);
-                        wicked.createSubscription(appId, {
-                            api: 'echo',
-                            application: appId,
-                            auth: 'oauth2',
-                            plan: echoPlan,
-                            trusted: false
-                        }, function (err, subs) {
-                            if (err)
-                                return callback(err);
-                            return callback(null, {
-                                clientId: subs.clientId,
-                                clientSecret: subs.clientSecret
-                            });
-                        });
-                    });
-                },
+                trusted: callback => createTrustedApp(echoPlan, callback),
+                confidential: callback => createConfidentialApp(echoPlan, callback),
+                public: callback => createPublicApp(echoPlan, callback),
+                withoutUri: callback => createWithoutUriApp(echoPlan, callback),
                 awaitQueue: callback => utils.awaitEmptyAdapterQueue(callback)
             }, function (err, results) {
                 console.log('Creating and propagating new apps: ' + (new Date().getTime() - now) + 'ms.');
                 if (err)
                     console.error(err);
                 assert.isNotOk(err);
+
+                delete results.awaitQueue;
                 return callback(null, results);
             });
         });
@@ -211,7 +249,7 @@ function deleteApplication(appId, callback) {
             return callback(err);
         if (err && err.statusCode === 404)
             return callback(null);
-        console.log('DELETE ' + appId);
+        // console.log('DELETE ' + appId);
         wicked.deleteApplication(appId, callback);
     });
 }
@@ -221,6 +259,7 @@ utils.destroyAppsAndSubcriptions = function (done) {
         callback => deleteApplication(consts.APP_ID + '-trusted', callback),
         callback => deleteApplication(consts.APP_ID + '-confidential', callback),
         callback => deleteApplication(consts.APP_ID + '-public', callback),
+        callback => deleteApplication(consts.APP_ID + '-withouturi', callback),
         callback => utils.destroyUsers(callback),
         callback => utils.awaitEmptyAdapterQueue(callback)
     ], function (err) {
@@ -242,7 +281,7 @@ utils.ensureSlash = function (s) {
 };
 
 let _authServerUrl;
-utils.getAuthServerUrl = function(callback) {
+utils.getAuthServerUrl = function (callback) {
     if (_authServerUrl)
         return callback(null, _authServerUrl);
     wicked.getAuthServer('default', function (err, as) {
@@ -260,12 +299,16 @@ utils.authGet = function (urlPath, cookieJar, callback) {
     assert.notEqual(urlPath[0], '/', 'Do not prepend the url path with a /');
     if (typeof cookieJar === 'function' && !callback)
         callback = cookieJar;
+    const corrId = utils.createRandomId();
+    if (process.env.OUTPUT_CORRELATION_IDS)
+        console.log(`GET ${urlPath}: Correlation-Id ${corrId}`);
     utils.getAuthServerUrl(function (err, authUrl) {
         assert.isNotOk(err);
         request.get({
             url: authUrl + urlPath,
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Correlation-Id': corrId
             },
             jar: cookieJar
         }, function (err, res, body) {
@@ -282,12 +325,16 @@ utils.authPost = function (urlPath, body, cookieJar, callback) {
     if (typeof cookieJar === 'function' && !callback)
         callback = cookieJar;
     assert.notEqual(urlPath[0], '/', 'Do not prepend the url path with a /');
+    const corrId = utils.createRandomId();
+    if (process.env.OUTPUT_CORRELATION_IDS)
+        console.log(`POST ${urlPath}: Correlation-Id ${corrId}`);
     utils.getAuthServerUrl(function (err, authUrl) {
         assert.isNotOk(err);
         request.post({
             url: authUrl + urlPath,
             headers: {
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Correlation-Id': corrId
             },
             jar: cookieJar,
             json: true,
@@ -333,8 +380,13 @@ utils.awaitEmptyAdapterQueue = function (callback) {
     setTimeout(_awaitEmptyQueue, 250, 1);
 };
 
-utils.getAuthCode = function (cookieJar, apiId, clientId, redirectUri, user, callback) {
-    utils.authGet(`local/api/${apiId}/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`, cookieJar, function (err, res, body) {
+utils.getAuthCode = function (cookieJar, apiId, client, user, scope, callback) {
+    let url = `local/api/${apiId}/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${client.redirectUri}`;
+    if (scope) {
+        const scopeString = scope.join(' ');
+        url += `&scope=${qs.escape(scopeString)}`;
+    }
+    utils.authGet(url, cookieJar, function (err, res, body) {
         const csrfToken = body.csrfToken;
         assert.isOk(csrfToken);
         utils.authPost(body.loginUrl, {
@@ -352,6 +404,88 @@ utils.getAuthCode = function (cookieJar, apiId, clientId, redirectUri, user, cal
             callback(null, code);
         });
     });
+};
+
+utils.getAuthCodeToken = function (cookieJar, apiId, client, user, scope, callback) {
+    utils.getAuthCode(cookieJar, apiId, client, user, scope, function (err, code) {
+        assert.isNotOk(err);
+        assert.isOk(code);
+        utils.authPost(`local/api/${apiId}/token`, {
+            grant_type: 'authorization_code',
+            client_id: client.clientId,
+            client_secret: client.clientSecret,
+            code: code
+        }, function (err, res, accessToken) {
+            assert.isNotOk(err);
+            assert.equal(200, res.statusCode);
+            assert.isOk(accessToken);
+            assert.isObject(accessToken);
+            assert.isOk(accessToken.access_token);
+            assert.isOk(accessToken.refresh_token);
+            assert.equal('bearer', accessToken.token_type);
+            callback(null, accessToken);
+        });
+    });
+};
+
+utils.getPasswordToken = function (apiId, client, user, scope, callback) {
+    const body = {
+        grant_type: 'password',
+        client_id: client.clientId,
+        client_secret: client.clientSecret,
+        username: user.email,
+        password: user.password
+    };
+    if (scope) {
+        const scopeString = scope.join(' ');
+        body.scope = scope;
+    }
+    utils.authPost(`local/api/${apiId}/token`, body, callback);
+};
+
+const _apiUrlMap = {};
+function getApiUrl(apiId, callback) {
+    if (_apiUrlMap[apiId])
+        return callback(null, _apiUrlMap[apiId]);
+    wicked.getApiConfig(apiId, function (err, apiConfig) {
+        assert.isNotOk(err);
+        assert.isOk(apiConfig.api);
+        assert.isOk(apiConfig.api.uris);
+        const path = apiConfig.api.uris[0];
+        const url = utils.ensureSlash(utils.ensureNoSlash(wicked.getExternalApiUrl()) + path);
+        _apiUrlMap[apiId] = url;
+        return callback(null, url);
+    });
+}
+
+utils.callApi = function (apiId, accessToken, method, url, body, callback) {
+    getApiUrl(apiId, function (err, apiUrl) {
+        assert.isNotOk(err);
+        const requestBody = {
+            url: apiUrl + url,
+            method: method,
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        };
+        if (requestBody) {
+            requestBody.json = true;
+            requestBody.body = body;
+        }
+        request(requestBody, function (err, res, body) {
+            const contentType = res.headers["content-type"];
+            if (contentType && contentType.indexOf('application/json') >= 0)
+                return callback(null, res, utils.getJson(body));
+            return callback(null, res, body);
+        });
+    });
+};
+
+utils.assertIsRedirectError = function (res, expectedError) {
+    assert.isOk(res.headers.location);
+    const redirUrl = new URL(res.headers.location);
+    assert.isOk(redirUrl.searchParams);
+    assert.isOk(redirUrl.searchParams.get('error'), expectedError);
 };
 
 module.exports = utils;
