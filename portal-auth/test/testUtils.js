@@ -178,7 +178,7 @@ function createPublicApp(echoPlan, callback) {
             application: appId,
             auth: 'oauth2',
             plan: echoPlan,
-            trusted: false
+            trusted: true
         }, function (err, subs) {
             if (err)
                 return callback(err);

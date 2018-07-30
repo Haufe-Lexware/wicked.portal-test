@@ -6,7 +6,6 @@ const assert = require('chai').assert;
 const request = require('request');
 const utils = require('./testUtils');
 const consts = require('./testConsts');
-const wicked = require('wicked-sdk');
 
 describe('Authorization Code Grant', function () {
 
@@ -23,10 +22,13 @@ describe('Authorization Code Grant', function () {
     ids = {
         users: {
             normal: {
-                id: 'kdlaskjdlkajskdasd'
+                id: 'kdlaskjdlkajskdasd',
+                email: ...,
+                password: ...
             },
             admin: {
                 id: 'dlksjdlksjdlksld'
+                ...
             }
         },
         trusted: {
@@ -35,7 +37,8 @@ describe('Authorization Code Grant', function () {
             redirectUri: '...'
         },
         confidential: { ... },
-        public: { ... }
+        public: { ... },
+        withoutUri: { ... }
     }
     */
     let ids;
