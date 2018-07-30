@@ -41,7 +41,10 @@ describe('With subscriptions,', function () {
         });
 
         afterEach(function (done) {
-            utils.deleteApplication(appId, devUserId, done);
+            async.series([
+                callback => utils.deleteApplication(appId, devUserId, callback),
+                callback => utils.awaitEmptyQueue(adapterQueue, adminUserId, callback)
+            ], done);
         });
 
         it('should write API keys correctly', function (done) {
