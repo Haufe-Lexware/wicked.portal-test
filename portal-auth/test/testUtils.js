@@ -428,21 +428,6 @@ utils.getAuthCodeToken = function (cookieJar, apiId, client, user, scope, callba
     });
 };
 
-utils.getPasswordToken = function (apiId, client, user, scope, callback) {
-    const body = {
-        grant_type: 'password',
-        client_id: client.clientId,
-        client_secret: client.clientSecret,
-        username: user.email,
-        password: user.password
-    };
-    if (scope) {
-        const scopeString = scope.join(' ');
-        body.scope = scope;
-    }
-    utils.authPost(`local/api/${apiId}/token`, body, callback);
-};
-
 const _apiUrlMap = {};
 function getApiUrl(apiId, callback) {
     if (_apiUrlMap[apiId])
@@ -486,6 +471,25 @@ utils.assertIsRedirectError = function (res, expectedError) {
     const redirUrl = new URL(res.headers.location);
     assert.isOk(redirUrl.searchParams);
     assert.isOk(redirUrl.searchParams.get('error'), expectedError);
+};
+
+utils.getPasswordToken = function (apiId, client, clientIsPublic, user, callback) {
+    const body = {
+        grant_type: 'password',
+        client_id: client.clientId,
+        username: user.email,
+        password: user.password
+    };
+    if (!clientIsPublic)
+        body.client_secret = client.clientSecret;
+    utils.authPost(`local/api/${apiId}/token`, body, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(res.statusCode, 200);
+        assert.isOk(body.access_token);
+        assert.isOk(body.refresh_token);
+        assert.equal(body.token_type, 'bearer');
+        callback(null, body);
+    });
 };
 
 module.exports = utils;

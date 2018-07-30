@@ -174,4 +174,82 @@ describe('Resource Owner Password Grant', function () {
             });
         });
     });
+
+    describe('with refresh tokens', function () {
+        it('should be possible to refresh a password token (confidential client)', function (done) {
+            const client = ids.trusted;
+            const user = ids.users.normal;
+            utils.getPasswordToken('echo', client, false, user, function (err, accessToken) {
+                utils.authPost(`local/api/echo/token`, {
+                    grant_type: 'refresh_token',
+                    client_id: client.clientId,
+                    client_secret: client.clientSecret,
+                    refresh_token: accessToken.refresh_token
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    assert.isOk(body);
+                    assert.isOk(body.access_token);
+                    assert.isOk(body.refresh_token);
+                    done();
+                });
+            });
+        });
+
+        it('should not be possible to refresh a password token without client_secret (confidential client)', function (done) {
+            const client = ids.trusted;
+            const user = ids.users.normal;
+            utils.getPasswordToken('echo', client, false, user, function (err, accessToken) {
+                utils.authPost(`local/api/echo/token`, {
+                    grant_type: 'refresh_token',
+                    client_id: client.clientId,
+                    refresh_token: accessToken.refresh_token
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 401);
+                    assert.equal(body.error, 'unauthorized_client');
+                    assert.isTrue(body.error_description.startsWith('client_secret is missing'));
+                    done();
+                });
+            });
+        });
+
+        it('should be possible to refresh a password token (public client)', function (done) {
+            const client = ids.public;
+            const user = ids.users.normal;
+            utils.getPasswordToken('echo', client, true, user, function (err, accessToken) {
+                utils.authPost(`local/api/echo/token`, {
+                    grant_type: 'refresh_token',
+                    client_id: client.clientId,
+                    refresh_token: accessToken.refresh_token
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    assert.isOk(body);
+                    assert.isOk(body.access_token);
+                    assert.isOk(body.refresh_token);
+                    done();
+                });
+            });
+        });
+
+        it('should not be possible to refresh a password token with client_secret (public client)', function (done) {
+            const client = ids.public;
+            const user = ids.users.normal;
+            utils.getPasswordToken('echo', client, true, user, function (err, accessToken) {
+                utils.authPost(`local/api/echo/token`, {
+                    grant_type: 'refresh_token',
+                    client_id: client.clientId,
+                    client_secret: client.clientSecret,
+                    refresh_token: accessToken.refresh_token
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 401);
+                    assert.equal(body.error, 'unauthorized_client');
+                    assert.isTrue(body.error_description.startsWith('client_secret is being passed'));
+                    done();
+                });
+            });
+        });
+    });
 });
