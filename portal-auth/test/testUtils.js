@@ -290,6 +290,7 @@ utils.getAuthServerUrl = function (callback) {
         const apiUrl = utils.ensureNoSlash(wicked.getExternalApiUrl());
         const authPath = as.config.api.uris[0];
         _authServerUrl = utils.ensureSlash(apiUrl + authPath);
+        console.log('Using Auth Server URL: ' + _authServerUrl);
         return callback(null, _authServerUrl);
     });
 };

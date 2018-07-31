@@ -13,7 +13,7 @@ describe('Resource Owner Password Grant', function () {
 
     let ids;
     before(function (done) {
-        this.timeout(5000);
+        this.timeout(10000);
         const now = new Date();
         utils.initAppsAndSubscriptions(function (err, idsAndSecrets) {
             assert.isNotOk(err);

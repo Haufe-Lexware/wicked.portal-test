@@ -32,15 +32,29 @@ describe('Basic use cases', function () {
 
     describe('init wicked SDK', function () {
         it('should be possible to initialize the wicked SDK', function (done) {
-            wicked.initialize(initOptions, done);
+            wicked.initialize(initOptions, function (err) {
+                assert.isNotOk(err);
+                console.log('Portal API: ' + wicked.getInternalApiUrl());
+                console.log('Kong Adapter: ' + wicked.getInternalKongAdapterUrl());
+                console.log('Kong Admin URL: ' + wicked.getInternalKongAdminUrl());
+                done();
+            });
         });
 
         it('should be possible to add a machine user', function (done) {
-            wicked.initMachineUser('test-portal-auth', done);
+            wicked.initMachineUser('test-portal-auth', function (err) {
+                assert.isNotOk(err);
+                done();
+            });
         });
 
         it('should be possible to create an application', function (done) {
-            wicked.createApplication({ id: appId, name: 'Portal Auth Test', confidential: true, redirectUri: 'http://localhost:3011' }, done);
+            wicked.createApplication({
+                id: appId, name: 'Portal Auth Test', confidential: true, redirectUri: 'http://localhost:3011'
+            }, function (err) {
+                assert.isNotOk(err);
+                done();
+            });
         });
 
         it('should be possible to create a subscription', function (done) {
