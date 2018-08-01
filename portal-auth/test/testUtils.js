@@ -107,6 +107,52 @@ utils.destroyUsers = function (callback) {
     });
 };
 
+function createAppSubscriptions(appId, echoPlan, trusted, redirectUri, callback) {
+    async.parallel({
+        echo: callback => wicked.createSubscription(appId, {
+            api: 'echo',
+            application: appId,
+            auth: 'oauth2',
+            plan: echoPlan,
+            trusted: trusted
+        }, callback),
+        echo_woo: callback => wicked.createSubscription(appId, {
+            api: 'echo-woo',
+            application: appId,
+            auth: 'oauth2',
+            plan: 'basic',
+            trusted: trusted
+        }, callback),
+        echo_woo_ns: callback => wicked.createSubscription(appId, {
+            api: 'echo-woo-ns',
+            application: appId,
+            auth: 'oauth2',
+            plan: 'basic',
+            trusted: trusted
+        }, callback)
+    }, function (err, subs) {
+        if (err)
+            return callback(err);
+        return callback(null, {
+            echo: {
+                clientId: subs.echo.clientId,
+                clientSecret: subs.echo.clientSecret,
+                redirectUri: redirectUri,
+            },
+            echo_woo: {
+                clientId: subs.echo_woo.clientId,
+                clientSecret: subs.echo_woo.clientSecret,
+                redirectUri: redirectUri,
+            },
+            echo_woo_ns: {
+                clientId: subs.echo_woo_ns.clientId,
+                clientSecret: subs.echo_woo_ns.clientSecret,
+                redirectUri: redirectUri,
+            }
+        });
+    });
+}
+
 function createTrustedApp(echoPlan, callback) {
     const appId = consts.APP_ID + '-trusted';
     wicked.createApplication({
@@ -117,21 +163,7 @@ function createTrustedApp(echoPlan, callback) {
     }, function (err, appInfo) {
         if (err)
             return callback(err);
-        wicked.createSubscription(appId, {
-            api: 'echo',
-            application: appId,
-            auth: 'oauth2',
-            plan: echoPlan,
-            trusted: true
-        }, function (err, subs) {
-            if (err)
-                return callback(err);
-            return callback(null, {
-                clientId: subs.clientId,
-                clientSecret: subs.clientSecret,
-                redirectUri: consts.REDIRECT_URI
-            });
-        });
+        createAppSubscriptions(appId, echoPlan, true /*trusted*/, consts.REDIRECT_URI, callback);
     });
 }
 
@@ -145,21 +177,7 @@ function createConfidentialApp(echoPlan, callback) {
     }, function (err, appInfo) {
         if (err)
             return callback(err);
-        wicked.createSubscription(appId, {
-            api: 'echo',
-            application: appId,
-            auth: 'oauth2',
-            plan: echoPlan,
-            trusted: false
-        }, function (err, subs) {
-            if (err)
-                return callback(err);
-            return callback(null, {
-                clientId: subs.clientId,
-                clientSecret: subs.clientSecret,
-                redirectUri: consts.REDIRECT_URI
-            });
-        });
+        createAppSubscriptions(appId, echoPlan, false /*trusted*/, consts.REDIRECT_URI, callback);
     });
 }
 
@@ -173,21 +191,7 @@ function createPublicApp(echoPlan, callback) {
     }, function (err, appInfo) {
         if (err)
             return callback(err);
-        wicked.createSubscription(appId, {
-            api: 'echo',
-            application: appId,
-            auth: 'oauth2',
-            plan: echoPlan,
-            trusted: true
-        }, function (err, subs) {
-            if (err)
-                return callback(err);
-            return callback(null, {
-                clientId: subs.clientId,
-                clientSecret: subs.clientSecret,
-                redirectUri: consts.REDIRECT_URI
-            });
-        });
+        createAppSubscriptions(appId, echoPlan, true /*trusted*/, consts.REDIRECT_URI, callback);
     });
 }
 
@@ -200,20 +204,7 @@ function createWithoutUriApp(echoPlan, callback) {
     }, function (err, appInfo) {
         if (err)
             return callback(err);
-        wicked.createSubscription(appId, {
-            api: 'echo',
-            application: appId,
-            auth: 'oauth2',
-            plan: echoPlan,
-            trusted: false
-        }, function (err, subs) {
-            if (err)
-                return callback(err);
-            return callback(null, {
-                clientId: subs.clientId,
-                clientSecret: subs.clientSecret
-            });
-        });
+        createAppSubscriptions(appId, echoPlan, false /*trusted*/, null, callback);
     });
 }
 
@@ -381,14 +372,30 @@ utils.awaitEmptyAdapterQueue = function (callback) {
     setTimeout(_awaitEmptyQueue, 250, 1);
 };
 
-utils.getAuthCode = function (cookieJar, apiId, client, user, scope, callback) {
+utils.getAuthCodeUrl = function (apiId, client, scope) {
     let url = `local/api/${apiId}/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${client.redirectUri}`;
     if (scope) {
         const scopeString = scope.join(' ');
         url += `&scope=${qs.escape(scopeString)}`;
     }
+    return url;
+};
+
+utils.assertIsCodeRedirect = function (res, callback) {
+    assert.equal(302, res.statusCode);
+    const redir = res.headers.location;
+    assert.isOk(redir);
+    const redirUrl = new URL(redir);
+    const code = redirUrl.searchParams.get('code');
+    assert.isOk(code);
+    callback(null, code);
+};
+
+utils.getAuthCode = function (cookieJar, apiId, client, user, scope, callback) {
+    let url = utils.getAuthCodeUrl(apiId, client, scope);
     utils.authGet(url, cookieJar, function (err, res, body) {
         const csrfToken = body.csrfToken;
+        assert.equal(res.statusCode, 200);
         assert.isOk(csrfToken);
         utils.authPost(body.loginUrl, {
             _csrf: csrfToken,
@@ -396,13 +403,7 @@ utils.getAuthCode = function (cookieJar, apiId, client, user, scope, callback) {
             password: user.password
         }, cookieJar, function (err, res, body) {
             assert.isNotOk(err);
-            assert.equal(302, res.statusCode);
-            const redir = res.headers.location;
-            assert.isOk(redir);
-            const redirUrl = new URL(redir);
-            const code = redirUrl.searchParams.get('code');
-            assert.isOk(code);
-            callback(null, code);
+            utils.assertIsCodeRedirect(res, callback);
         });
     });
 };
@@ -490,6 +491,37 @@ utils.getPasswordToken = function (apiId, client, clientIsPublic, user, callback
         assert.isOk(body.refresh_token);
         assert.equal(body.token_type, 'bearer');
         callback(null, body);
+    });
+};
+
+utils.getRegistrationForm = function (cookieJar, apiId, client, user, callback) {
+    const url = utils.getAuthCodeUrl(apiId, client, null);
+    utils.authGet(url, cookieJar, function (err, res, body) {
+        utils.assertIsHtml(body);
+        const csrfToken = body.csrfToken;
+        assert.equal('login', body.template);
+        assert.isOk(csrfToken);
+        utils.authPost(body.loginUrl, {
+            _csrf: csrfToken,
+            username: user.email,
+            password: user.password
+        }, cookieJar, function (err, res, body) {
+            assert.isNotOk(err);
+            utils.assertIsHtml(body);
+            assert.equal(res.statusCode, 200);
+            assert.equal(body.template, 'register');
+            callback(null, res, body);
+        });
+    });
+};
+
+utils.assertUserRegistration = function (poolId, userId, callback) {
+    wicked.getUserRegistrations(poolId, userId, function (err, regs) {
+        assert.isNotOk(err);
+        assert.equal(regs.items.length, 1);
+        assert.equal(regs.items[0].poolId, poolId);
+        assert.equal(regs.items[0].userId, userId);
+        callback(null);
     });
 };
 

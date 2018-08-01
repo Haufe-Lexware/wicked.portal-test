@@ -30,7 +30,7 @@ describe('Resource Owner Password Grant', function () {
 
     describe('basic failure checks', function () {
         it('should reject calls with a faulty grant type', function (done) {
-            const client = ids.trusted;
+            const client = ids.trusted.echo;
             const user = ids.users.normal;
             utils.authPost(`local/api/echo/token`, {
                 client_id: client.clientId,
@@ -47,7 +47,7 @@ describe('Resource Owner Password Grant', function () {
         });
 
         it('should reject calls with an invalid client id', function (done) {
-            const client = ids.trusted;
+            const client = ids.trusted.echo;
             const user = ids.users.normal;
             utils.authPost(`local/api/echo/token`, {
                 grant_type: 'password',
@@ -65,7 +65,7 @@ describe('Resource Owner Password Grant', function () {
         });
 
         it('should reject calls without a client secret (confidential apps)', function (done) {
-            const client = ids.trusted;
+            const client = ids.trusted.echo;
             const user = ids.users.normal;
             utils.authPost(`local/api/echo/token`, {
                 grant_type: 'password',
@@ -82,7 +82,7 @@ describe('Resource Owner Password Grant', function () {
         });
 
         it('should reject calls with an invalid client secret', function (done) {
-            const client = ids.trusted;
+            const client = ids.trusted.echo;
             const user = ids.users.normal;
             utils.authPost(`local/api/echo/token`, {
                 grant_type: 'password',
@@ -100,7 +100,7 @@ describe('Resource Owner Password Grant', function () {
         });
 
         it('should reject calls from a subscription which is not trusted', function (done) {
-            const client = ids.confidential;
+            const client = ids.confidential.echo;
             const user = ids.users.normal;
             utils.authPost(`local/api/echo/token`, {
                 grant_type: 'password',
@@ -118,7 +118,7 @@ describe('Resource Owner Password Grant', function () {
         });
 
         it('should reject calls with client_secret from a trusted subscription which is not confidential', function (done) {
-            const client = ids.public;
+            const client = ids.public.echo;
             const user = ids.users.normal;
             utils.authPost(`local/api/echo/token`, {
                 grant_type: 'password',
@@ -138,7 +138,7 @@ describe('Resource Owner Password Grant', function () {
 
     describe('basic success cases', function () {
         it('should be possible to retrieve an access token as a trusted application', function (done) {
-            const client = ids.trusted;
+            const client = ids.trusted.echo;
             const user = ids.users.normal;
             utils.authPost(`local/api/echo/token`, {
                 grant_type: 'password',
@@ -157,7 +157,7 @@ describe('Resource Owner Password Grant', function () {
         });
 
         it('should be possible to retrieve an access token as a trusted public application', function (done) {
-            const client = ids.public;
+            const client = ids.public.echo;
             const user = ids.users.normal;
             utils.authPost(`local/api/echo/token`, {
                 grant_type: 'password',
@@ -177,7 +177,7 @@ describe('Resource Owner Password Grant', function () {
 
     describe('with refresh tokens', function () {
         it('should be possible to refresh a password token (confidential client)', function (done) {
-            const client = ids.trusted;
+            const client = ids.trusted.echo;
             const user = ids.users.normal;
             utils.getPasswordToken('echo', client, false, user, function (err, accessToken) {
                 utils.authPost(`local/api/echo/token`, {
@@ -197,7 +197,7 @@ describe('Resource Owner Password Grant', function () {
         });
 
         it('should not be possible to refresh a password token without client_secret (confidential client)', function (done) {
-            const client = ids.trusted;
+            const client = ids.trusted.echo;
             const user = ids.users.normal;
             utils.getPasswordToken('echo', client, false, user, function (err, accessToken) {
                 utils.authPost(`local/api/echo/token`, {
@@ -215,7 +215,7 @@ describe('Resource Owner Password Grant', function () {
         });
 
         it('should be possible to refresh a password token (public client)', function (done) {
-            const client = ids.public;
+            const client = ids.public.echo;
             const user = ids.users.normal;
             utils.getPasswordToken('echo', client, true, user, function (err, accessToken) {
                 utils.authPost(`local/api/echo/token`, {
@@ -234,7 +234,7 @@ describe('Resource Owner Password Grant', function () {
         });
 
         it('should not be possible to refresh a password token with client_secret (public client)', function (done) {
-            const client = ids.public;
+            const client = ids.public.echo;
             const user = ids.users.normal;
             utils.getPasswordToken('echo', client, true, user, function (err, accessToken) {
                 utils.authPost(`local/api/echo/token`, {

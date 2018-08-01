@@ -156,6 +156,7 @@ export ECHO_PORT=${echoPort}
 
 mode=""
 grepFilter=""
+onlyEnv=""
 while [[ -n "$1" ]]; do
     case "$1" in
         "--json")
@@ -169,12 +170,16 @@ while [[ -n "$1" ]]; do
             grepFilter="$1"
             echo "Filtering test cases for '${grepFilter}'"
             ;;
+        "--only-env")
+            onlyEnv="$1"
+            echo "Only setting up environment."
+            ;;
     esac
     shift 1
 done
 
 if [[ -z "${mode}" ]]; then
-    echo "Usage: $0 <--json|--postgres> [-grep <filter>]"
+    echo "Usage: $0 <--json|--postgres> [--grep <filter>] [--only-env]"
     exit 1
 fi
 
@@ -226,16 +231,43 @@ echo "INFO: Kong Adapter running as PID ${kongAdapterPid}."
 popd &> /dev/null
 
 pushd portal-auth &> /dev/null
+
+rm -f ./kill-env.sh
+cat << EOF > ./kill-env.sh
+#!/bin/bash
+
+echo "Killing Auth Server..."
+kill $authPid
+echo "Killing Kong Adapter..."
+kill $kongAdapterPid
+echo "Killing Portal API..."
+kill $apiPid
+
+echo "Killing docker containers..."
+docker rm -f $redisContainer $kongContainer $pgContainer
+EOF
+
+chmod +x ./kill-env.sh
+
 node node_modules/portal-env/await.js http://localhost:${apiPort}/ping
 node node_modules/portal-env/await.js http://localhost:${kongAdapterPort}/ping
 node node_modules/portal-env/await.js http://localhost:${authPort}/ping
 node node_modules/portal-env/await.js http://localhost:${kongProxyPort}/auth/ping
 
-if [[ -z "$grepFilter" ]]; then
-    mocha
-else
-    mocha --grep "${grepFilter}"
-fi
-popd &> /dev/null
+if [[ -z "$onlyEnv" ]]; then
+    if [[ -z "$grepFilter" ]]; then
+        mocha
+    else
+        mocha --grep "${grepFilter}"
+    fi
+    popd &> /dev/null
 
-killthings
+    killthings
+else
+    echo "INFO: Leaving environment open; go into the portal-auth directory and run"
+    echo ""
+    echo "      export PORTAL_API_URL=http://localhost:3401"
+    echo "      mocha"
+    echo ""
+    echo "      You can then use the ./kill-env.sh to kill the testing environment."
+fi

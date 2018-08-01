@@ -50,6 +50,7 @@ describe('Authorization Code Grant', function () {
             assert.isNotOk(err);
             assert.isOk(idsAndSecrets);
             ids = idsAndSecrets;
+            // console.log(JSON.stringify(ids, null, 2));
             console.log('Before handler took ' + (new Date() - now) + 'ms.');
             done();
         });
@@ -100,7 +101,7 @@ describe('Authorization Code Grant', function () {
         });
 
         it('should return an HTML error for a missing redirect_uri', function (done) {
-            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.clientId}`, function (err, res, body) {
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}`, function (err, res, body) {
                 assert.equal(res.statusCode, 400);
                 utils.assertIsHtml(body);
                 // console.log(body);
@@ -110,7 +111,7 @@ describe('Authorization Code Grant', function () {
         });
 
         it('should return an HTML error for a faulty redirect_uri', function (done) {
-            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.clientId}&redirect_uri=http://bla.com`, function (err, res, body) {
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}&redirect_uri=http://bla.com`, function (err, res, body) {
                 assert.equal(res.statusCode, 400);
                 utils.assertIsHtml(body);
                 assert.isTrue(body.message.indexOf('does not match the registered') >= 0);
@@ -124,7 +125,7 @@ describe('Authorization Code Grant', function () {
         this.timeout(10000);
 
         it('should return a login screen for a valid authorize request', function (done) {
-            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.clientId}&redirect_uri=${consts.REDIRECT_URI}`, function (err, res, body) {
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}&redirect_uri=${consts.REDIRECT_URI}`, function (err, res, body) {
                 assert.equal(res.statusCode, 200);
                 utils.assertIsHtml(body);
                 assert.equal('login', body.template);
@@ -135,7 +136,7 @@ describe('Authorization Code Grant', function () {
 
         it('should return an auth code if logged in successfully', function (done) {
             const cookieJar = request.jar();
-            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.clientId}&redirect_uri=${consts.REDIRECT_URI}`, cookieJar, function (err, res, body) {
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}&redirect_uri=${consts.REDIRECT_URI}`, cookieJar, function (err, res, body) {
                 const csrfToken = body.csrfToken;
                 assert.isOk(csrfToken);
                 utils.authPost(body.loginUrl, {
@@ -157,13 +158,13 @@ describe('Authorization Code Grant', function () {
 
         it('should also return a token for an auth code (confidential client)', function (done) {
             const cookieJar = request.jar();
-            utils.getAuthCode(cookieJar, 'echo', ids.confidential, ids.users.normal, null /*scope*/, function (err, code) {
+            utils.getAuthCode(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, null /*scope*/, function (err, code) {
                 assert.isNotOk(err);
                 assert.isOk(code);
                 utils.authPost(`local/api/echo/token`, {
                     grant_type: 'authorization_code',
-                    client_id: ids.confidential.clientId,
-                    client_secret: ids.confidential.clientSecret,
+                    client_id: ids.confidential.echo.clientId,
+                    client_secret: ids.confidential.echo.clientSecret,
                     code: code
                 }, function (err, res, accessToken) {
                     assert.isNotOk(err);
@@ -180,14 +181,14 @@ describe('Authorization Code Grant', function () {
 
         it('should be possible to use a refresh token (confidential client)', function (done) {
             const cookieJar = request.jar();
-            utils.getAuthCodeToken(cookieJar, 'echo', ids.confidential, ids.users.normal, null /*scope*/, function (err, accessToken) {
+            utils.getAuthCodeToken(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, null /*scope*/, function (err, accessToken) {
                 assert.isNotOk(err);
                 assert.isObject(accessToken);
                 utils.authPost(`local/api/echo/token`, {
                     grant_type: 'refresh_token',
                     refresh_token: accessToken.refresh_token,
-                    client_id: ids.confidential.clientId,
-                    client_secret: ids.confidential.clientSecret
+                    client_id: ids.confidential.echo.clientId,
+                    client_secret: ids.confidential.echo.clientSecret
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
@@ -202,13 +203,13 @@ describe('Authorization Code Grant', function () {
 
         it('should not be possible to use a refresh token without the client secret (confidential client)', function (done) {
             const cookieJar = request.jar();
-            utils.getAuthCodeToken(cookieJar, 'echo', ids.confidential, ids.users.normal, null /*scope*/, function (err, accessToken) {
+            utils.getAuthCodeToken(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, null /*scope*/, function (err, accessToken) {
                 assert.isNotOk(err);
                 assert.isObject(accessToken);
                 utils.authPost(`local/api/echo/token`, {
                     grant_type: 'refresh_token',
                     refresh_token: accessToken.refresh_token,
-                    client_id: ids.confidential.clientId
+                    client_id: ids.confidential.echo.clientId
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(401, res.statusCode);
@@ -223,11 +224,11 @@ describe('Authorization Code Grant', function () {
     describe('rejection use cases', function () {
         it('should reject creating a token with a differing client_id/secret than the one used for getting the code', function (done) {
             const cookieJar = request.jar();
-            utils.getAuthCode(cookieJar, 'echo', ids.confidential, ids.users.normal, null /*scope*/, function (err, code) {
+            utils.getAuthCode(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, null /*scope*/, function (err, code) {
                 utils.authPost(`local/api/echo/token`, {
                     grant_type: 'authorization_code',
-                    client_id: ids.trusted.clientId,
-                    client_secret: ids.trusted.clientSecret,
+                    client_id: ids.trusted.echo.clientId,
+                    client_secret: ids.trusted.echo.clientSecret,
                     code: code
                 }, function (err, res, body) {
                     assert.isNotOk(err);
@@ -240,7 +241,7 @@ describe('Authorization Code Grant', function () {
         });
 
         it('should reject attempting to log in with an app without a redirect_uri', function (done) {
-            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.withoutUri.clientId}&redirect_uri=http://bla.com`, function (err, res, body) {
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.withoutUri.echo.clientId}&redirect_uri=http://bla.com`, function (err, res, body) {
                 assert.equal(res.statusCode, 400);
                 utils.assertIsHtml(body);
                 assert.isTrue(body.message.indexOf('does not have a registered redirect_uri') >= 0);
@@ -251,7 +252,7 @@ describe('Authorization Code Grant', function () {
         it('should detect a faulty password (and redisplay login screen)', function (done) {
             this.slow(1200);
             const cookieJar = request.jar();
-            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.clientId}&redirect_uri=${consts.REDIRECT_URI}`, cookieJar, function (err, res, body) {
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}&redirect_uri=${consts.REDIRECT_URI}`, cookieJar, function (err, res, body) {
                 const csrfToken = body.csrfToken;
                 assert.isOk(csrfToken);
                 const now = new Date().getTime();
@@ -277,7 +278,7 @@ describe('Authorization Code Grant', function () {
         this.timeout(10000);
         it('should reject doing the auth code grant with a public client', function (done) {
             const cookieJar = request.jar();
-            const client = ids.public;
+            const client = ids.public.echo;
             utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, null /*scope*/, function (err, code) {
                 utils.authPost(`local/api/echo/token`, {
                     grant_type: 'authorization_code',
@@ -299,7 +300,7 @@ describe('Authorization Code Grant', function () {
         this.timeout(10000);
         it('should return a token with full scope for a trusted client', function (done) {
             const cookieJar = request.jar();
-            const client = ids.trusted;
+            const client = ids.trusted.echo;
             const user = ids.users.normal;
             utils.getAuthCodeToken(cookieJar, 'echo', client, user, null /*scope*/, function (err, accessToken) {
                 utils.callApi('echo', accessToken.access_token, 'GET', 'foo', null, function (err, res, body) {
@@ -316,7 +317,7 @@ describe('Authorization Code Grant', function () {
 
     describe('misc security failures', function (done) {
         it('should return reject a login if not using a session (cannot resolve CSRF)', function (done) {
-            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.clientId}&redirect_uri=${consts.REDIRECT_URI}`, function (err, res, body) {
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}&redirect_uri=${consts.REDIRECT_URI}`, function (err, res, body) {
                 const csrfToken = body.csrfToken;
                 assert.isOk(csrfToken);
                 utils.authPost(body.loginUrl, {
