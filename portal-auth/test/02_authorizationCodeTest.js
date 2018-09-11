@@ -307,7 +307,7 @@ describe('Authorization Code Grant', function () {
                     assert.isNotOk(err);
                     // console.log(body);
                     // Echo API returns everything
-                    assert.equal(body.headers['x-authenticated-userid'], user.id);
+                    assert.equal(body.headers['x-authenticated-userid'], `sub=${user.id}`);
                     assert.equal(body.headers['x-authenticated-scope'], 'get put post patch delete wicked:dev');
                     done();
                 });

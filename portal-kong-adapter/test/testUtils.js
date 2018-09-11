@@ -51,7 +51,7 @@ utils.makeHeaders = function (userId, scopes) {
         return null;
     const headers = {};
     if (userId)
-        headers['X-Authenticated-UserId'] = userId;
+        headers['X-Authenticated-UserId'] = `sub=${userId}`;
     if (scopes)
         headers['X-Authenticated-Scope'] = scopes;
     if (utils.correlationId)
