@@ -176,6 +176,24 @@ describe('operations on OAuth2 APIs', function () {
             });
         });
 
+        it('must be possible to change the redirectUri of an app (custom scheme)', function (done) {
+            request.patch({
+                url: baseUrl + 'applications/' + appId,
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: appId,
+                    redirectUri: 'customscheme://dummy/hello'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                var jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.redirectUri, 'customscheme://dummy/hello');
+                done();
+            });
+        });
+
         it('must be possible to add a redirectUri to an app', function (done) {
             request.patch({
                 url: baseUrl + 'applications/' + badAppId,
@@ -208,7 +226,26 @@ describe('operations on OAuth2 APIs', function () {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 400);
                 var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.message, 'redirectUri must be a https URI');
+                assert.equal(jsonBody.message, 'redirectUri is not valid');
+                done();
+            });
+        });
+
+        it('must be forbidden to create an app with a custom scheme redirectUri without a host', function (done) {
+            request.post({
+                url: baseUrl + 'applications',
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: 'someid',
+                    name: 'Some Name',
+                    redirectUri: 'customscheme:/just_a_path'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 400);
+                var jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.message, 'redirectUri is not valid');
                 done();
             });
         });
@@ -226,7 +263,7 @@ describe('operations on OAuth2 APIs', function () {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 400);
                 var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.message, 'redirectUri must be a https URI');
+                assert.equal(jsonBody.message, 'redirectUri is not valid');
                 done();
             });
         });
@@ -264,7 +301,7 @@ describe('operations on OAuth2 APIs', function () {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 400);
                 var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.message, 'redirectUri must be a https URI');
+                assert.equal(jsonBody.message, 'redirectUri is not valid');
                 done();
             });
         });
