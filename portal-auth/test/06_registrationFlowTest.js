@@ -44,7 +44,7 @@ describe('Registration Flow', function () {
             const cookieJar = request.jar();
             const apiId = 'echo-woo';
             const user = ids.users.normal;
-            const url = utils.getAuthCodeUrl(apiId, ids.confidential.echo_woo, null);
+            const url = utils.getAuthCodeUrl(apiId, ids.confidential.echo_woo, {});
             utils.authGet(url, cookieJar, function (err, res, body) {
                 utils.assertIsHtml(body);
                 const csrfToken = body.csrfToken;

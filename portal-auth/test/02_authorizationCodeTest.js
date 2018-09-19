@@ -158,7 +158,7 @@ describe('Authorization Code Grant', function () {
 
         it('should also return a token for an auth code (confidential client)', function (done) {
             const cookieJar = request.jar();
-            utils.getAuthCode(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, null /*scope*/, function (err, code) {
+            utils.getAuthCode(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, {}, function (err, code) {
                 assert.isNotOk(err);
                 assert.isOk(code);
                 utils.authPost(`local/api/echo/token`, {
@@ -181,7 +181,7 @@ describe('Authorization Code Grant', function () {
 
         it('should be possible to use a refresh token (confidential client)', function (done) {
             const cookieJar = request.jar();
-            utils.getAuthCodeToken(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, null /*scope*/, function (err, accessToken) {
+            utils.getAuthCodeToken(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, {}, function (err, accessToken) {
                 assert.isNotOk(err);
                 assert.isObject(accessToken);
                 utils.authPost(`local/api/echo/token`, {
@@ -203,7 +203,7 @@ describe('Authorization Code Grant', function () {
 
         it('should not be possible to use a refresh token without the client secret (confidential client)', function (done) {
             const cookieJar = request.jar();
-            utils.getAuthCodeToken(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, null /*scope*/, function (err, accessToken) {
+            utils.getAuthCodeToken(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, {}, function (err, accessToken) {
                 assert.isNotOk(err);
                 assert.isObject(accessToken);
                 utils.authPost(`local/api/echo/token`, {
@@ -224,7 +224,7 @@ describe('Authorization Code Grant', function () {
     describe('rejection use cases', function () {
         it('should reject creating a token with a differing client_id/secret than the one used for getting the code', function (done) {
             const cookieJar = request.jar();
-            utils.getAuthCode(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, null /*scope*/, function (err, code) {
+            utils.getAuthCode(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, {}, function (err, code) {
                 utils.authPost(`local/api/echo/token`, {
                     grant_type: 'authorization_code',
                     client_id: ids.trusted.echo.clientId,
@@ -279,16 +279,53 @@ describe('Authorization Code Grant', function () {
         it('should reject doing the auth code grant with a public client', function (done) {
             const cookieJar = request.jar();
             const client = ids.public.echo;
-            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, null /*scope*/, function (err, code) {
-                utils.authPost(`local/api/echo/token`, {
-                    grant_type: 'authorization_code',
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${consts.REDIRECT_URI}`, cookieJar, function (err, res, body) {
+                assert.equal(res.statusCode, 400);
+                assert.equal(body.error, 'invalid_request');
+                assert.isTrue(body.error_description.indexOf('code_challenge') >= 0, 'error_description does not contain "code_challenge"');
+                done();
+            });
+        });
+
+        it('should accept doing the auth code grant with PKCE (plain challenge)', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.public.echo;
+            const codeVerifier = 'hello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
                     client_id: client.clientId,
-                    client_secret: client.clientSecret,
-                    code: code
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
                 }, function (err, res, body) {
                     assert.isNotOk(err);
-                    assert.equal(401, res.statusCode);
-                    assert.equal('unauthorized_client', body.error);
+                    assert.equal(res.statusCode, 200);
+                    assert.isOk(body.access_token);
+                    assert.isNotOk(body.error);
+                    done();
+                });
+            });
+        });
+
+        it('should accept doing the auth code grant with PKCE (S256 challenge)', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.public.echo;
+            const codeVerifier = 'hello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, code_challenge_method: 'S256' }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
+                    client_id: client.clientId,
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    assert.isOk(body.access_token);
+                    assert.isNotOk(body.error);
                     done();
                 });
             });
@@ -302,7 +339,7 @@ describe('Authorization Code Grant', function () {
             const cookieJar = request.jar();
             const client = ids.trusted.echo;
             const user = ids.users.normal;
-            utils.getAuthCodeToken(cookieJar, 'echo', client, user, null /*scope*/, function (err, accessToken) {
+            utils.getAuthCodeToken(cookieJar, 'echo', client, user, {}, function (err, accessToken) {
                 utils.callApi('echo', accessToken.access_token, 'GET', 'foo', null, function (err, res, body) {
                     assert.isNotOk(err);
                     // console.log(body);

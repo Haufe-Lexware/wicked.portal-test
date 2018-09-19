@@ -372,11 +372,28 @@ utils.awaitEmptyAdapterQueue = function (callback) {
     setTimeout(_awaitEmptyQueue, 250, 1);
 };
 
-utils.getAuthCodeUrl = function (apiId, client, scope) {
+utils.getAuthCodeUrl = function (apiId, client, options) {
+    let scope = options.scope;
+    let code_challenge = options.code_challenge;
+    let code_challenge_method;
+    if (code_challenge) {
+        if (!options.code_challenge_method)
+            code_challenge_method = 'plain';
+        else
+            code_challenge_method = options.code_challenge_method;
+        if (code_challenge_method === 'S256') {
+            const h = crypto.createHash('sha256');
+            h.update(code_challenge);
+            code_challenge = h.digest('base64');
+        }
+    }
     let url = `local/api/${apiId}/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${client.redirectUri}`;
     if (scope) {
         const scopeString = scope.join(' ');
         url += `&scope=${qs.escape(scopeString)}`;
+    }
+    if (code_challenge) {
+        url += `&code_challenge=${qs.escape(code_challenge)}&code_challenge_method=${code_challenge_method}`;
     }
     return url;
 };
@@ -391,8 +408,8 @@ utils.assertIsCodeRedirect = function (res, callback) {
     callback(null, code);
 };
 
-utils.getAuthCode = function (cookieJar, apiId, client, user, scope, callback) {
-    let url = utils.getAuthCodeUrl(apiId, client, scope);
+utils.getAuthCode = function (cookieJar, apiId, client, user, options, callback) {
+    let url = utils.getAuthCodeUrl(apiId, client, options);
     utils.authGet(url, cookieJar, function (err, res, body) {
         const csrfToken = body.csrfToken;
         assert.equal(res.statusCode, 200);
@@ -408,8 +425,8 @@ utils.getAuthCode = function (cookieJar, apiId, client, user, scope, callback) {
     });
 };
 
-utils.getAuthCodeToken = function (cookieJar, apiId, client, user, scope, callback) {
-    utils.getAuthCode(cookieJar, apiId, client, user, scope, function (err, code) {
+utils.getAuthCodeToken = function (cookieJar, apiId, client, user, options, callback) {
+    utils.getAuthCode(cookieJar, apiId, client, user, options, function (err, code) {
         assert.isNotOk(err);
         assert.isOk(code);
         utils.authPost(`local/api/${apiId}/token`, {
@@ -495,7 +512,7 @@ utils.getPasswordToken = function (apiId, client, clientIsPublic, user, callback
 };
 
 utils.getRegistrationForm = function (cookieJar, apiId, client, user, callback) {
-    const url = utils.getAuthCodeUrl(apiId, client, null);
+    const url = utils.getAuthCodeUrl(apiId, client, {});
     utils.authGet(url, cookieJar, function (err, res, body) {
         utils.assertIsHtml(body);
         const csrfToken = body.csrfToken;
