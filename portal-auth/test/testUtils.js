@@ -363,7 +363,9 @@ utils.awaitEmptyAdapterQueue = function (callback) {
                 if (tryCount > 7)
                     console.log('INFO: awaitEmptyQueue needed ' + tryCount + ' tries.');
                 return callback(null);
-            }
+            } // else {
+            //     console.log('Pending events: ' + events.length);
+            // }
             setTimeout(_awaitEmptyQueue, timeOut, tryCount + 1);
         });
     };
