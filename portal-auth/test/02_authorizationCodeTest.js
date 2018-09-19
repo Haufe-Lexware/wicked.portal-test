@@ -290,7 +290,7 @@ describe('Authorization Code Grant', function () {
         it('should accept doing the auth code grant with PKCE (plain challenge)', function (done) {
             const cookieJar = request.jar();
             const client = ids.public.echo;
-            const codeVerifier = 'hello';
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
             utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier }, function (err, code) {
                 assert.isNotOk(err);
                 assert.isOk(code);
@@ -312,7 +312,8 @@ describe('Authorization Code Grant', function () {
         it('should accept doing the auth code grant with PKCE (S256 challenge)', function (done) {
             const cookieJar = request.jar();
             const client = ids.public.echo;
-            const codeVerifier = 'hello';
+            // At least 43, max 128
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
             utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, code_challenge_method: 'S256' }, function (err, code) {
                 assert.isNotOk(err);
                 assert.isOk(code);
@@ -326,6 +327,50 @@ describe('Authorization Code Grant', function () {
                     assert.equal(res.statusCode, 200);
                     assert.isOk(body.access_token);
                     assert.isNotOk(body.error);
+                    done();
+                });
+            });
+        });
+
+        it('should reject doing the auth code grant with PKCE (S256 challenge) with a too short code_verifier', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.public.echo;
+            // At least 43, max 128
+            const codeVerifier = 'hello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, code_challenge_method: 'S256' }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
+                    client_id: client.clientId,
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 400);
+                    assert.equal('invalid_request', body.error);
+                    done();
+                });
+            });
+        });
+
+        it('should reject doing the auth code grant with PKCE (S256 challenge) with a too long code_verifier', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.public.echo;
+            // At least 43, max 128
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, code_challenge_method: 'S256' }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
+                    client_id: client.clientId,
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 400);
+                    assert.equal('invalid_request', body.error);
                     done();
                 });
             });
