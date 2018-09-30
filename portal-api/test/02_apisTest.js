@@ -130,34 +130,6 @@ describe('/apis', function () {
                 done();
             });
         });
-
-        it('should not return the health API for a normal user', function (done) {
-            request({
-                url: baseUrl + 'apis',
-                headers: utils.makeHeaders(devUserId, READ_APIS_SCOPE)
-            }, function (err, res, body) {
-                assert.isNotOk(err);
-                assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
-                var healthApi = jsonBody.apis.find(function (a) { return a.id == 'portal-health'; });
-                assert.isNotOk(healthApi);
-                done();
-            });
-        });
-
-        it('should return the health API for an admin user', function (done) {
-            request({
-                url: baseUrl + 'apis',
-                headers: utils.makeHeaders(adminUserId, READ_APIS_SCOPE)
-            }, function (err, res, body) {
-                assert.isNotOk(err);
-                assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
-                var healthApi = jsonBody.apis.find(function (a) { return a.id == 'portal-health'; });
-                assert.isOk(healthApi);
-                done();
-            });
-        });
     }); // /apis GET
 
     describe('/<apiID>', function () {

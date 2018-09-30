@@ -1118,5 +1118,24 @@ describe('/users', function () {
                 done();
             });
         });
+
+        it('should not be possilble to create a machine user with an invalid email', (done) => {
+            request.post({
+                url: baseUrl + 'users/machine',
+                headers: {},
+                json: true,
+                body: {
+                    customId: 'internal:whatever',
+                    email: 'foo@whatever',
+                    validated: true,
+                    groups: ["admin"]
+                }
+            }, function (err, res, body) {
+                assert.equal(400, res.statusCode, "status code not 400");
+                const jsonBody = utils.getJson(body);
+                assert.equal('Email address invalid (not RFC 5322 compliant)', jsonBody.message, 'Unexpected error message');
+                done();
+            });
+        });
     });
 }); // /users

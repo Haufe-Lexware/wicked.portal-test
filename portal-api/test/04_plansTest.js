@@ -34,12 +34,12 @@ describe('/plans', function () {
                 assert.equal(200, res.statusCode);
                 var jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody.plans);
-                assert.equal(8, jsonBody.plans.length);
+                assert.equal(7, jsonBody.plans.length);
                 done();
             });
         });
 
-        it('should return also the internal health Plan', function (done) {
+        it('should return also the internal API Plans', function (done) {
             request({
                 url: baseUrl + 'plans',
                 headers: utils.onlyScope(READ_PLANS_SCOPE)
@@ -48,12 +48,16 @@ describe('/plans', function () {
                 assert.equal(200, res.statusCode);
                 var jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody.plans);
-                var foundHealthPlan = false;
+                var foundApiPlanBasic = false;
+                var foundApiPlanUnlimited = false;
                 for (var i = 0; i < jsonBody.plans.length; ++i) {
-                    if ("__internal_health" == jsonBody.plans[i].id)
-                        foundHealthPlan = true;
+                    if ("__internal_api_basic" == jsonBody.plans[i].id)
+                        foundApiPlanBasic = true;
+                    if ("__internal_api_unlimited" == jsonBody.plans[i].id)
+                        foundApiPlanUnlimited = true;
                 }
-                assert.isOk(foundHealthPlan);
+                assert.isOk(foundApiPlanBasic, 'did not find api basic plan');
+                assert.isOk(foundApiPlanUnlimited, 'did not find api unlimited plan');
                 done();
             });
         });
