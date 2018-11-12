@@ -91,11 +91,11 @@ describe('Authorization Code Grant', function () {
         });
 
         it('should return an HTML error for an invalid client_id', function (done) {
-            utils.authGet('local/api/echo/authorize?response_type=code&client_id=invalid', function (err, res, body) {
+            utils.authGet('local/api/echo/authorize?response_type=code&client_id=invalid&redirect_uri=http://dummy.org', function (err, res, body) {
                 assert.equal(res.statusCode, 400);
                 utils.assertIsHtml(body);
                 // console.log(body);
-                assert.isTrue(body.message.indexOf('Invalid') >= 0);
+                assert.isTrue(body.message.indexOf('could not validate') >= 0);
                 done();
             });
         });
