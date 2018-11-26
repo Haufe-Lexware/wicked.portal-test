@@ -129,6 +129,13 @@ function createAppSubscriptions(appId, echoPlan, trusted, redirectUri, callback)
             auth: 'oauth2',
             plan: 'basic',
             trusted: trusted
+        }, callback),
+        echo_client_credentials: callback => wicked.createSubscription(appId, {
+            api: 'echo-client-credentials',
+            application: appId,
+            auth: 'oauth2',
+            plan: 'basic',
+            trusted: trusted
         }, callback)
     }, function (err, subs) {
         if (err)
@@ -147,6 +154,11 @@ function createAppSubscriptions(appId, echoPlan, trusted, redirectUri, callback)
             echo_woo_ns: {
                 clientId: subs.echo_woo_ns.clientId,
                 clientSecret: subs.echo_woo_ns.clientSecret,
+                redirectUri: redirectUri,
+            },
+            echo_client_credentials: {
+                clientId: subs.echo_client_credentials.clientId,
+                clientSecret: subs.echo_client_credentials.clientSecret,
                 redirectUri: redirectUri,
             }
         });

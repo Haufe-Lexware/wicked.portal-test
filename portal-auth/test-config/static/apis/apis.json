@@ -123,6 +123,47 @@
       "requiredGroup": "",
       "registrationPool": "",
       "passthroughScopeUrl": "${PORTAL_APIS_ECHOPASSTHROUGH_SCOPE_URL}"
+    },
+    {
+      "id": "echo-client-credentials",
+      "name": "Echo with Client Credentials",
+      "desc": "Echo with Client Credentials",
+      "auth": "oauth2",
+      "tags": [],
+      "plans": [
+        "unlimited",
+        "basic"
+      ],
+      "authMethods": [
+        "default:local"
+      ],
+      "settings": {
+        "token_expiration": "600",
+        "scopes": {
+          "get": {
+            "description": "GET"
+          },
+          "put": {
+            "description": "PUT"
+          },
+          "post": {
+            "description": "POST"
+          },
+          "delete": {
+            "description": "DELETE"
+          },
+          "patch": {
+            "description": "PATCH"
+          }
+        },
+        "mandatory_scope": false,
+        "enable_client_credentials": true,
+        "enable_implicit_grant": false,
+        "enable_password_grant": false,
+        "enable_authorization_code": false
+      },
+      "requiredGroup": "",
+      "registrationPool": ""
     }
   ],
   "_links": {

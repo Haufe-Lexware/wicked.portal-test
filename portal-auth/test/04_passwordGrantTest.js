@@ -152,10 +152,11 @@ describe('Resource Owner Password Grant', function () {
                 assert.isOk(body.access_token);
                 assert.isOk(body.refresh_token);
                 assert.equal(body.token_type, 'bearer');
+                assert.isDefined(body.scope, 'scope is not passed back (should be)');
                 done();
             });
         });
-
+        
         it('should be possible to retrieve an access token as a trusted public application', function (done) {
             const client = ids.public.echo;
             const user = ids.users.normal;
@@ -170,6 +171,7 @@ describe('Resource Owner Password Grant', function () {
                 assert.isOk(body.access_token);
                 assert.isOk(body.refresh_token);
                 assert.equal(body.token_type, 'bearer');
+                assert.isDefined(body.scope, 'scope is not passed back (should be)');
                 done();
             });
         });
