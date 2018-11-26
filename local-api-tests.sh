@@ -116,7 +116,7 @@ while [[ -n "$1" ]]; do
 done
 
 if [[ -z "${mode}" ]]; then
-    echo "Usage: $0 <--json|--postgres> [-grep <filter>]"
+    echo "Usage: $0 <--json|--postgres> [--grep <filter>]"
     exit 1
 fi
 

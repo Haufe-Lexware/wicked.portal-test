@@ -75,164 +75,149 @@ describe('/applications/<appId>/subscriptions', function () {
     var subsUrl = baseUrl + 'applications/' + appId + '/subscriptions';
     var publicApi = 'superduper';
     var privateApi = 'partner';
+    var oauth2Api = 'oauth2-api';
 
     describe('POST', function () {
         it('should not be possible to add a subscription with the wrong scope', function (done) {
-            request.post(
-                {
-                    url: subsUrl,
-                    headers: utils.makeHeaders(devUserId, INVALID_SCOPE),
-                    json: true,
-                    body: {
-                        application: appId,
-                        api: publicApi,
-                        plan: 'unlimited'
-                    }
-                },
-                function (err, res, body) {
-                    assert.isNotOk(err);
-                    utils.assertScopeReject(res, body);
-                    done();
-                });
+            request.post({
+                url: subsUrl,
+                headers: utils.makeHeaders(devUserId, INVALID_SCOPE),
+                json: true,
+                body: {
+                    application: appId,
+                    api: publicApi,
+                    plan: 'unlimited'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                utils.assertScopeReject(res, body);
+                done();
+            });
         });
-        
+
         it('should be possible to add a subscription', function (done) {
-            request.post(
-                {
-                    url: subsUrl,
-                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
-                    json: true,
-                    body: {
-                        application: appId,
-                        api: publicApi,
-                        plan: 'unlimited'
-                    }
-                },
-                function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(201, res.statusCode);
-                    done();
-                });
+            request.post({
+                url: subsUrl,
+                headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
+                json: true,
+                body: {
+                    application: appId,
+                    api: publicApi,
+                    plan: 'unlimited'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(201, res.statusCode);
+                done();
+            });
         });
 
         it('should be possible for co-owners to add a subscription', function (done) {
             utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', function () {
-                request.post(
-                    {
-                        url: subsUrl,
-                        headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
-                        json: true,
-                        body: {
-                            application: appId,
-                            api: publicApi,
-                            plan: 'unlimited'
-                        }
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(201, res.statusCode);
-                        done();
-                    });
+                request.post({
+                    url: subsUrl,
+                    headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        application: appId,
+                        api: publicApi,
+                        plan: 'unlimited'
+                    }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(201, res.statusCode);
+                    done();
+                });
             });
         });
 
         it('should be possible for collaborators to add a subscription', function (done) {
             utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function () {
-                request.post(
-                    {
-                        url: subsUrl,
-                        headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
-                        json: true,
-                        body: {
-                            application: appId,
-                            api: publicApi,
-                            plan: 'godlike'
-                        }
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(201, res.statusCode);
-                        done();
-                    });
+                request.post({
+                    url: subsUrl,
+                    headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        application: appId,
+                        api: publicApi,
+                        plan: 'godlike'
+                    }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(201, res.statusCode);
+                    done();
+                });
             });
         });
 
         it('should not be possible for readers to add a subscription', function (done) {
             utils.addOwner(appId, devUserId, 'noob@random.org', 'reader', function () {
-                request.post(
-                    {
-                        url: subsUrl,
-                        headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
-                        json: true,
-                        body: {
-                            application: appId,
-                            api: publicApi,
-                            plan: 'basic'
-                        }
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(403, res.statusCode);
-                        done();
-                    });
-            });
-        });
-
-        it('should not be possible to add a subscription with an invalid user', function (done) {
-            request.post(
-                {
+                request.post({
                     url: subsUrl,
-                    headers: utils.makeHeaders('somethinginvalid', WRITE_SUBS_SCOPE),
+                    headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
                     json: true,
                     body: {
                         application: appId,
                         api: publicApi,
                         plan: 'basic'
                     }
-                },
-                function (err, res, body) {
+                }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(403, res.statusCode);
                     done();
                 });
+            });
+        });
+
+        it('should not be possible to add a subscription with an invalid user', function (done) {
+            request.post({
+                url: subsUrl,
+                headers: utils.makeHeaders('somethinginvalid', WRITE_SUBS_SCOPE),
+                json: true,
+                body: {
+                    application: appId,
+                    api: publicApi,
+                    plan: 'basic'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(403, res.statusCode);
+                done();
+            });
         });
 
         it('should not be possible to add a subscription with an invalid plan', function (done) {
-            request.post(
-                {
-                    url: subsUrl,
-                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
-                    json: true,
-                    body: {
-                        application: appId,
-                        api: publicApi,
-                        plan: 'invalidplan'
-                    }
-                },
-                function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(400, res.statusCode);
-                    done();
-                });
+            request.post({
+                url: subsUrl,
+                headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
+                json: true,
+                body: {
+                    application: appId,
+                    api: publicApi,
+                    plan: 'invalidplan'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(400, res.statusCode);
+                done();
+            });
         });
 
         it('should not be possible to add a subscription with a restricted plan', function (done) {
-            request.post(
-                {
-                    url: subsUrl,
-                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
-                    json: true,
-                    body: {
-                        application: appId,
-                        api: 'orders',
-                        plan: 'restricted_basic'
-                    }
-                },
-                function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(403, res.statusCode);
-                    done();
-                });
+            request.post({
+                url: subsUrl,
+                headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
+                json: true,
+                body: {
+                    application: appId,
+                    api: 'orders',
+                    plan: 'restricted_basic'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(403, res.statusCode);
+                done();
+            });
         });
 
         it('should, with the required group, be possible to add a subscription to a restricted plan', function (done) {
@@ -255,117 +240,105 @@ describe('/applications/<appId>/subscriptions', function () {
         });
 
         it('should not be possible to add a subscription with an invalid API', function (done) {
-            request.post(
-                {
-                    url: subsUrl,
-                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
-                    json: true,
-                    body: {
-                        application: appId,
-                        api: 'invalid-api',
-                        plan: 'basic'
-                    }
-                },
-                function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(400, res.statusCode);
-                    done();
-                });
+            request.post({
+                url: subsUrl,
+                headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
+                json: true,
+                body: {
+                    application: appId,
+                    api: 'invalid-api',
+                    plan: 'basic'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(400, res.statusCode);
+                done();
+            });
         });
 
         it('should not be possible to add a subscription without a user', function (done) {
-            request.post(
-                {
-                    url: subsUrl,
-                    json: true,
-                    body: {
-                        application: appId,
-                        api: publicApi,
-                        plan: 'basic'
-                    },
-                    headers: utils.onlyScope(WRITE_SUBS_SCOPE)
+            request.post({
+                url: subsUrl,
+                json: true,
+                body: {
+                    application: appId,
+                    api: publicApi,
+                    plan: 'basic'
                 },
-                function (err, res, body) {
-                    assert.isNotOk(err);
-                    utils.assertNotScopeReject(res, body);
-                    done();
-                });
+                headers: utils.onlyScope(WRITE_SUBS_SCOPE)
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                utils.assertNotScopeReject(res, body);
+                done();
+            });
         });
 
         it('should not be possible to add a subscription to an invalid app', function (done) {
-            request.post(
-                {
-                    url: baseUrl + 'applications/invalid-app/subscriptions',
-                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
-                    json: true,
-                    body: {
-                        application: 'invalid-app',
-                        api: publicApi,
-                        plan: 'basic'
-                    }
-                },
-                function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(404, res.statusCode);
-                    done();
-                });
+            request.post({
+                url: baseUrl + 'applications/invalid-app/subscriptions',
+                headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
+                json: true,
+                body: {
+                    application: 'invalid-app',
+                    api: publicApi,
+                    plan: 'basic'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(404, res.statusCode);
+                done();
+            });
         });
         it('should not be possible to add a subscription to a restricted API', function (done) {
             utils.createApplication('noobapp', 'Noob App', noobUserId, function () {
-                request.post(
-                    {
-                        url: baseUrl + 'applications/noobapp/subscriptions',
-                        headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
-                        json: true,
-                        body: {
-                            application: 'noobapp',
-                            api: 'restricted',
-                            plan: 'restricted_basic'
-                        }
-                    },
-                    function (err, res, body) {
-                        utils.deleteApplication('noobapp', noobUserId, function () {
-                            assert.isNotOk(err);
-                            utils.assertNotScopeReject(res, body);
-                            done();
-                        });
+                request.post({
+                    url: baseUrl + 'applications/noobapp/subscriptions',
+                    headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        application: 'noobapp',
+                        api: 'restricted',
+                        plan: 'restricted_basic'
+                    }
+                }, function (err, res, body) {
+                    utils.deleteApplication('noobapp', noobUserId, function () {
+                        assert.isNotOk(err);
+                        utils.assertNotScopeReject(res, body);
+                        done();
                     });
+                });
             });
         });
 
         it('should not return an apikey for plans which require approval', function (done) {
             utils.addSubscription(appId, devUserId, privateApi, 'unlimited', null, function () {
-                request.get(
-                    {
-                        url: subsUrl,
-                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
-                        assert.isNotOk(jsonBody[0].apikey);
-                        assert.isNotOk(jsonBody[0].approved);
-                        done();
-                    });
+                request.get({
+                    url: subsUrl,
+                    headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.isNotOk(jsonBody[0].apikey);
+                    assert.isNotOk(jsonBody[0].approved);
+                    done();
+                });
             });
         });
 
         it('should, for admins, return an apikey for plans which require approval', function (done) {
             utils.addSubscription(appId, adminUserId, privateApi, 'unlimited', null, function () {
-                request(
-                    {
-                        url: subsUrl,
-                        headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
-                        assert.isOk(jsonBody[0].apikey, "Admins must get the apikey back, no approval needed.");
-                        assert.isOk(jsonBody[0].approved, "Subscriptions must be marked as approved.");
-                        done();
-                    });
+                request({
+                    url: subsUrl,
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody[0].apikey, "Admins must get the apikey back, no approval needed.");
+                    assert.isOk(jsonBody[0].approved, "Subscriptions must be marked as approved.");
+                    done();
+                });
             });
         });
     }); // /subscriptions POST
@@ -373,36 +346,32 @@ describe('/applications/<appId>/subscriptions', function () {
     describe('GET', function () {
         it('should be possible to get all subscriptions', function (done) {
             utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                request(
-                    {
-                        url: subsUrl,
-                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
-                        assert.equal(1, jsonBody.length);
-                        done();
-                    });
+                request({
+                    url: subsUrl,
+                    headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.equal(1, jsonBody.length);
+                    done();
+                });
             });
         });
 
         it('should be possible for collaborators to get all subscriptions', function (done) {
             utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
                 utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function () {
-                    request(
-                        {
-                            url: subsUrl,
-                            headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
-                        },
-                        function (err, res, body) {
-                            assert.isNotOk(err);
-                            assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
-                            assert.equal(1, jsonBody.length);
-                            done();
-                        });
+                    request({
+                        url: subsUrl,
+                        headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.equal(1, jsonBody.length);
+                        done();
+                    });
                 });
             });
         });
@@ -410,51 +379,45 @@ describe('/applications/<appId>/subscriptions', function () {
         it('should be possible for readers to get all subscriptions', function (done) {
             utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
                 utils.addOwner(appId, devUserId, 'noob@random.org', 'reader', function () {
-                    request(
-                        {
-                            url: subsUrl,
-                            headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
-                        },
-                        function (err, res, body) {
-                            assert.isNotOk(err);
-                            assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
-                            assert.equal(1, jsonBody.length);
-                            done();
-                        });
-                });
-            });
-        });
-
-        it('should be possible for admins to get all subscriptions, even if not owner', function (done) {
-            utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                request(
-                    {
+                    request({
                         url: subsUrl,
-                        headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
-                    },
-                    function (err, res, body) {
+                        headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
                         var jsonBody = utils.getJson(body);
                         assert.equal(1, jsonBody.length);
                         done();
                     });
+                });
+            });
+        });
+
+        it('should be possible for admins to get all subscriptions, even if not owner', function (done) {
+            utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
+                request({
+                    url: subsUrl,
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.equal(1, jsonBody.length);
+                    done();
+                });
             });
         });
 
         it('should not be possible for unrelated users to get all subscriptions', function (done) {
             utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                request(
-                    {
-                        url: subsUrl,
-                        headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        utils.assertNotScopeReject(res, body);
-                        done();
-                    });
+                request({
+                    url: subsUrl,
+                    headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    utils.assertNotScopeReject(res, body);
+                    done();
+                });
             });
         });
     }); // /subscriptions GET
@@ -463,55 +426,49 @@ describe('/applications/<appId>/subscriptions', function () {
         describe('GET', function () {
             it('should be possible to get subscription', function (done) {
                 utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                    request(
-                        {
-                            url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
-                        },
-                        function (err, res, body) {
-                            assert.isNotOk(err);
-                            assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
-                            assert.equal(privateApi, jsonBody.api);
-                            done();
-                        });
+                    request({
+                        url: subsUrl + '/' + privateApi,
+                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.equal(privateApi, jsonBody.api);
+                        done();
+                    });
                 });
             });
 
             it('should return the correct apikey for a subscription', function (done) {
                 var APIKEY = 'abcdefghijklmno';
                 utils.addSubscription(appId, devUserId, privateApi, 'basic', APIKEY, function () {
-                    request(
-                        {
-                            url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
-                        },
-                        function (err, res, body) {
-                            assert.isNotOk(err);
-                            assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
-                            assert.equal(privateApi, jsonBody.api);
-                            assert.equal(APIKEY, jsonBody.apikey);
-                            done();
-                        });
+                    request({
+                        url: subsUrl + '/' + privateApi,
+                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.equal(privateApi, jsonBody.api);
+                        assert.equal(APIKEY, jsonBody.apikey);
+                        done();
+                    });
                 });
             });
 
             it('should be possible for collaborators to get subscription', function (done) {
                 utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
                     utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function () {
-                        request(
-                            {
-                                url: subsUrl + '/' + privateApi,
-                                headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
-                            },
-                            function (err, res, body) {
-                                assert.isNotOk(err);
-                                assert.equal(200, res.statusCode);
-                                var jsonBody = utils.getJson(body);
-                                assert.equal(privateApi, jsonBody.api);
-                                done();
-                            });
+                        request({
+                            url: subsUrl + '/' + privateApi,
+                            headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
+                        }, function (err, res, body) {
+                            assert.isNotOk(err);
+                            assert.equal(200, res.statusCode);
+                            var jsonBody = utils.getJson(body);
+                            assert.equal(privateApi, jsonBody.api);
+                            done();
+                        });
                     });
                 });
             });
@@ -519,76 +476,85 @@ describe('/applications/<appId>/subscriptions', function () {
             it('should be possible for readers to get subscription', function (done) {
                 utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
                     utils.addOwner(appId, devUserId, 'noob@random.org', 'reader', function () {
-                        request(
-                            {
-                                url: subsUrl + '/' + privateApi,
-                                headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
-                            },
-                            function (err, res, body) {
-                                assert.isNotOk(err);
-                                assert.equal(200, res.statusCode);
-                                var jsonBody = utils.getJson(body);
-                                assert.equal(privateApi, jsonBody.api);
-                                done();
-                            });
-                    });
-                });
-            });
-
-            it('should be possible for admins to get subscription, even if not owner', function (done) {
-                utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                    request(
-                        {
+                        request({
                             url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
-                        },
-                        function (err, res, body) {
+                            headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
+                        }, function (err, res, body) {
                             assert.isNotOk(err);
                             assert.equal(200, res.statusCode);
                             var jsonBody = utils.getJson(body);
                             assert.equal(privateApi, jsonBody.api);
                             done();
                         });
+                    });
+                });
+            });
+
+            it('should be possible for admins to get subscription, even if not owner', function (done) {
+                utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
+                    request({
+                        url: subsUrl + '/' + privateApi,
+                        headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.equal(privateApi, jsonBody.api);
+                        done();
+                    });
+                });
+            });
+
+            it('should contain data for allowedScopes(Mode)', function (done) {
+                utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function () {
+                    request({
+                        url: subsUrl + '/' + oauth2Api,
+                        headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.equal(oauth2Api, jsonBody.api);
+                        assert.isDefined(jsonBody.allowedScopesMode, 'allowedScopesMode is not defined');
+                        assert.isDefined(jsonBody.allowedScopes, 'allowedScopesMode is not defined');
+                        done();
+                    });
                 });
             });
 
             it('should not be possible for unrelated users to get subscription', function (done) {
                 utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                    request(
-                        {
-                            url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
-                        },
-                        function (err, res, body) {
-                            assert.isNotOk(err);
-                            utils.assertNotScopeReject(res, body);
-                            done();
-                        });
+                    request({
+                        url: subsUrl + '/' + privateApi,
+                        headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        utils.assertNotScopeReject(res, body);
+                        done();
+                    });
                 });
             });
 
             it('should return valid _links', function (done) {
                 utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                    request(
-                        {
-                            url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
-                        },
-                        function (err, res, body) {
-                            assert.isNotOk(err);
-                            assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
-                            assert.isOk(jsonBody._links);
-                            assert.isOk(jsonBody._links.self);
-                            assert.isOk(jsonBody._links.application);
-                            assert.isOk(jsonBody._links.plans);
-                            assert.isOk(jsonBody._links.apis);
-                            assert.equal(jsonBody._links.self.href, '/applications/' + appId + '/subscriptions/' + privateApi);
-                            assert.equal(jsonBody._links.application.href, '/applications/' + appId);
-                            assert.equal(jsonBody._links.plans.href, '/plans');
-                            assert.equal(jsonBody._links.apis.href, '/apis');
-                            done();
-                        });
+                    request({
+                        url: subsUrl + '/' + privateApi,
+                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.isOk(jsonBody._links);
+                        assert.isOk(jsonBody._links.self);
+                        assert.isOk(jsonBody._links.application);
+                        assert.isOk(jsonBody._links.plans);
+                        assert.isOk(jsonBody._links.apis);
+                        assert.equal(jsonBody._links.self.href, '/applications/' + appId + '/subscriptions/' + privateApi);
+                        assert.equal(jsonBody._links.application.href, '/applications/' + appId);
+                        assert.equal(jsonBody._links.plans.href, '/plans');
+                        assert.equal(jsonBody._links.apis.href, '/apis');
+                        done();
+                    });
                 });
             });
 
@@ -597,84 +563,72 @@ describe('/applications/<appId>/subscriptions', function () {
         describe('DELETE', function () {
             it('should be possible to delete a subscription', function (done) {
                 utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                    request.delete(
-                        {
-                            url: subsUrl + '/' + privateApi,
-                            headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE)
-                        },
-                        function (err, res, body) {
-                            assert.isNotOk(err);
-                            assert.equal(204, res.statusCode);
-                            done();
-                        });
+                    request.delete({
+                        url: subsUrl + '/' + privateApi,
+                        headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(204, res.statusCode);
+                        done();
+                    });
                 });
             });
 
             it('should return a 404 if the application is invalid', function (done) {
-                request.delete(
-                    {
-                        url: baseUrl + 'applications/invalid-app/subscriptions/' + privateApi,
-                        headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE)
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(404, res.statusCode);
-                        done();
-                    });
+                request.delete({
+                    url: baseUrl + 'applications/invalid-app/subscriptions/' + privateApi,
+                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(404, res.statusCode);
+                    done();
+                });
             });
 
             it('should return a 403 if using the wrong scope', function (done) {
-                request.delete(
-                    {
-                        url: subsUrl + '/' + privateApi,
-                        headers: utils.makeHeaders(devUserId, INVALID_SCOPE)
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        utils.assertScopeReject(res, body);
-                        done();
-                    });
+                request.delete({
+                    url: subsUrl + '/' + privateApi,
+                    headers: utils.makeHeaders(devUserId, INVALID_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    utils.assertScopeReject(res, body);
+                    done();
+                });
             });
 
             it('should return a 403 if the user is invalid', function (done) {
-                request.delete(
-                    {
-                        url: subsUrl + '/' + privateApi,
-                        headers: utils.makeHeaders('somethinginvalid', WRITE_SUBS_SCOPE)
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        utils.assertNotScopeReject(res, body);
-                        done();
-                    });
+                request.delete({
+                    url: subsUrl + '/' + privateApi,
+                    headers: utils.makeHeaders('somethinginvalid', WRITE_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    utils.assertNotScopeReject(res, body);
+                    done();
+                });
             });
 
             it('should return a 404 if trying to delete a non-existing subscription', function (done) {
-                request.delete(
-                    {
-                        url: subsUrl + '/' + privateApi,
-                        headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE)
-                    },
-                    function (err, res, body) {
-                        assert.isNotOk(err);
-                        assert.equal(404, res.statusCode);
-                        done();
-                    });
+                request.delete({
+                    url: subsUrl + '/' + privateApi,
+                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(404, res.statusCode);
+                    done();
+                });
             });
 
             it('should be possible to delete a subscription for a collaborator', function (done) {
                 utils.addOwner(appId, devUserId, 'noob@random.org', 'collaborator', function () {
                     utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                        request.delete(
-                            {
-                                url: subsUrl + '/' + privateApi,
-                                headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE)
-                            },
-                            function (err, res, body) {
-                                assert.isNotOk(err);
-                                assert.equal(204, res.statusCode);
-                                done();
-                            });
+                        request.delete({
+                            url: subsUrl + '/' + privateApi,
+                            headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE)
+                        }, function (err, res, body) {
+                            assert.isNotOk(err);
+                            assert.equal(204, res.statusCode);
+                            done();
+                        });
                     });
                 });
             });
@@ -682,48 +636,42 @@ describe('/applications/<appId>/subscriptions', function () {
             it('should not be possible to delete a subscription for a reader', function (done) {
                 utils.addOwner(appId, devUserId, 'noob@random.org', 'reader', function () {
                     utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                        request.delete(
-                            {
-                                url: subsUrl + '/' + privateApi,
-                                headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE)
-                            },
-                            function (err, res, body) {
-                                assert.isNotOk(err);
-                                utils.assertNotScopeReject(res, body);
-                                done();
-                            });
+                        request.delete({
+                            url: subsUrl + '/' + privateApi,
+                            headers: utils.makeHeaders(noobUserId, WRITE_SUBS_SCOPE)
+                        }, function (err, res, body) {
+                            assert.isNotOk(err);
+                            utils.assertNotScopeReject(res, body);
+                            done();
+                        });
                     });
                 });
             });
 
             it('should be removed from subscriptions after deleting', function (done) {
                 utils.addSubscription(appId, devUserId, privateApi, 'basic', null, function () {
-                    request(
-                        {
-                            url: subsUrl,
-                            headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
-                        },
-                        function (err, res, body) {
-                            assert.isNotOk(err);
-                            assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
-                            assert.equal(1, jsonBody.length);
+                    request({
+                        url: subsUrl,
+                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        var jsonBody = utils.getJson(body);
+                        assert.equal(1, jsonBody.length);
 
-                            utils.deleteSubscription(appId, devUserId, privateApi, function () {
-                                request(
-                                    {
-                                        url: subsUrl,
-                                        headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
-                                    },
-                                    function (err, res, body) {
-                                        assert.isNotOk(err);
-                                        assert.equal(200, res.statusCode);
-                                        var jsonBody = utils.getJson(body);
-                                        assert.equal(0, jsonBody.length);
-                                        done();
-                                    });
+                        utils.deleteSubscription(appId, devUserId, privateApi, function () {
+                            request({
+                                url: subsUrl,
+                                headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
+                            }, function (err, res, body) {
+                                assert.isNotOk(err);
+                                assert.equal(200, res.statusCode);
+                                var jsonBody = utils.getJson(body);
+                                assert.equal(0, jsonBody.length);
+                                done();
                             });
                         });
+                    });
                 });
             });
 
@@ -732,24 +680,22 @@ describe('/applications/<appId>/subscriptions', function () {
 
     describe('deprecated APIs', function () {
         it('should not be possible to create a subscription for a deprecated API', function (done) {
-            request.post(
-                {
-                    url: baseUrl + 'applications/' + appId + '/subscriptions',
-                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
-                    json: true,
-                    body: {
-                        application: appId,
-                        api: 'deprecated',
-                        plan: 'basic'
-                    }
-                },
-                function (err, res, body) {
-                    assert.isNotOk(err);
-                    assert.equal(400, res.statusCode);
-                    var jsonBody = utils.getJson(body);
-                    assert.equal(jsonBody.message, 'API is deprecated. Subscribing not possible.');
-                    done();
-                });
+            request.post({
+                url: baseUrl + 'applications/' + appId + '/subscriptions',
+                headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
+                json: true,
+                body: {
+                    application: appId,
+                    api: 'deprecated',
+                    plan: 'basic'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(400, res.statusCode);
+                var jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.message, 'API is deprecated. Subscribing not possible.');
+                done();
+            });
         });
     });
 
@@ -830,6 +776,123 @@ describe('/applications/<appId>/subscriptions', function () {
                     assert.isArray(jsonBody.items);
                     assert.equal(0, jsonBody.items.length);
                     done();
+                });
+            });
+        });
+    });
+
+    describe('PATCH', function () {
+        it('should be possible to patch a subscription (trust subscription)', function (done) {
+            utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function () {
+                request.patch({
+                    url: subsUrl + '/' + oauth2Api,
+                    headers: utils.makeHeaders(adminUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        trusted: true
+                    }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.equal(jsonBody.trusted, true);
+                    assert.isDefined(jsonBody.allowedScopes, 'allowedScopes must be defined');
+                    assert.isDefined(jsonBody.allowedScopesMode, 'allowedScopesMode must be defined');
+                    utils.deleteSubscription(appId, devUserId, oauth2Api, done);
+                });
+            });
+        });
+
+        it('should be possible to patch a subscription (change allowed scopes)', function (done) {
+            utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function () {
+                request.patch({
+                    url: subsUrl + '/' + oauth2Api,
+                    headers: utils.makeHeaders(adminUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        allowedScopesMode: 'select',
+                        allowedScopes: ['hello', 'world']
+                    }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.equal(jsonBody.trusted, false);
+                    assert.equal(jsonBody.allowedScopesMode, 'select');
+                    assert.isDefined(jsonBody.allowedScopesMode, 'allowedScopesMode must be defined');
+                    assert.isDefined(jsonBody.allowedScopes, 'allowedScopes must be defined');
+                    assert.isArray(jsonBody.allowedScopes, 'allowedScopes must be an array');
+                    utils.deleteSubscription(appId, devUserId, oauth2Api, done);
+                });
+            });
+        });
+
+        it('should reject an invalid patch request (invalid mode)', function (done) {
+            utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function () {
+                request.patch({
+                    url: subsUrl + '/' + oauth2Api,
+                    headers: utils.makeHeaders(adminUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        allowedScopesMode: 'invalid',
+                    }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(400, res.statusCode);
+                    utils.deleteSubscription(appId, devUserId, oauth2Api, done);
+                });
+            });
+        });
+
+        it('should reject an invalid patch request (invalid scope array)', function (done) {
+            utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function () {
+                request.patch({
+                    url: subsUrl + '/' + oauth2Api,
+                    headers: utils.makeHeaders(adminUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        allowedScopesMode: 'select',
+                        allowedScopes: 'aoow jlslf slkjslkjdfksdf'
+                    }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(400, res.statusCode);
+                    utils.deleteSubscription(appId, devUserId, oauth2Api, done);
+                });
+            });
+        });
+
+        it('should reject an invalid patch request (invalid scope array (2))', function (done) {
+            utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function () {
+                request.patch({
+                    url: subsUrl + '/' + oauth2Api,
+                    headers: utils.makeHeaders(adminUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        allowedScopesMode: 'select',
+                        allowedScopes: [{ scope: 'hello' }, { scope: 'world' }]
+                    }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(400, res.statusCode);
+                    utils.deleteSubscription(appId, devUserId, oauth2Api, done);
+                });
+            });
+        });
+
+        it('should not be possible to patch a subscription as a non-admin (trust subscription)', function (done) {
+            utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function () {
+                request.patch({
+                    url: subsUrl + '/' + oauth2Api,
+                    headers: utils.makeHeaders(devUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        trusted: true
+                    }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(403, res.statusCode);
+                    utils.deleteSubscription(appId, devUserId, oauth2Api, done);
                 });
             });
         });
