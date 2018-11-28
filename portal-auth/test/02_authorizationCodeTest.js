@@ -44,7 +44,7 @@ describe('Authorization Code Grant', function () {
     let ids;
 
     before(function (done) {
-        this.timeout(10000);
+        this.timeout(20000);
         const now = new Date();
         utils.initAppsAndSubscriptions(function (err, idsAndSecrets) {
             assert.isNotOk(err);
@@ -105,6 +105,23 @@ describe('Authorization Code Grant', function () {
                 assert.equal(res.statusCode, 400);
                 utils.assertIsHtml(body);
                 assert.isTrue(body.message.indexOf('does not match the registered') >= 0);
+                done();
+            });
+        });
+
+        it('should return a 401 if trying to get a token with an invalid code', function (done) {
+            utils.authPost(`local/api/echo/token`, {
+                grant_type: 'authorization_code',
+                client_id: ids.confidential.echo.clientId,
+                client_secret: ids.confidential.echo.clientSecret,
+                code: 'thisisaninvalidcode'
+            }, null, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 401, 'faulty status code');
+                const jsonBody = utils.getJson(body);
+                assert.isUndefined(jsonBody.access_token);
+                assert.isDefined(jsonBody.error);
+                assert.isDefined(jsonBody.error_description);
                 done();
             });
         });
