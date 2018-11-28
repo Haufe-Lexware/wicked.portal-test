@@ -17,7 +17,7 @@ describe('Registration Flow', function () {
     let ids;
 
     before(function (done) {
-        this.timeout(10000);
+        this.timeout(20000);
         const now = new Date();
         utils.initAppsAndSubscriptions(function (err, idsAndSecrets) {
             assert.isNotOk(err);
