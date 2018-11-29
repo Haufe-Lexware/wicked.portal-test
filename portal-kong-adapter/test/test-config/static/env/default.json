@@ -10,5 +10,14 @@
     },
     "PORTAL_REC2": {
         "value": "Recursive"
+    },
+    "PORTAL_STORAGE_PGHOST": {
+        "value": "localhost"
+    },
+    "PORTAL_STORAGE_PGPORT": {
+        "value": "7654"
+    },
+    "PORTAL_KONG_ADAPTER_URL": {
+        "value": "http://portal-kong-adapter:3002/"
     }
 }

@@ -7,8 +7,8 @@
         "apiHost": "kong:8000",
         "apiUrl": "http://kong:8000/",
         "portalUrl": "http://portal:3000/",
-        "kongAdapterUrl": "http://portal-kong-adapter:3002/",
-        "kongAdminUrl": "http://kong:8001/"
+        "kongAdapterUrl": "$PORTAL_KONG_ADAPTER_URL",
+        "kongAdminUrl": "$PORTAL_KONG_ADMIN_URL"
     },
     "storage": {
         "type": "${WICKED_STORAGE}",
