@@ -503,7 +503,7 @@ utils.assertIsRedirectError = function (res, expectedError) {
     assert.isOk(res.headers.location);
     const redirUrl = new URL(res.headers.location);
     assert.isOk(redirUrl.searchParams);
-    assert.isOk(redirUrl.searchParams.get('error'), expectedError);
+    assert.equal(redirUrl.searchParams.get('error'), expectedError);
 };
 
 utils.getPasswordToken = function (apiId, client, clientIsPublic, user, callback) {

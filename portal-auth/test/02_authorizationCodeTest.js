@@ -4,6 +4,7 @@
 
 const assert = require('chai').assert;
 const request = require('request');
+const wicked = require('wicked-sdk');
 const utils = require('./testUtils');
 const consts = require('./testConsts');
 
@@ -449,6 +450,178 @@ describe('Authorization Code Grant', function () {
                     assert.isNotOk(err);
                     // console.log(res);
                     assert.equal(400, res.statusCode);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe('granting access to applications', function () {
+
+        it('should ask for access after logging in', function (done) {
+            const cookieJar = request.jar();
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.confidential.echo.clientId}&scope=get`, cookieJar, function (err, res, body) {
+                const csrfToken = body.csrfToken;
+                assert.isOk(csrfToken);
+                utils.authPost(body.loginUrl, {
+                    _csrf: csrfToken,
+                    username: ids.users.normal.email,
+                    password: ids.users.normal.password
+                }, cookieJar, function (err, res, body) {
+                    assert.isNotOk(err);
+                    const csrfToken = body.csrfToken;
+                    assert.isDefined(csrfToken);
+                    // console.log(res);
+                    assert.equal(res.statusCode, 200);
+                    utils.assertIsHtml(body);
+                    assert.equal(body.template, 'grant_scopes');
+                    done();
+                });
+            });
+        });
+
+        it('should be possible to deny access after logging in', function (done) {
+            const cookieJar = request.jar();
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.confidential.echo.clientId}&scope=get`, cookieJar, function (err, res, body) {
+                const csrfToken = body.csrfToken;
+                assert.isOk(csrfToken);
+                utils.authPost(body.loginUrl, {
+                    _csrf: csrfToken,
+                    username: ids.users.normal.email,
+                    password: ids.users.normal.password
+                }, cookieJar, function (err, res, body) {
+                    assert.isNotOk(err);
+                    const csrfToken = body.csrfToken;
+                    assert.isDefined(csrfToken);
+                    // console.log(body);
+                    assert.equal(res.statusCode, 200);
+                    utils.assertIsHtml(body);
+                    assert.equal(body.template, 'grant_scopes');
+
+                    utils.authPost(body.grantUrl, {
+                        _csrf: csrfToken,
+                        _action: 'deny'
+                    }, cookieJar, function (err, res, body) {
+                        assert.isNotOk(err);
+                        utils.assertIsRedirectError(res, 'access_denied');
+                        done();
+                    });
+                });
+            });
+        });
+
+        it('should be possible to grant access after logging in', function (done) {
+            const cookieJar = request.jar();
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.confidential.echo.clientId}&scope=get`, cookieJar, function (err, res, body) {
+                const csrfToken = body.csrfToken;
+                assert.isOk(csrfToken);
+                utils.authPost(body.loginUrl, {
+                    _csrf: csrfToken,
+                    username: ids.users.normal.email,
+                    password: ids.users.normal.password
+                }, cookieJar, function (err, res, body) {
+                    assert.isNotOk(err);
+                    const csrfToken = body.csrfToken;
+                    assert.isDefined(csrfToken);
+                    // console.log(body);
+                    assert.equal(res.statusCode, 200);
+                    utils.assertIsHtml(body);
+                    assert.equal(body.template, 'grant_scopes');
+
+                    utils.authPost(body.grantUrl, {
+                        _csrf: csrfToken,
+                        _action: 'allow'
+                    }, cookieJar, function (err, res, body) {
+                        assert.isNotOk(err);
+                        utils.assertIsCodeRedirect(res, done);
+                    });
+                });
+            });
+        });
+
+        it('should be possible to get a code for a granted scope', function (done) {
+            const cookieJar = request.jar();
+            utils.getAuthCode(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, { scope: ['get'] }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isDefined(code);
+                done();
+            });
+        });
+
+        it('after revoking a scope, it should not be possible to get a code for a granted scope', function (done) {
+            const cookieJar = request.jar();
+            wicked.deleteAllUserGrants(ids.users.normal.id, function (err) {
+                assert.isNotOk(err);
+                utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.confidential.echo.clientId}&scope=get`, cookieJar, function (err, res, body) {
+                    const csrfToken = body.csrfToken;
+                    assert.isOk(csrfToken);
+                    utils.authPost(body.loginUrl, {
+                        _csrf: csrfToken,
+                        username: ids.users.normal.email,
+                        password: ids.users.normal.password
+                    }, cookieJar, function (err, res, body) {
+                        assert.isNotOk(err);
+                        const csrfToken = body.csrfToken;
+                        assert.isDefined(csrfToken);
+                        // console.log(res);
+                        assert.equal(res.statusCode, 200);
+                        utils.assertIsHtml(body);
+                        assert.equal(body.template, 'grant_scopes');
+
+                        // It's okay, grant it again now please                        
+                        utils.authPost(body.grantUrl, {
+                            _csrf: csrfToken,
+                            _action: 'allow'
+                        }, cookieJar, function (err, res, body) {
+                            assert.isNotOk(err);
+                            utils.assertIsCodeRedirect(res, done);
+                        });
+                    });
+                });
+            });
+        });
+
+        let refreshToken;
+        it('should be possible to get a token (and refresh token) for a granted scope', function (done) {
+            const cookieJar = request.jar();
+            utils.getAuthCodeToken(cookieJar, 'echo', ids.confidential.echo, ids.users.normal, { scope: ['get'] }, function (err, accessToken) {
+                assert.isNotOk(err);
+                assert.isDefined(accessToken.access_token);
+                assert.isDefined(accessToken.refresh_token);
+                refreshToken = accessToken.refresh_token;
+                done();
+            });
+        });
+
+        it('should be possible to refresh a token (with a granted scope)', function (done) {
+            utils.authPost('local/api/echo/token', {
+                grant_type: 'refresh_token',
+                client_id: ids.confidential.echo.clientId,
+                client_secret: ids.confidential.echo.clientSecret,
+                refresh_token: refreshToken
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 200);
+                assert.isDefined(body.access_token);
+                assert.isDefined(body.refresh_token);
+                refreshToken = body.refresh_token;
+                done();
+            });
+        });
+
+        it('should not be possible to refresh a token after the scope has been revoked by the user', function (done) {
+            wicked.deleteAllUserGrants(ids.users.normal.id, function (err) {
+                assert.isNotOk(err);
+                utils.authPost('local/api/echo/token', {
+                    grant_type: 'refresh_token',
+                    client_id: ids.confidential.echo.clientId,
+                    client_secret: ids.confidential.echo.clientSecret,
+                    refresh_token: refreshToken
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 403);
+                    assert.isDefined(body.error);
+                    assert.equal(body.error, 'unauthorized_client');
                     done();
                 });
             });
