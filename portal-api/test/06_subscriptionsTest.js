@@ -936,20 +936,20 @@ describe('/applications/<appId>/subscriptions', function () {
         }
         before(function (done) {
             async.each(appList, (appId, callback) => {
-                 utils.createApplication(appId, makeAppInfo(appId), devUserId, function (){
-                    utils.addSubscription(appId, devUserId, privateApi, 'unlimited',null, callback);
-                 }); 
+                utils.createApplication(appId, makeAppInfo(appId), devUserId, function () {
+                    utils.addSubscription(appId, devUserId, privateApi, 'unlimited', null, callback);
+                });
             }, done);
         });
-    
+
         after(function (done) {
-            async.each(appList, (appId, callback) => { 
+            async.each(appList, (appId, callback) => {
                 utils.deleteSubscription(appId, devUserId, privateApi, function () {
                     utils.deleteApplication(appId, devUserId, callback);
                 });
             }, done);
         });
-    
+
         it('should, as an admin, be possible to get a list of subscriptions', function (done) {
             request.get({
                 url: baseUrl + 'subscriptions?embed=1&no_cache=1',
@@ -1001,8 +1001,8 @@ describe('/applications/<appId>/subscriptions', function () {
 
         it('should return a 403 if using a non-admin user id', function (done) {
             request({
-                 url: baseUrl + 'subscriptions?embed=1&no_cache=1',
-               headers: utils.makeHeaders(devUserId, 'read_subscriptions')
+                url: baseUrl + 'subscriptions?embed=1&no_cache=1',
+                headers: utils.makeHeaders(devUserId, 'read_subscriptions')
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 403);
