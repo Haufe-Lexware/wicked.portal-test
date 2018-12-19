@@ -230,6 +230,10 @@ node node_modules/portal-env/await.js http://localhost:${apiPort}/ping
 node node_modules/portal-env/await.js http://localhost:${kongAdapterPort}/ping
 
 if [[ -z "$onlyEnv" ]]; then
+    export PORTAL_API_URL=http://localhost:3401
+    export KONG_ADAPTER_URL=http://localhost:3402
+    export KONG_ADMIN_URL=http://localhost:8101
+    export KONG_GATEWAY_URL=http://localhost:8100
     if [[ -z "$grepFilter" ]]; then
         mocha
     else
