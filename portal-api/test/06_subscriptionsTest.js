@@ -827,6 +827,32 @@ describe('/applications/<appId>/subscriptions', function () {
             });
         });
 
+        it('should be possible to patch a subscription (change allowed scopes, just one scope)', function (done) {
+            utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function () {
+                request.patch({
+                    url: subsUrl + '/' + oauth2Api,
+                    headers: utils.makeHeaders(adminUserId, WRITE_SUBS_SCOPE),
+                    json: true,
+                    body: {
+                        allowedScopesMode: 'select',
+                        allowedScopes: ['hello']
+                    }
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(200, res.statusCode);
+                    var jsonBody = utils.getJson(body);
+                    assert.equal(jsonBody.trusted, false);
+                    assert.equal(jsonBody.allowedScopesMode, 'select');
+                    assert.isDefined(jsonBody.allowedScopesMode, 'allowedScopesMode must be defined');
+                    assert.isDefined(jsonBody.allowedScopes, 'allowedScopes must be defined');
+                    assert.isArray(jsonBody.allowedScopes, 'allowedScopes must be an array');
+                    assert.equal(jsonBody.allowedScopes.length, 1);
+                    assert.equal(jsonBody.allowedScopes[0], 'hello');
+                    utils.deleteSubscription(appId, devUserId, oauth2Api, done);
+                });
+            });
+        });
+
         it('should reject an invalid patch request (invalid mode)', function (done) {
             utils.addSubscription(appId, devUserId, oauth2Api, 'basic', null, function () {
                 request.patch({
