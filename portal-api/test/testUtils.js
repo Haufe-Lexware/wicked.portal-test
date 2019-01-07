@@ -14,6 +14,10 @@ const utils = {};
 
 // }
 
+utils.isPostgres = function () {
+    return process.env.WICKED_STORAGE && process.env.WICKED_STORAGE.toLowerCase() == 'postgres';
+};
+
 utils.createRandomId = function () {
     return crypto.randomBytes(5).toString('hex');
 };
