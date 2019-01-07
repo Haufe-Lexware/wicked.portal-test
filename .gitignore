@@ -5,3 +5,4 @@ test_results
 *compose.yml
 backup
 tmp
+package-lock.json
