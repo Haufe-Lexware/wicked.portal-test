@@ -41,18 +41,12 @@ Docker is known to work with this suite as of version 1.12, Docker Compose requi
 Run the integration tests by calling any of the `run-xxx-tests.sh` shell scripts in `bash` (tested on macOS and Linux, unfortunately not on Windows):
 
 ```bash
-$ ./run-<api|portal|kong-adapter>-tests.sh
+$ ./run-<api|auth|kong-adapter>-tests.sh
 ```
 
 The scripts will attempt to first build the needed docker images locally (this may take some time the first time), and then runs the integration tests on the built images.
 
-The portal tests are run with file session store by default. If you want to run them using Redis as a session store, you can do so by running them like:
-
-```bash
-$ REDIS_SESSIONS=true ./run-portal-tests.sh
-```
-
-The API tests are run using the non-alpine images, using JSON file storage, as a default. You can switch on the Postgres DAO and Alpine builds using the following two environment variables:
+The tests are run using the non-alpine images, using JSON file storage, as a default. You can switch on the Postgres DAO and Alpine builds using the following two environment variables:
 
 * `BUILD_POSTGRES`: Use Postgres as a backing storage
 * `BUILD_ALPINE`: Build and test the Alpine images
@@ -88,9 +82,57 @@ In case `DOCKER_REGISTRY` is specified, the testing scripts will also require us
 
 A set of environment variables specific to the test cases are referenced via the `variables.env` file inside the `*compose.yml.template` configuration files. All test suites make use of different instances of test data, stored as `test-config` inside the sub directories. 
 
-### TODOs
+## Running the tests non-dockerized
+
+The test suites can also be run locally, using the local node.js installation (this has currently only been tested on macOS). For this purpose there are the following bash scripts:
+
+* `local-api-tests.sh`
+* `local-kong-adapter-tests.sh`
+* `local-auth-tests.sh`
+
+They take a `--json` or `--postgres` parameter, depending on which DAO you want to test; all tests subsequently run with the same DAO. If you want to test both DAOs, run the same script twice. For these scripts, there isn't an "Alpine" option, as the tests actually run on your local machine. Make sure you have installed `mocha` globally using
+
+```
+$ npm install -g mocha
+```
+
+### Creating local environments for faster testing
+
+Especially for the Authorization Server and Kong Adapter tests, the setup time is rather long (20+ seconds, depending on your system). To ease that up a little, the local test scripts `local-auth-tests.sh` and `local-kong-adapter-tests.sh` support an additional parameter `--only-env`. Using this parameter will create a testing environment for the integration tests to use, and leave that environment open so that you can iterate faster just on the test cases.
+
+Example:
+
+```
+$ ./local-auth-tests.sh --postgres --only-env
+Test dir: /Users/martind/Projects/wicked.github/wicked.portal-test/tmp/test-20190108100718
+Only setting up environment.
+=== Postgres mode
+INFO: Starting postgres...
+INFO: Starting Kong...
+[...]
+INFO: Leaving environment open; go into the portal-auth directory and run
+
+      export PORTAL_API_URL=http://localhost:3401
+      mocha
+
+      You can then use the ./kill-env.sh to kill the testing environment.
+```
+
+Then proceed as described:
+
+```
+$ cd portal-auth
+$ export PORTAL_API_URL=http://localhost:3401
+$ mocha
+[...]
+
+  53 passing (27s)
+```
+
+This works for the Kong Adapter tests, and for the tests of the Authorization Server. It is not implemented for the API tests (`local-api-tests.sh`) as the setup time for those tests is not as long, just a couple of seconds.
+
+## TODOs
 
 The tests are created as integration tests, which makes calculating code coverage impossible. The point with these tests is that the actual docker images which are used for production are tested in a real scenario (deployment via `docker-compose`). If you wanted to calculate code coverage of the integration tests, you would have to instrument the images with e.g. `istanbul`, but you would not want to have that in your production images.
 
 A possible way of circumventing this would be to have special testing containers which allow instrumenting the containers with `istanbul` in addition to the "real" images for production use. You could then run both kinds of tests: First the integration tests on the production containers, then an instrumented test on the testing containers. Other ideas are welcome as well. 
-

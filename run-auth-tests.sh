@@ -67,6 +67,7 @@ thisPath=`pwd`
 export PORTAL_ENV_TAG=${DOCKER_TAG}-onbuild
 export PORTAL_API_TAG=${DOCKER_TAG}
 export PORTAL_KONG_ADAPTER_TAG=${DOCKER_TAG}
+export PORTAL_AUTH_TAG=${DOCKER_TAG}
 export KONG_TAG=${DOCKER_TAG}
 
 echo "INFO: Docker logs go into logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log."
@@ -92,6 +93,12 @@ if [ ! -z "$buildLocal" ]; then
     docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-kong-adapter:${PORTAL_KONG_ADAPTER_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
     popd > /dev/null
 
+    pushd ../wicked.portal-auth > /dev/null
+    echo "INFO: Building Auth Server docker image..."
+    perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-auth:${PORTAL_KONG_ADAPTER_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log
+    popd > /dev/null
+
     pushd ../wicked.kong > /dev/null
     echo "INFO: Building Kong docker image..."
     # perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile
@@ -112,6 +119,7 @@ else
         export PORTAL_ENV_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-env ${dockerTag})
         export PORTAL_API_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-api ${dockerTag})
         export PORTAL_KONG_ADAPTER_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-kong-adapter ${dockerTag})
+        export PORTAL_AUTH_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-auth ${dockerTag})
         export KONG_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.kong ${dockerTag})
     fi
 fi
@@ -121,19 +129,20 @@ export PROJECT_NAME=test$(od -vN "8" -An -tx1 /dev/urandom | tr -d " \n")
 echo "INFO: PORTAL_ENV_TAG=${PORTAL_ENV_TAG}"
 echo "INFO: PORTAL_API_TAG=${PORTAL_API_TAG}"
 echo "INFO: PORTAL_KONG_ADAPTER_TAG=${PORTAL_KONG_ADAPTER_TAG}"
+echo "INFO: PORTAL_AUTH_TAG=${PORTAL_AUTH_TAG}"
 echo "INFO: KONG_TAG=${KONG_TAG}"
 echo "INFO: PROJECT_NAME=${PROJECT_NAME}"
 
 echo "INFO: Templating Dockerfile for test base and compose file..."
 
 perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' base/Dockerfile.template > base/Dockerfile
-perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-kong-adapter/Dockerfile.template > portal-kong-adapter/Dockerfile
-perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-kong-adapter/kong-adapter-tests-compose.yml.template > portal-kong-adapter/kong-adapter-tests-compose.yml
+perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-auth/Dockerfile.template > portal-auth/Dockerfile
+perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' portal-auth/auth-tests-compose.yml.template > portal-auth/auth-tests-compose.yml
 
 if [ -z "$buildLocal" ]; then 
     echo "INFO: Using prebuilt images: Pulling images..."
     separator
-    docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml pull
+    docker-compose -p ${PROJECT_NAME} -f portal-auth/auth-tests-compose.yml pull
     docker pull ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE}
     separator
 fi
@@ -144,14 +153,14 @@ docker build -t ${PROJECT_NAME}_test-base . >> $thisPath/logs/docker-kong-adapte
 popd > /dev/null
 
 echo "INFO: Building Test container..."
-docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml build >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+docker-compose -p ${PROJECT_NAME} -f portal-auth/auth-tests-compose.yml build >> $thisPath/logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log
 
 fat_separator
-echo "INFO: Running Kong Adapter test containers..."
+echo "INFO: Running Auth test containers..."
 separator
 
 failedTests=""
-if ! docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml up --abort-on-container-exit > logs/kong-adapter-test-${wickedStorage}${BUILD_ALPINE}.log; then
+if ! docker-compose -p ${PROJECT_NAME} -f portal-auth/auth-tests-compose.yml up --abort-on-container-exit > logs/auth-test-${wickedStorage}${BUILD_ALPINE}.log; then
     echo "WARNING: docker-compose exited with a non-zero return code."
     failedTests="true"
 fi
@@ -160,28 +169,28 @@ if [ -d test_results ]; then
     echo "INFO: Cleaning up..."
     rm -rf test_results
 fi
-if ! docker cp ${PROJECT_NAME}_kong-adapter-test-data_1:/usr/src/app/test_results .; then
+if ! docker cp ${PROJECT_NAME}_auth-test-data_1:/usr/src/app/test_results .; then
     echo "ERROR: The test results are not available."
     failedTests="true"
 fi
 separator
 echo "INFO: Taking down Test containers..."
 separator
-docker-compose -p ${PROJECT_NAME} -f portal-kong-adapter/kong-adapter-tests-compose.yml down -v >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+docker-compose -p ${PROJECT_NAME} -f portal-auth/auth-tests-compose.yml down -v >> $thisPath/logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log
 
 if [ ! -z "$failedTests" ]; then
     exit 1
 fi
 
-cp test_results/kong-adapter-test.log logs/kong-adapter-test-${wickedStorage}${BUILD_ALPINE}-RESULT.log
-cat test_results/kong-adapter-test.log
+cp test_results/auth-test.log logs/auth-test-${wickedStorage}${BUILD_ALPINE}-RESULT.log
+cat test_results/auth-test.log
 
 echo "INFO: Detailed logs are in logs/kong-adapter-test-${wickedStorage}${BUILD_ALPINE}.log."
 
 echo "INFO: Cleaning up temporary images..."
 separator
 docker rmi ${PROJECT_NAME}_test-base
-docker rmi ${PROJECT_NAME}_kong-adapter-test-data
+docker rmi ${PROJECT_NAME}_auth-test-data
 
 fat_separator
 

@@ -133,7 +133,7 @@ export ALLOW_RESYNC=true
 export PORTAL_CONFIG_BASE=$baseDir 
 export PORTAL_API_STATIC_CONFIG=$baseDir/static
 export PORTAL_API_DYNAMIC_CONFIG=$baseDir/dynamic
-export NODE_ENV=test
+export NODE_ENV=default
 export LOG_LEVEL=debug
 # Do not log in JSON
 export LOG_PLAIN=true

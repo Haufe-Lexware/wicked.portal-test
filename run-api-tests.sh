@@ -150,7 +150,7 @@ if ! docker cp ${PROJECT_NAME}_api-test-data_1:/usr/src/app/test_results .; then
 fi
 echo "INFO: Taking down Test containers..."
 separator
-docker-compose -p ${PROJECT_NAME} -f portal-api/api-tests-compose.yml down >> $thisPath/logs/docker-api-${wickedStorage}${BUILD_ALPINE}.log
+docker-compose -p ${PROJECT_NAME} -f portal-api/api-tests-compose.yml down -v >> $thisPath/logs/docker-api-${wickedStorage}${BUILD_ALPINE}.log
 separator
 
 if [ ! -z "$failedTests" ]; then
