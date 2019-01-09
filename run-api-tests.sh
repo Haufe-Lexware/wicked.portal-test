@@ -73,15 +73,15 @@ if [ ! -z "$buildLocal" ]; then
 
     echo "INFO: Building images locally."
 
-    pushd ../wicked.portal-env > /dev/null
+    pushd ../wicked.env > /dev/null
     echo "INFO: Building Environment docker image..."
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-api-${wickedStorage}${BUILD_ALPINE}.log 
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-api-${wickedStorage}${BUILD_ALPINE}.log 
     popd > /dev/null
 
-    pushd ../wicked.portal-api > /dev/null
+    pushd ../wicked.api > /dev/null
     echo "INFO: Building API docker image..."
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}portal-api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-api-${wickedStorage}${BUILD_ALPINE}.log
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-api-${wickedStorage}${BUILD_ALPINE}.log
     popd > /dev/null
 
 else
@@ -95,9 +95,9 @@ else
     if [[ "$DOCKER_PREFIX" == "haufelexware/wicked." ]]; then
         echo "INFO: Resolving image names for tag ${dockerTag}"
         separator
-        docker pull haufelexware/wicked.portal-env:next-onbuild-alpine
-        export PORTAL_ENV_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-env ${dockerTag})
-        export PORTAL_API_TAG=$(docker run --rm haufelexware/wicked.portal-env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.portal-api ${dockerTag})
+        docker pull haufelexware/wicked.env:next-onbuild-alpine
+        export PORTAL_ENV_TAG=$(docker run --rm haufelexware/wicked.env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.env ${dockerTag})
+        export PORTAL_API_TAG=$(docker run --rm haufelexware/wicked.env:next-onbuild-alpine node node_modules/portal-env/getMatchingTag.js haufelexware wicked.api ${dockerTag})
         separator
     fi
 fi

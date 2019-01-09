@@ -17,10 +17,10 @@ properties([
     pipelineTriggers([
         [$class: "SCMTrigger", scmpoll_spec: "H/10 * * * *"],
         [$class: 'jenkins.triggers.ReverseBuildTrigger', upstreamProjects: 
-            "wicked.portal/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
-            "wicked.portal-api/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
-            "wicked.portal-kong-adapter/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
-            "wicked.portal-auth/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
+            "wicked.ui/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
+            "wicked.api/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
+            "wicked.kong-adapter/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
+            "wicked.auth/" + env.BRANCH_NAME.replaceAll("/", "%2F") + "," +
             "wicked.kong/" + env.BRANCH_NAME.replaceAll("/", "%2F"),
             threshold: hudson.model.Result.SUCCESS]
     ])

@@ -17,18 +17,18 @@ The wicked repositories need to be cloned in the following way:
 ```
 wicked
   |
-  +-- wicked.portal
+  +-- wicked.ui
   |
-  +-- wicked.portal-api
+  +-- wicked.api
   |
-  +-- wicked.portal-test
+  +-- wicked.test
   |
   +-- wicked.kong
   |
-  +-- wicked.portal-kong-adapter
+  +-- wicked.kong-adapter
 ```
 
-This is the default if you are using the `checkout.sh` from the [wicked.portal-tools](https://github.com/apim-haufe-io/wicked.portal-tools) repository. There you will find `checkout.sh` in the `development` subfolder (**IMPORTANT**: Until wicked 1.0.0, you must check out the `wicked_1_0` branch to get the full set of development tooling).
+This is the default if you are using the `checkout.sh` from the [wicked.tools](https://github.com/apim-haufe-io/wicked.tools) repository. There you will find `checkout.sh` in the `development` subfolder (**IMPORTANT**: Until wicked 1.0.0, you must check out the `wicked_1_0` branch to get the full set of development tooling).
 
 #### Docker
 
@@ -68,7 +68,7 @@ In order to run the integration tests on already prebuilt containers (e.g. the o
 $ DOCKER_PREFIX=haufelexware/wicked. DOCKER_TAG=latest ./run-<api|portal|kong-adapter>-tests.sh
 ```
 
-The above line will run the integration tests for the official Haufe-Lexware wicked.haufe.io docker images, having the `latest` tag. This will require that you will have checked out the `master` branch of `wicked.portal-test`, otherwise chances are good that the test suite will not match the container images' versions.
+The above line will run the integration tests for the official Haufe-Lexware wicked.haufe.io docker images, having the `latest` tag. This will require that you will have checked out the `master` branch of `wicked.test`, otherwise chances are good that the test suite will not match the container images' versions.
 
 In case your images are located on a private registry, you may also use the following environment variables:
 
@@ -104,7 +104,7 @@ Example:
 
 ```
 $ ./local-auth-tests.sh --postgres --only-env
-Test dir: /Users/martind/Projects/wicked.github/wicked.portal-test/tmp/test-20190108100718
+Test dir: /Users/martind/Projects/wicked.github/wicked.test/tmp/test-20190108100718
 Only setting up environment.
 === Postgres mode
 INFO: Starting postgres...

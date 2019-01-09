@@ -134,7 +134,7 @@ else
     export WICKED_STORAGE=postgres
 fi
 
-pushd ../wicked.portal-api
+pushd ../wicked.api
 PORT=${apiPort} node bin/api &> ${thisDir}/logs/api-test-local.log &
 apiPid=$!
 popd

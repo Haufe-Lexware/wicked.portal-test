@@ -71,7 +71,7 @@ describe('/confighash', function () {
             url: baseUrl + 'globals',
             headers: {
                 'X-Config-Hash': configHash,
-                'User-Agent': 'wicked.portal-test/' + packageJson.version
+                'User-Agent': 'wicked.test/' + packageJson.version
             }
         }, function (err, res, body) {
             assert.isNotOk(err);
@@ -85,7 +85,7 @@ describe('/confighash', function () {
             url: baseUrl + 'globals',
             headers: {
                 'X-Config-Hash': configHash,
-                'User-Agent': 'wicked.portal-test/0.1.0'
+                'User-Agent': 'wicked.test/0.1.0'
             }
         }, function (err, res, body) {
             assert.isNotOk(err);
