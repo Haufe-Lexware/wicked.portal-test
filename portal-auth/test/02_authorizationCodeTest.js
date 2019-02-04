@@ -349,6 +349,36 @@ describe('Authorization Code Grant', function () {
             });
         });
 
+        it('should immediately return an auth code if adding &prompt=none', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.public.echo;
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.getAuthCode(cookieJar, 'echo', client, null, { code_challenge: codeVerifier, prompt: 'none' }, function (err, code) {
+                    assert.isNotOk(err);
+                    assert.isOk(code);
+                    done();
+                });
+            });
+        });
+
+        it('should force login but return an auth code if adding &prompt=login', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.public.echo;
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, prompt: 'login' }, function (err, code) {
+                    assert.isNotOk(err);
+                    assert.isOk(code);
+                    done();
+                });
+            });
+        });
+
         it('should not return a refresh token for public clients', function (done) {
             const cookieJar = request.jar();
             const client = ids.public.echo;

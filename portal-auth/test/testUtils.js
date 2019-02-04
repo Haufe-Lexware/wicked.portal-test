@@ -314,7 +314,8 @@ utils.authGet = function (urlPath, cookieJar, callback) {
                 'Accept': 'application/json',
                 'Correlation-Id': corrId
             },
-            jar: cookieJar
+            jar: cookieJar,
+            followRedirect: false
         }, function (err, res, body) {
             assert.isNotOk(err);
             const contentType = res.headers["content-type"];
@@ -390,6 +391,7 @@ utils.getAuthCodeUrl = function (apiId, client, options) {
     let scope = options.scope;
     let code_challenge = options.code_challenge;
     let code_challenge_method;
+    let prompt = options.prompt;
     if (code_challenge) {
         if (!options.code_challenge_method)
             code_challenge_method = 'plain';
@@ -409,6 +411,9 @@ utils.getAuthCodeUrl = function (apiId, client, options) {
     if (code_challenge) {
         url += `&code_challenge=${qs.escape(code_challenge)}&code_challenge_method=${code_challenge_method}`;
     }
+    if (prompt) {
+        url += `&prompt=${prompt}`;
+    }
     return url;
 };
 
@@ -424,19 +429,26 @@ utils.assertIsCodeRedirect = function (res, callback) {
 
 utils.getAuthCode = function (cookieJar, apiId, client, user, options, callback) {
     let url = utils.getAuthCodeUrl(apiId, client, options);
-    utils.authGet(url, cookieJar, function (err, res, body) {
-        const csrfToken = body.csrfToken;
-        assert.equal(res.statusCode, 200);
-        assert.isOk(csrfToken);
-        utils.authPost(body.loginUrl, {
-            _csrf: csrfToken,
-            username: user.email,
-            password: user.password
-        }, cookieJar, function (err, res, body) {
+    if (options.prompt != 'none') {
+        utils.authGet(url, cookieJar, function (err, res, body) {
+            const csrfToken = body.csrfToken;
+            assert.equal(res.statusCode, 200);
+            assert.isOk(csrfToken);
+            utils.authPost(body.loginUrl, {
+                _csrf: csrfToken,
+                username: user.email,
+                password: user.password
+            }, cookieJar, function (err, res, body) {
+                assert.isNotOk(err);
+                utils.assertIsCodeRedirect(res, callback);
+            });
+        });
+    } else {
+        utils.authGet(url, cookieJar, function (err, res, body) {
             assert.isNotOk(err);
             utils.assertIsCodeRedirect(res, callback);
         });
-    });
+    }
 };
 
 utils.getAuthCodeToken = function (cookieJar, apiId, client, user, options, callback) {
