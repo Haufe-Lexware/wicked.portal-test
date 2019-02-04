@@ -349,6 +349,29 @@ describe('Authorization Code Grant', function () {
             });
         });
 
+        it('should not return a refresh token for public clients', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.public.echo;
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
+                    client_id: client.clientId,
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    assert.isOk(body.access_token);
+                    assert.isUndefined(body.refresh_token);
+                    assert.isNotOk(body.error);
+                    done();
+                });
+            });
+        });
+
         it('should accept doing the auth code grant with PKCE (S256 challenge)', function (done) {
             const cookieJar = request.jar();
             const client = ids.public.echo;
