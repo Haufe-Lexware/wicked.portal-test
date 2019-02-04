@@ -43,7 +43,7 @@ services:
     - "DEBUG=*"
   
   postgres:
-    image: postgres:9.6.8
+    image: postgres:11-alpine
     environment:
     - "POSTGRES_USER=kong"
     - "POSTGRES_PASSWORD=kong"
@@ -60,4 +60,4 @@ services:
     - seccomp:unconfined
 
   redis:
-    image: redis:3.2.10-alpine
+    image: redis:5-alpine

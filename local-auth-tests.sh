@@ -193,7 +193,7 @@ fi
 
 echo "INFO: Starting postgres..."
 pgContainer=${tmpDir}_pg
-docker run -d --name ${pgContainer} -p ${pgPort}:5432 -e POSTGRES_USER=kong -e POSTGRES_PASSWORD=kong postgres:9.6.8 &> /dev/null
+docker run -d --name ${pgContainer} -p ${pgPort}:5432 -e POSTGRES_USER=kong -e POSTGRES_PASSWORD=kong postgres:11-alpine &> /dev/null
 
 echo "INFO: Starting Kong..."
 kongContainer=${tmpDir}_kong
@@ -203,7 +203,7 @@ docker run -d --name ${kongContainer} -p ${kongProxyPort}:8000 -p ${kongAdminPor
 
 echo "INFO: Starting redis..."
 redisContainer=${tmpDir}_redis
-docker run -d --name ${redisContainer} -p ${redisPort}:6379 redis:3.2.10-alpine &> /dev/null
+docker run -d --name ${redisContainer} -p ${redisPort}:6379 redis:5-alpine &> /dev/null
 
 echo "INFO: Starting portal API..."
 pushd ../wicked.api &> /dev/null

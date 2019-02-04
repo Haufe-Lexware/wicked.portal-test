@@ -25,7 +25,7 @@ services:
     - "api-test-data"
 
   postgres:
-    image: postgres:9.6.8
+    image: postgres:11-alpine
     environment:
     - POSTGRES_USER=kong
     - POSTGRES_PASSWORD=kong
