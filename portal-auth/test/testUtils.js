@@ -171,6 +171,7 @@ function createTrustedApp(echoPlan, callback) {
         id: appId,
         name: appId,
         confidential: true,
+        clientType: 'confidential',
         redirectUri: consts.REDIRECT_URI
     }, function (err, appInfo) {
         if (err)
@@ -185,6 +186,7 @@ function createConfidentialApp(echoPlan, callback) {
         id: appId,
         name: appId,
         confidential: true,
+        clientType: 'confidential',
         redirectUri: consts.REDIRECT_URI
     }, function (err, appInfo) {
         if (err)
@@ -199,6 +201,22 @@ function createPublicApp(echoPlan, callback) {
         id: appId,
         name: appId,
         confidential: false,
+        clientType: 'public_spa',
+        redirectUri: consts.REDIRECT_URI
+    }, function (err, appInfo) {
+        if (err)
+            return callback(err);
+        createAppSubscriptions(appId, echoPlan, true /*trusted*/, consts.REDIRECT_URI, callback);
+    });
+}
+
+function createNativeApp(echoPlan, callback) {
+    const appId = consts.APP_ID + '-native';
+    wicked.createApplication({
+        id: appId,
+        name: appId,
+        confidential: false,
+        clientType: 'public_native',
         redirectUri: consts.REDIRECT_URI
     }, function (err, appInfo) {
         if (err)
@@ -231,6 +249,7 @@ utils.initAppsAndSubscriptions = function (callback) {
                 trusted: callback => createTrustedApp(echoPlan, callback),
                 confidential: callback => createConfidentialApp(echoPlan, callback),
                 public: callback => createPublicApp(echoPlan, callback),
+                native: callback => createNativeApp(echoPlan, callback),
                 withoutUri: callback => createWithoutUriApp(echoPlan, callback),
                 awaitQueue: callback => utils.awaitEmptyAdapterQueue(callback)
             }, function (err, results) {
@@ -262,6 +281,7 @@ utils.destroyAppsAndSubcriptions = function (done) {
         callback => deleteApplication(consts.APP_ID + '-trusted', callback),
         callback => deleteApplication(consts.APP_ID + '-confidential', callback),
         callback => deleteApplication(consts.APP_ID + '-public', callback),
+        callback => deleteApplication(consts.APP_ID + '-native', callback),
         callback => deleteApplication(consts.APP_ID + '-withouturi', callback),
         callback => utils.destroyUsers(callback),
         callback => utils.awaitEmptyAdapterQueue(callback)

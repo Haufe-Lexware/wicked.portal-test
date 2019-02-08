@@ -316,7 +316,7 @@ describe('Authorization Code Grant', function () {
     describe('public clients', function () {
         this.slow(1000);
         this.timeout(10000);
-        it('should reject doing the auth code grant with a public client', function (done) {
+        it('should reject doing the auth code grant with a public client without code_challenge', function (done) {
             const cookieJar = request.jar();
             const client = ids.public.echo;
             utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${consts.REDIRECT_URI}`, cookieJar, function (err, res, body) {
@@ -450,6 +450,148 @@ describe('Authorization Code Grant', function () {
         it('should reject doing the auth code grant with PKCE (S256 challenge) with a too long code_verifier', function (done) {
             const cookieJar = request.jar();
             const client = ids.public.echo;
+            // At least 43, max 128
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, code_challenge_method: 'S256' }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
+                    client_id: client.clientId,
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 400);
+                    assert.equal('invalid_request', body.error);
+                    done();
+                });
+            });
+        });
+    });
+
+    describe('native clients', function () {
+        this.slow(1000);
+        this.timeout(10000);
+        it('should reject doing the auth code grant with a public client without code_challenge', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.native.echo;
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${consts.REDIRECT_URI}`, cookieJar, function (err, res, body) {
+                assert.equal(res.statusCode, 400);
+                assert.equal(body.error, 'invalid_request');
+                assert.isTrue(body.error_description.indexOf('code_challenge') >= 0, 'error_description does not contain "code_challenge"');
+                done();
+            });
+        });
+
+        it('should accept doing the auth code grant with PKCE (plain challenge)', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.native.echo;
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
+                    client_id: client.clientId,
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    assert.isOk(body.access_token);
+                    assert.isNotOk(body.error);
+                    done();
+                });
+            });
+        });
+
+        it('should force login but return an auth code if adding &prompt=login', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.native.echo;
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, prompt: 'login' }, function (err, code) {
+                    assert.isNotOk(err);
+                    assert.isOk(code);
+                    done();
+                });
+            });
+        });
+
+        it('should return a refresh token for native clients', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.native.echo;
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
+                    client_id: client.clientId,
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    assert.isOk(body.access_token);
+                    assert.isOk(body.refresh_token);
+                    assert.isNotOk(body.error);
+                    done();
+                });
+            });
+        });
+
+        it('should accept doing the auth code grant with PKCE (S256 challenge)', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.native.echo;
+            // At least 43, max 128
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, code_challenge_method: 'S256' }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
+                    client_id: client.clientId,
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    assert.isOk(body.access_token);
+                    assert.isNotOk(body.error);
+                    done();
+                });
+            });
+        });
+
+        it('should reject doing the auth code grant with PKCE (S256 challenge) with a too short code_verifier', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.native.echo;
+            // At least 43, max 128
+            const codeVerifier = 'hello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, code_challenge_method: 'S256' }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.authPost('local/api/echo/token', {
+                    client_id: client.clientId,
+                    code_verifier: codeVerifier,
+                    code: code,
+                    grant_type: 'authorization_code'
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 400);
+                    assert.equal('invalid_request', body.error);
+                    done();
+                });
+            });
+        });
+
+        it('should reject doing the auth code grant with PKCE (S256 challenge) with a too long code_verifier', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.native.echo;
             // At least 43, max 128
             const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello';
             utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier, code_challenge_method: 'S256' }, function (err, code) {

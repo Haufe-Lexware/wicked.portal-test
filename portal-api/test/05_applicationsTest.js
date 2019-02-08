@@ -85,6 +85,72 @@ describe('/applications', function () {
             });
         });
 
+        it('should assign a default clientType to the application', function (done) {
+            request.post({
+                url: baseUrl + 'applications',
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: 'application',
+                    name: 'Application'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(201, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                assert.isOk(jsonBody);
+                utils.deleteApplication('application', devUserId, function () {
+                    assert.equal(jsonBody.clientType, 'public_spa');
+                    assert.isFalse(jsonBody.confidential);
+                    done();
+                });
+            });
+        });
+
+        it('should overrule confidential with clientType', function (done) {
+            request.post({
+                url: baseUrl + 'applications',
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: 'application',
+                    name: 'Application',
+                    confidential: true,
+                    clientType: 'public_native'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(201, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                assert.isOk(jsonBody);
+                utils.deleteApplication('application', devUserId, function () {
+                    assert.equal(jsonBody.clientType, 'public_native');
+                    assert.isFalse(jsonBody.confidential);
+                    done();
+                });
+            });
+        });
+
+        it('should not be possible to create a new application with an invalid clientType', function (done) {
+            request.post({
+                url: baseUrl + 'applications',
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: 'application',
+                    name: 'Application',
+                    clientType: 'invalid'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(400, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                assert.isOk(jsonBody);
+                assert.include(jsonBody.message, 'Invalid clientType');
+                done();
+            });
+        });
+
         it('should not be possible to create a new application with a wrong scope', function (done) {
             request.post({
                 url: baseUrl + 'applications',
