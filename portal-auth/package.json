@@ -23,7 +23,7 @@
     "async": "2.6.1",
     "chai": "3.5.0",
     "mocha": "3.0.2",
-    "portal-env": "file:../../portal-env-1.0.0.tgz",
+    "portal-env": "file:../../portal-env.tgz",
     "request": "2.87.0",
     "wicked-sdk": "file:wicked-sdk.tgz"
   },
