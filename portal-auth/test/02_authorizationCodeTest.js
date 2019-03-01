@@ -105,7 +105,7 @@ describe('Authorization Code Grant', function () {
             utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}&redirect_uri=http://bla.com`, function (err, res, body) {
                 assert.equal(res.statusCode, 400);
                 utils.assertIsHtml(body);
-                assert.isTrue(body.message.indexOf('does not match the registered') >= 0);
+                assert.include(body.message, 'does not match any registered');
                 done();
             });
         });
@@ -142,6 +142,16 @@ describe('Authorization Code Grant', function () {
             });
         });
 
+        it('should return a login screen for a valid authorize request (secondary redirectUri)', function (done) {
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}&redirect_uri=${consts.REDIRECT_URI2}`, function (err, res, body) {
+                assert.equal(res.statusCode, 200);
+                utils.assertIsHtml(body);
+                assert.equal('login', body.template);
+                // console.log(body);
+                done();
+            });
+        });
+
         it('should return a login screen for a valid authorize request (without redirect_uri)', function (done) {
             utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}`, function (err, res, body) {
                 assert.equal(res.statusCode, 200);
@@ -166,6 +176,29 @@ describe('Authorization Code Grant', function () {
                     assert.equal(302, res.statusCode);
                     const redir = res.headers.location;
                     assert.isOk(redir);
+                    //console.log(redir);
+                    const redirUrl = new URL(redir);
+                    assert.isOk(redirUrl.searchParams.get('code'));
+                    done();
+                });
+            });
+        });
+
+        it('should return an auth code if logged in successfully (secondary redirectUri)', function (done) {
+            const cookieJar = request.jar();
+            utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${ids.trusted.echo.clientId}&redirect_uri=${consts.REDIRECT_URI2}`, cookieJar, function (err, res, body) {
+                const csrfToken = body.csrfToken;
+                assert.isOk(csrfToken);
+                utils.authPost(body.loginUrl, {
+                    _csrf: csrfToken,
+                    username: ids.users.normal.email,
+                    password: ids.users.normal.password
+                }, cookieJar, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(302, res.statusCode);
+                    const redir = res.headers.location;
+                    assert.isOk(redir);
+                    assert.isTrue(redir.startsWith(consts.REDIRECT_URI2), `redirect location ${redir} does not start with ${consts.REDIRECT_URI2}`);
                     //console.log(redir);
                     const redirUrl = new URL(redir);
                     assert.isOk(redirUrl.searchParams.get('code'));
@@ -357,6 +390,21 @@ describe('Authorization Code Grant', function () {
                 assert.isNotOk(err);
                 assert.isOk(code);
                 utils.getAuthCode(cookieJar, 'echo', client, null, { code_challenge: codeVerifier, prompt: 'none' }, function (err, code) {
+                    assert.isNotOk(err);
+                    assert.isOk(code);
+                    done();
+                });
+            });
+        });
+
+        it('should immediately return an auth code if adding &prompt=none (using secondary redirectUri)', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.public.echo;
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, ids.users.normal, { code_challenge: codeVerifier }, function (err, code) {
+                assert.isNotOk(err);
+                assert.isOk(code);
+                utils.getAuthCode(cookieJar, 'echo', client, null, { code_challenge: codeVerifier, prompt: 'none', redirect_uri: consts.REDIRECT_URI2 }, function (err, code) {
                     assert.isNotOk(err);
                     assert.isOk(code);
                     done();

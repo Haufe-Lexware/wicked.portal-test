@@ -107,7 +107,7 @@ utils.destroyUsers = function (callback) {
     });
 };
 
-function createAppSubscriptions(appId, echoPlan, trusted, redirectUri, callback) {
+function createAppSubscriptions(appId, echoPlan, trusted, redirectUris, callback) {
     async.parallel({
         echo: callback => wicked.createSubscription(appId, {
             api: 'echo',
@@ -144,22 +144,22 @@ function createAppSubscriptions(appId, echoPlan, trusted, redirectUri, callback)
             echo: {
                 clientId: subs.echo.clientId,
                 clientSecret: subs.echo.clientSecret,
-                redirectUri: redirectUri,
+                redirectUris: redirectUris,
             },
             echo_woo: {
                 clientId: subs.echo_woo.clientId,
                 clientSecret: subs.echo_woo.clientSecret,
-                redirectUri: redirectUri,
+                redirectUris: redirectUris,
             },
             echo_woo_ns: {
                 clientId: subs.echo_woo_ns.clientId,
                 clientSecret: subs.echo_woo_ns.clientSecret,
-                redirectUri: redirectUri,
+                redirectUris: redirectUris,
             },
             echo_client_credentials: {
                 clientId: subs.echo_client_credentials.clientId,
                 clientSecret: subs.echo_client_credentials.clientSecret,
-                redirectUri: redirectUri,
+                redirectUris: redirectUris,
             }
         });
     });
@@ -167,61 +167,65 @@ function createAppSubscriptions(appId, echoPlan, trusted, redirectUri, callback)
 
 function createTrustedApp(echoPlan, callback) {
     const appId = consts.APP_ID + '-trusted';
+    const redirectUris = [consts.REDIRECT_URI, consts.REDIRECT_URI2];
     wicked.createApplication({
         id: appId,
         name: appId,
         confidential: true,
         clientType: 'confidential',
-        redirectUri: consts.REDIRECT_URI
+        redirectUris
     }, function (err, appInfo) {
         if (err)
             return callback(err);
-        createAppSubscriptions(appId, echoPlan, true /*trusted*/, consts.REDIRECT_URI, callback);
+        createAppSubscriptions(appId, echoPlan, true /*trusted*/, redirectUris, callback);
     });
 }
 
 function createConfidentialApp(echoPlan, callback) {
     const appId = consts.APP_ID + '-confidential';
+    const redirectUris = [consts.REDIRECT_URI, consts.REDIRECT_URI2];
     wicked.createApplication({
         id: appId,
         name: appId,
         confidential: true,
         clientType: 'confidential',
-        redirectUri: consts.REDIRECT_URI
+        redirectUris
     }, function (err, appInfo) {
         if (err)
             return callback(err);
-        createAppSubscriptions(appId, echoPlan, false /*trusted*/, consts.REDIRECT_URI, callback);
+        createAppSubscriptions(appId, echoPlan, false /*trusted*/, redirectUris, callback);
     });
 }
 
 function createPublicApp(echoPlan, callback) {
     const appId = consts.APP_ID + '-public';
+    const redirectUris = [consts.REDIRECT_URI, consts.REDIRECT_URI2];
     wicked.createApplication({
         id: appId,
         name: appId,
         confidential: false,
         clientType: 'public_spa',
-        redirectUri: consts.REDIRECT_URI
+        redirectUris
     }, function (err, appInfo) {
         if (err)
             return callback(err);
-        createAppSubscriptions(appId, echoPlan, true /*trusted*/, consts.REDIRECT_URI, callback);
+        createAppSubscriptions(appId, echoPlan, true /*trusted*/, redirectUris, callback);
     });
 }
 
 function createNativeApp(echoPlan, callback) {
     const appId = consts.APP_ID + '-native';
+    const redirectUris = [consts.REDIRECT_URI, consts.REDIRECT_URI2];
     wicked.createApplication({
         id: appId,
         name: appId,
         confidential: false,
         clientType: 'public_native',
-        redirectUri: consts.REDIRECT_URI
+        redirectUris
     }, function (err, appInfo) {
         if (err)
             return callback(err);
-        createAppSubscriptions(appId, echoPlan, true /*trusted*/, consts.REDIRECT_URI, callback);
+        createAppSubscriptions(appId, echoPlan, true /*trusted*/, redirectUris, callback);
     });
 }
 
@@ -423,7 +427,11 @@ utils.getAuthCodeUrl = function (apiId, client, options) {
             code_challenge = h.digest('base64');
         }
     }
-    let url = `local/api/${apiId}/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${client.redirectUri}`;
+    let redirectUri = client.redirectUris[0];
+    if (options.redirect_uri) {
+        redirectUri = options.redirect_uri;
+    }
+    let url = `local/api/${apiId}/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${redirectUri}`;
     if (scope) {
         const scopeString = scope.join(' ');
         url += `&scope=${qs.escape(scopeString)}`;
@@ -437,10 +445,22 @@ utils.getAuthCodeUrl = function (apiId, client, options) {
     return url;
 };
 
-utils.assertIsCodeRedirect = function (res, callback) {
+utils.assertIsCodeRedirect = function (res, options, callback) {
+    if (typeof (options) === 'function') {
+        callback = options;
+        options = null;
+    }
     assert.equal(302, res.statusCode);
     const redir = res.headers.location;
     assert.isOk(redir);
+    // console.log(redir);
+    if (options && options.redirect_uri) {
+        // console.log('Custom redirect_uri: ' + options.redirect_uri);
+        assert.isTrue(redir.startsWith(options.redirect_uri), `redirect_uri does not start with ${options.redirect_uri} (${redir})`);
+    } else {
+        // console.log('Assuming standard redirect_uri');
+        assert.isTrue(redir.startsWith(consts.REDIRECT_URI), `redirect_uri does not start with ${consts.REDIRECT_URI} (${redir})`);
+    }
     const redirUrl = new URL(redir);
     const code = redirUrl.searchParams.get('code');
     assert.isOk(code);
@@ -460,13 +480,13 @@ utils.getAuthCode = function (cookieJar, apiId, client, user, options, callback)
                 password: user.password
             }, cookieJar, function (err, res, body) {
                 assert.isNotOk(err);
-                utils.assertIsCodeRedirect(res, callback);
+                utils.assertIsCodeRedirect(res, options, callback);
             });
         });
     } else {
         utils.authGet(url, cookieJar, function (err, res, body) {
             assert.isNotOk(err);
-            utils.assertIsCodeRedirect(res, callback);
+            utils.assertIsCodeRedirect(res, options, callback);
         });
     }
 };

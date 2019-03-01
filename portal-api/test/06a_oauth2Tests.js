@@ -2,12 +2,12 @@
 
 /* global it, describe, before, beforeEach, after, afterEach, slow */
 
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 const READ_SUBS_SCOPE = 'read_subscriptions';
 const WRITE_SUBS_SCOPE = 'write_subscriptions';
@@ -47,11 +47,11 @@ describe('operations on OAuth2 APIs', function () {
         });
     });
 
-    var appId = 'myoauth2app';
-    var appName = 'My OAuth2 Application';
-    var redirectUri = 'https://my.app.com/callback';
-    var badAppId = 'badapp';
-    var badAppName = 'My Bad App without redirectUri';
+    const appId = 'myoauth2app';
+    const appName = 'My OAuth2 Application';
+    const redirectUri = 'https://my.app.com/callback';
+    const badAppId = 'badapp';
+    const badAppName = 'My Bad App without redirectUri';
 
     // Let's create two standard applications to play with for each test case
     beforeEach(function (done) {
@@ -70,9 +70,9 @@ describe('operations on OAuth2 APIs', function () {
         });
     });
 
-    var oauth2Api = 'mobile'; // this is oauth2 with implicit grant
+    const oauth2Api = 'mobile'; // this is oauth2 with implicit grant
 
-    var subscriptionClientId = null;
+    let subscriptionClientId = null;
 
     describe('Adding subscriptions', function () {
         it('an application must return its redirectUri', function (done) {
@@ -82,8 +82,10 @@ describe('operations on OAuth2 APIs', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 200);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.redirectUri, redirectUri);
+                assert.isArray(jsonBody.redirectUris);
+                assert.equal(jsonBody.redirectUris[0], redirectUri);
                 done();
             });
         });
@@ -104,7 +106,7 @@ describe('operations on OAuth2 APIs', function () {
                 done();
             });
         });
-        
+
         it('must be possible to add a subscription for an app with redirectUri', function (done) {
             request.post({
                 url: baseUrl + 'applications/' + appId + '/subscriptions',
@@ -118,7 +120,7 @@ describe('operations on OAuth2 APIs', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 201);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody.clientId);
                 assert.isOk(jsonBody.clientSecret);
                 subscriptionClientId = jsonBody.clientId;
@@ -150,7 +152,7 @@ describe('operations on OAuth2 APIs', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(400, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.message, 'Application does not have a redirectUri');
                 done();
             });
@@ -158,6 +160,26 @@ describe('operations on OAuth2 APIs', function () {
     });
 
     describe('Patching applications', function () {
+        it('must not overwrite the redirectUri if not applied', function (done) {
+            request.patch({
+                url: baseUrl + 'applications/' + appId,
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: appId,
+                    name: 'Other name'
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.redirectUri, redirectUri);
+                assert.isArray(jsonBody.redirectUris);
+                assert.equal(jsonBody.redirectUris[0], redirectUri);
+                done();
+            });
+        });
+
         it('must be possible to change the redirectUri of an app', function (done) {
             request.patch({
                 url: baseUrl + 'applications/' + appId,
@@ -170,8 +192,30 @@ describe('operations on OAuth2 APIs', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.redirectUri, 'https://other.uri');
+                done();
+            });
+        });
+
+        it('must be possible to change the redirectUris of an app (to two redirect URIs)', function (done) {
+            request.patch({
+                url: baseUrl + 'applications/' + appId,
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: appId,
+                    redirectUris: ['https://other2.uri', 'http://localhost:8080']
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.redirectUri, 'https://other2.uri');
+                assert.isArray(jsonBody.redirectUris);
+                assert.equal(jsonBody.redirectUris.length, 2);
+                assert.equal(jsonBody.redirectUris[0], 'https://other2.uri');
+                assert.equal(jsonBody.redirectUris[1], 'http://localhost:8080');
                 done();
             });
         });
@@ -188,8 +232,9 @@ describe('operations on OAuth2 APIs', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.redirectUri, 'customscheme://dummy/hello');
+                assert.equal(jsonBody.redirectUris[0], 'customscheme://dummy/hello');
                 done();
             });
         });
@@ -201,12 +246,12 @@ describe('operations on OAuth2 APIs', function () {
                 json: true,
                 body: {
                     id: badAppId,
-                    redirectUri: 'https://some.uri'
+                    redirectUris: ['https://some.uri']
                 }
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.redirectUri, 'https://some.uri');
                 done();
             });
@@ -220,13 +265,13 @@ describe('operations on OAuth2 APIs', function () {
                 body: {
                     id: 'someid',
                     name: 'Some Name',
-                    redirectUri: 'http://insecure.uri'
+                    redirectUris: ['http://insecure.uri']
                 }
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 400);
-                var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.message, 'redirectUri is not valid');
+                const jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.message, 'redirectUri http://insecure.uri is not valid.');
                 done();
             });
         });
@@ -244,8 +289,8 @@ describe('operations on OAuth2 APIs', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 400);
-                var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.message, 'redirectUri is not valid');
+                const jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.message, 'redirectUri customscheme:/just_a_path is not valid.');
                 done();
             });
         });
@@ -262,8 +307,8 @@ describe('operations on OAuth2 APIs', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 400);
-                var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.message, 'redirectUri is not valid');
+                const jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.message, 'redirectUri http://insecure.uri is not valid.');
                 done();
             });
         });
@@ -300,8 +345,8 @@ describe('operations on OAuth2 APIs', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 400);
-                var jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.message, 'redirectUri is not valid');
+                const jsonBody = utils.getJson(body);
+                assert.equal(jsonBody.message, 'redirectUri https:// is not valid.');
                 done();
             });
         });
@@ -319,7 +364,7 @@ describe('operations on OAuth2 APIs', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 200);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.subscription);
                     assert.equal(jsonBody.subscription.api, oauth2Api);
                     assert.equal(jsonBody.subscription.application, appId);
@@ -336,7 +381,7 @@ describe('operations on OAuth2 APIs', function () {
                 assert.isNotOk(err);
                 assert.isOk(subsInfo);
                 assert.isOk(subsInfo.clientId);
-                var clientId = subsInfo.clientId;
+                const clientId = subsInfo.clientId;
                 utils.deleteSubscription(appId, devUserId, oauth2Api, function () {
                     request.get({
                         url: baseUrl + 'subscriptions/' + clientId,
@@ -384,7 +429,7 @@ describe('operations on OAuth2 APIs', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(res.statusCode, 200);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.isOk(jsonBody.clientId);
                         assert.isOk(jsonBody.clientSecret);
                         done();
@@ -403,16 +448,16 @@ describe('operations on OAuth2 APIs', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(res.statusCode, 200);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.isOk(jsonBody.clientId);
-                        var clientId = jsonBody.clientId;
+                        const clientId = jsonBody.clientId;
                         request.get({
                             url: baseUrl + 'subscriptions/' + clientId,
                             headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                         }, function (err, res, body) {
                             assert.isNotOk(err);
                             assert.equal(res.statusCode, 200);
-                            var jsonBody = utils.getJson(body);
+                            const jsonBody = utils.getJson(body);
                             assert.isOk(jsonBody.application);
                             assert.isOk(jsonBody.subscription);
                             assert.equal(jsonBody.application.id, appId);
