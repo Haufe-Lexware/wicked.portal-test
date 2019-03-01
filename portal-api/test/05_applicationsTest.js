@@ -151,6 +151,67 @@ describe('/applications', function () {
             });
         });
 
+        it('should be possible to create a new application with two redirectUris', function (done) {
+            request.post({
+                url: baseUrl + 'applications',
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: 'application2',
+                    name: 'Application',
+                    redirectUris: [
+                        'https://hello.com',
+                        'http://localhost:8080'
+                    ]
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(201, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                assert.isOk(jsonBody);
+                utils.deleteApplication('application2', devUserId, function () {
+                    assert.isArray(jsonBody.redirectUris);
+                    assert.equal(jsonBody.redirectUris.length, 2);
+                    assert.equal(jsonBody.redirectUris[0], 'https://hello.com');
+                    assert.equal(jsonBody.redirectUris[1], 'http://localhost:8080');
+                    assert.equal(jsonBody.redirectUri, 'https://hello.com');
+                    done();
+                });
+            });
+        });
+
+        it('should filter out empty redirect_uris', function (done) {
+            request.post({
+                url: baseUrl + 'applications',
+                headers: utils.makeHeaders(devUserId, WRITE_APPS_SCOPE),
+                json: true,
+                body: {
+                    id: 'application2',
+                    name: 'Application',
+                    redirectUris: [
+                        '',
+                        '   ',
+                        'https://hello.com',
+                        '       ',
+                        'http://localhost:8080'
+                    ]
+                }
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(201, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                assert.isOk(jsonBody);
+                utils.deleteApplication('application2', devUserId, function () {
+                    assert.isArray(jsonBody.redirectUris);
+                    assert.equal(jsonBody.redirectUris.length, 2);
+                    assert.equal(jsonBody.redirectUris[0], 'https://hello.com');
+                    assert.equal(jsonBody.redirectUris[1], 'http://localhost:8080');
+                    assert.equal(jsonBody.redirectUri, 'https://hello.com');
+                    done();
+                });
+            });
+        });
+
         it('should not be possible to create a new application with a wrong scope', function (done) {
             request.post({
                 url: baseUrl + 'applications',
@@ -452,6 +513,8 @@ describe('/applications', function () {
                 assert.equal(200, res.statusCode);
                 const jsonBody = utils.getJson(body);
                 assert.equal('A different name', jsonBody.name);
+                assert.isArray(jsonBody.redirectUris);
+                assert.equal(jsonBody.redirectUris.length, 0);
                 done();
             });
         });
@@ -699,7 +762,7 @@ describe('/applications', function () {
                 });
             });
         });
-        
+
         it('should remove application from index', function (done) {
             utils.createApplication('otherapp', 'My Application', noobUserId, function () {
                 utils.deleteApplication('otherapp', noobUserId, function () {
