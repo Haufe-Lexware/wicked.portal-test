@@ -241,6 +241,8 @@ if [[ -z "$onlyEnv" ]]; then
     fi
     popd &> /dev/null
 
+    docker logs ${kongContainer} &> ${thisDir}/logs/kong-adapter-test-local-kong.log
+
     killthings
 else
     echo "INFO: Leaving environment open; go into the portal-kong-adapter directory and run"
