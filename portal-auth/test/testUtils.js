@@ -463,8 +463,13 @@ utils.assertIsCodeRedirect = function (res, options, callback) {
     }
     const redirUrl = new URL(redir);
     const code = redirUrl.searchParams.get('code');
-    assert.isOk(code);
-    callback(null, code);
+    const error = redirUrl.searchParams.get('error');
+    if (code) {
+        return callback(null, code);
+    }
+    const err = new Error(error);
+    err.error_description = redirUrl.searchParams.get('error_description');
+    return callback(err);
 };
 
 utils.getAuthCode = function (cookieJar, apiId, client, user, options, callback) {
