@@ -1210,7 +1210,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 });
             }
         });
-        it('should be possible to return the list of subscriptions, filtering it by api as an admin ', function (done) {
+        it('should be possible to return a list of subscriptions, filtering it by api as an admin ', function (done) {
             if (utils.isPostgres()) {
                 request.get({
                     url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22api%22%3A%20%22superduper%22%0A%7D&no_cache=1',
@@ -1236,7 +1236,7 @@ describe('/applications/<appId>/subscriptions', function () {
             }
         });
 
-        it('should not be possible to get the list of subscriptions, filtering it by incorrect api as an admin', function (done) {
+        it('should not be possible to get a list of subscriptions, filtering it by incorrect api as an admin', function (done) {
             if (utils.isPostgres()) {
                 request.get({
                     url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22api%22%3A%20%22pet%22%0A%7D&no_cache=1',
