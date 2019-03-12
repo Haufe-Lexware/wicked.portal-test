@@ -354,8 +354,9 @@ describe('Authorization Code Grant', function () {
             const client = ids.public.echo;
             utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${consts.REDIRECT_URI}`, cookieJar, function (err, res, body) {
                 assert.equal(res.statusCode, 400);
-                assert.equal(body.error, 'invalid_request');
-                assert.isTrue(body.error_description.indexOf('code_challenge') >= 0, 'error_description does not contain "code_challenge"');
+                utils.assertIsHtml(body);
+                assert.equal(body.template, 'error');
+                assert.include(body.message, 'it must present a code_challenge');
                 done();
             });
         });
@@ -409,6 +410,17 @@ describe('Authorization Code Grant', function () {
                     assert.isOk(code);
                     done();
                 });
+            });
+        });
+
+        it('should return an error as a redirect if not logged in when using prompt=none', function (done) {
+            const cookieJar = request.jar();
+            const client = ids.public.echo;
+            const codeVerifier = 'hellohellohellohellohellohellohellohellohellohellohellohello';
+            utils.getAuthCode(cookieJar, 'echo', client, null, { code_challenge: codeVerifier, prompt: 'none', redirect_uri: consts.REDIRECT_URI2 }, function (err, code) {
+                assert.isOk(err);
+                assert.equal(err.message, 'login_required');
+                done();
             });
         });
 
@@ -526,8 +538,9 @@ describe('Authorization Code Grant', function () {
             const client = ids.native.echo;
             utils.authGet(`local/api/echo/authorize?response_type=code&client_id=${client.clientId}&redirect_uri=${consts.REDIRECT_URI}`, cookieJar, function (err, res, body) {
                 assert.equal(res.statusCode, 400);
-                assert.equal(body.error, 'invalid_request');
-                assert.isTrue(body.error_description.indexOf('code_challenge') >= 0, 'error_description does not contain "code_challenge"');
+                utils.assertIsHtml(body);
+                assert.equal(body.template, 'error');
+                assert.include(body.message, 'it must present a code_challenge');
                 done();
             });
         });
