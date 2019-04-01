@@ -950,7 +950,6 @@ describe('/applications/<appId>/subscriptions', function () {
 
         it('should, as an admin, be possible to get a list of subscriptions', function (done) {
             const h = utils.makeHeaders(adminUserId, 'read_subscriptions');
-            h['correlation-id'] = 'FUCK_THIS_BASTARD';
             if (utils.isPostgres()) {
                 request.get({
                     url: baseUrl + 'subscriptions?embed=1&no_cache=1',
