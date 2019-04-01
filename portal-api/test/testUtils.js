@@ -51,14 +51,31 @@ utils.createUser = function (lastName, group, validated, callback) {
             email: lastName.toLowerCase() + '@random.org',
             groups: thisGroup
         }
-    },
-        function (err, res, body) {
-            if (201 != res.statusCode)
-                throw Error("Creating user did not succeed: " + utils.getText(body));
-            const jsonBody = utils.getJson(body);
-            // console.log(jsonBody);
-            callback(jsonBody.id);
+    }, function (err, res, body) {
+        assert.isNotOk(err);
+        assert.equal(res.statusCode, 201, 'Unexpected status code when creating user: ' + utils.getText(body));
+        const jsonBody = utils.getJson(body);
+        callback(jsonBody.id);
+    });
+};
+
+utils.createUserWithRegistration = function (lastName, group, validated, callback) {
+    utils.createUser(lastName, group, validated, function (userId) {
+        request.put({
+            url: consts.BASE_URL + `registrations/pools/wicked/users/${userId}`,
+            headers: utils.makeHeaders(1, 'write_registrations'),
+            json: true,
+            body: {
+                poolId: 'wicked',
+                userId: userId,
+                name: lastName
+            }
+        }, function (err, res, body) {
+            assert.isNotOk(err);
+            assert.equal(res.statusCode, 204, 'User registration returned unexpected status code.');
+            return callback(userId);
         });
+    });
 };
 
 utils.makeHeaders = function (userId, scopes) {

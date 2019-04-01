@@ -31,11 +31,11 @@ describe('/applications/<appId>/subscriptions', function () {
 
     // Let's create some users to play with
     before(function (done) {
-        utils.createUser('Dev', 'dev', true, function (id) {
+        utils.createUserWithRegistration('Dev', 'dev', true, function (id) {
             devUserId = id;
-            utils.createUser('Admin', 'admin', true, function (id) {
+            utils.createUserWithRegistration('Admin', 'admin', true, function (id) {
                 adminUserId = id;
-                utils.createUser('Noob', null, true, function (id) {
+                utils.createUserWithRegistration('Noob', null, true, function (id) {
                     noobUserId = id;
                     done();
                 });
@@ -951,10 +951,12 @@ describe('/applications/<appId>/subscriptions', function () {
         });
 
         it('should, as an admin, be possible to get a list of subscriptions', function (done) {
+            const h = utils.makeHeaders(adminUserId, 'read_subscriptions');
+            h['correlation-id'] = 'FUCK_THIS_BASTARD';
             if (utils.isPostgres()) {
                 request.get({
                     url: baseUrl + 'subscriptions?embed=1&no_cache=1',
-                    headers: utils.makeHeaders(adminUserId, 'read_subscriptions')
+                    headers: h
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 200);
@@ -1014,7 +1016,6 @@ describe('/applications/<appId>/subscriptions', function () {
                     assert.equal(res.statusCode, 200);
                     const jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.items);
-                    // console.log(jsonBody);
                     assert.isArray(jsonBody.items);
                     assert.equal(jsonBody.items[0].application, 'abcde-hello');
                     assert.equal(jsonBody.items[4].application, 'uvwxyz-world');
