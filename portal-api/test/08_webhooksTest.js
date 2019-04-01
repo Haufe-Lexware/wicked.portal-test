@@ -1,13 +1,11 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
-
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-var http = require('http');
-var async = require('async');
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
+const http = require('http');
+const async = require('async');
 
 const baseUrl = consts.BASE_URL;
 const HOOK_URL = consts.HOOK_URL;
@@ -25,7 +23,7 @@ const INVALID_SCOPE = 'invalid_webhooks';
 const READ_USERS_SCOPE = 'read_users';
 const WRITE_USERS_SCOPE = 'write_users';
 
-var __server = null;
+let __server = null;
 
 function hookServer(callback, serverHooked) {
     if (__server)
@@ -43,9 +41,9 @@ function hookServer(callback, serverHooked) {
 }
 
 function findEvent(eventList, action, entity) {
-    var e = null;
-    for (var i = 0; i < eventList.length; ++i) {
-        var thisE = eventList[i];
+    let e = null;
+    for (let i = 0; i < eventList.length; ++i) {
+        const thisE = eventList[i];
         if (thisE.action == action &&
             thisE.entity == entity) {
             e = thisE;
@@ -119,7 +117,7 @@ describe('/webhooks', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(1, jsonBody.length);
                 assert.equal('sample', jsonBody[0].id);
                 done();
@@ -176,7 +174,7 @@ describe('/webhooks', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(1, jsonBody.length);
                 assert.equal('http://lostalllocals:3002', jsonBody[0].url);
                 done();
@@ -212,7 +210,7 @@ describe('/webhooks', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(0, jsonBody.length);
                 done();
             });
@@ -229,8 +227,8 @@ describe('/webhooks', function () {
     describe('/events/:listenerId', function () {
         this.slow(500);
 
-        var devUserId = '';
-        var privateApi = 'users';
+        let devUserId = '';
+        const privateApi = 'users';
 
         before(function (done) {
             utils.createUser('Developer', 'dev', true, function (id) {
@@ -243,7 +241,7 @@ describe('/webhooks', function () {
             utils.deleteUser(devUserId, done);
         });
 
-        var LISTENER = 'test-listener';
+        const LISTENER = 'test-listener';
 
         /*
         afterEach(function (done) {
@@ -282,8 +280,8 @@ describe('/webhooks', function () {
 
                                 assert.isNotOk(err);
                                 assert.equal(200, apiResponse.statusCode);
-                                var jsonBody = utils.getJson(apiBody);
-                                var wh = findEvent(jsonBody, 'add', 'application');
+                                const jsonBody = utils.getJson(apiBody);
+                                const wh = findEvent(jsonBody, 'add', 'application');
                                 assert.isOk(wh);
                                 assert.isOk(wh.data);
                                 assert.equal(devUserId, wh.data.userId);
@@ -306,8 +304,8 @@ describe('/webhooks', function () {
             hookServer(function () {
                 request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
-                        var jsonBody = utils.getJson(apiBody);
-                        var wh = findEvent(jsonBody, 'add', 'application');
+                        const jsonBody = utils.getJson(apiBody);
+                        const wh = findEvent(jsonBody, 'add', 'application');
                         request.delete({ url: `${baseUrl}webhooks/events/${LISTENER}/${wh.id}`, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) }, function (deleteErr, deleteRes, deleteBody) {
                             utils.deleteListener(LISTENER, function () {
                                 utils.deleteApplication('dvolla', devUserId, function () {
@@ -346,14 +344,14 @@ describe('/webhooks', function () {
                                     // Before flush
                                     assert.isNotOk(err);
                                     assert.equal(200, apiResponse.statusCode);
-                                    var jsonBody = utils.getJson(apiBody);
-                                    var wh = findEvent(jsonBody, 'add', 'application');
+                                    const jsonBody = utils.getJson(apiBody);
+                                    const wh = findEvent(jsonBody, 'add', 'application');
                                     assert.isOk(wh);
                                     assert.isOk(wh.data);
                                     // After flush
                                     assert.isNotOk(err2);
                                     assert.equal(200, apiResponse2.statusCode);
-                                    var jsonBody2 = utils.getJson(apiBody2);
+                                    const jsonBody2 = utils.getJson(apiBody2);
                                     assert.isTrue(Array.isArray(jsonBody2));
                                     assert.equal(0, jsonBody2.length);
                                     done();
@@ -379,8 +377,8 @@ describe('/webhooks', function () {
 
                             assert.isNotOk(err);
                             assert.equal(200, apiResponse.statusCode);
-                            var jsonBody = utils.getJson(apiBody);
-                            var wh = findEvent(jsonBody, 'delete', 'application');
+                            const jsonBody = utils.getJson(apiBody);
+                            const wh = findEvent(jsonBody, 'delete', 'application');
                             assert.isOk(wh);
                             assert.equal('delete', wh.action);
                             assert.equal('application', wh.entity);
@@ -411,8 +409,8 @@ describe('/webhooks', function () {
 
                             assert.isNotOk(err);
                             assert.equal(200, apiResponse.statusCode);
-                            var jsonBody = utils.getJson(apiBody);
-                            var wh = findEvent(jsonBody, 'delete', 'application');
+                            const jsonBody = utils.getJson(apiBody);
+                            const wh = findEvent(jsonBody, 'delete', 'application');
                             assert.isOk(wh);
                             assert.equal('delete', wh.action);
                             assert.equal('application', wh.entity);
@@ -448,8 +446,8 @@ describe('/webhooks', function () {
 
                                 assert.isNotOk(err);
                                 assert.equal(200, apiResponse.statusCode);
-                                var jsonBody = utils.getJson(apiBody);
-                                var wh = findEvent(jsonBody, 'add', 'subscription');
+                                const jsonBody = utils.getJson(apiBody);
+                                const wh = findEvent(jsonBody, 'add', 'subscription');
                                 assert.isOk(wh);
                                 assert.equal('add', wh.action);
                                 assert.equal('subscription', wh.entity);
@@ -482,8 +480,8 @@ describe('/webhooks', function () {
 
                                 assert.isNotOk(err);
                                 assert.equal(200, apiResponse.statusCode);
-                                var jsonBody = utils.getJson(apiBody);
-                                var wh = findEvent(jsonBody, 'update', 'subscription');
+                                const jsonBody = utils.getJson(apiBody);
+                                const wh = findEvent(jsonBody, 'update', 'subscription');
                                 assert.isOk(wh);
                                 assert.equal('update', wh.action);
                                 assert.equal('subscription', wh.entity);
@@ -526,8 +524,8 @@ describe('/webhooks', function () {
 
                                 assert.isNotOk(err);
                                 assert.equal(200, apiResponse.statusCode);
-                                var jsonBody = utils.getJson(apiBody);
-                                var wh = findEvent(jsonBody, 'delete', 'subscription');
+                                const jsonBody = utils.getJson(apiBody);
+                                const wh = findEvent(jsonBody, 'delete', 'subscription');
                                 assert.isOk(wh);
                                 assert.equal('delete', wh.action);
                                 assert.equal('subscription', wh.entity);
@@ -555,7 +553,7 @@ describe('/webhooks', function () {
         });
 
         it('should return expected events (create user)', function (done) {
-            var noobUserId = '';
+            let noobUserId = '';
             hookServer(function () {
                 request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
@@ -564,8 +562,8 @@ describe('/webhooks', function () {
 
                                 assert.isNotOk(err);
                                 assert.equal(200, apiResponse.statusCode);
-                                var jsonBody = utils.getJson(apiBody);
-                                var wh = findEvent(jsonBody, 'add', 'user');
+                                const jsonBody = utils.getJson(apiBody);
+                                const wh = findEvent(jsonBody, 'add', 'user');
                                 assert.isOk(wh);
                                 assert.equal('add', wh.action);
                                 assert.equal('user', wh.entity);
@@ -586,7 +584,6 @@ describe('/webhooks', function () {
         });
 
         it('should return expected events (patch user)', function (done) {
-            var noobUserId = '';
             hookServer(function () {
                 request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
@@ -594,8 +591,8 @@ describe('/webhooks', function () {
 
                             assert.isNotOk(err);
                             assert.equal(200, apiResponse.statusCode);
-                            var jsonBody = utils.getJson(apiBody);
-                            var wh = findEvent(jsonBody, 'update', 'user');
+                            const jsonBody = utils.getJson(apiBody);
+                            const wh = findEvent(jsonBody, 'update', 'user');
                             assert.isOk(wh);
                             assert.equal('update', wh.action);
                             assert.equal('user', wh.entity);
@@ -624,7 +621,7 @@ describe('/webhooks', function () {
         });
 
         it('should return expected events (delete user)', function (done) {
-            var noobUserId = '';
+            let noobUserId = '';
             hookServer(function () {
                 request({ url: baseUrl + 'webhooks/events/' + LISTENER, headers: utils.makeHeaders('1', WEBHOOKS_SCOPE) },
                     function (err, apiResponse, apiBody) {
@@ -632,8 +629,8 @@ describe('/webhooks', function () {
 
                             assert.isNotOk(err);
                             assert.equal(200, apiResponse.statusCode);
-                            var jsonBody = utils.getJson(apiBody);
-                            var wh = findEvent(jsonBody, 'delete', 'user');
+                            const jsonBody = utils.getJson(apiBody);
+                            const wh = findEvent(jsonBody, 'delete', 'user');
                             assert.isOk(wh);
                             assert.equal('delete', wh.action);
                             assert.equal('user', wh.entity);
@@ -659,7 +656,7 @@ describe('/webhooks', function () {
 
         describe('adding and deleting owners', function () {
 
-            var noobUserId = '';
+            let noobUserId = '';
 
             beforeEach(function (done) {
                 utils.createUser('Noob', '', true, function (userId) {
@@ -681,8 +678,8 @@ describe('/webhooks', function () {
                             utils.deleteListener(LISTENER, function () {
                                 assert.isNotOk(err);
                                 assert.equal(200, apiResponse.statusCode);
-                                var jsonBody = utils.getJson(apiBody);
-                                var wh = findEvent(jsonBody, 'add', 'owner');
+                                const jsonBody = utils.getJson(apiBody);
+                                const wh = findEvent(jsonBody, 'add', 'owner');
                                 assert.isOk(wh);
                                 assert.equal('add', wh.action);
                                 assert.equal('owner', wh.entity);
@@ -711,8 +708,8 @@ describe('/webhooks', function () {
                             utils.deleteListener(LISTENER, function () {
                                 assert.isNotOk(err);
                                 assert.equal(200, apiResponse.statusCode);
-                                var jsonBody = utils.getJson(apiBody);
-                                var wh = findEvent(jsonBody, 'delete', 'owner');
+                                const jsonBody = utils.getJson(apiBody);
+                                const wh = findEvent(jsonBody, 'delete', 'owner');
                                 assert.isOk(wh);
                                 assert.equal('delete', wh.action);
                                 assert.equal('owner', wh.entity);

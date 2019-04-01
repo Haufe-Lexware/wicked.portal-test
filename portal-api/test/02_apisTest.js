@@ -1,16 +1,14 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
+const assert = require('chai').assert;
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var assert = require('chai').assert;
-var http = require('http');
-var fs = require('fs');
-var path = require('path');
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 const READ_APIS_SCOPE = 'read_apis';
 const READ_PLANS_SCOPE = 'read_plans';
@@ -18,9 +16,9 @@ const INVALID_SCOPE = 'invalid_apis';
 
 describe('/apis', function () {
 
-    var swaggerServer = null;
+    let swaggerServer = null;
     before(function (done) {
-        var swaggerText = fs.readFileSync(path.join(__dirname, 'res', 'swagger.json'), 'utf8');
+        const swaggerText = fs.readFileSync(path.join(__dirname, 'res', 'swagger.json'), 'utf8');
         // Hook up a stupid little web server which serves a Swagger file
         swaggerServer = http.createServer(function (req, res) {
             res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -40,9 +38,9 @@ describe('/apis', function () {
         }
     });
 
-    var devUserId = '';
-    var adminUserId = '';
-    var noobUserId = '';
+    let devUserId = '';
+    let adminUserId = '';
+    let noobUserId = '';
 
     // Let's create some users to play with
     before(function (done) {
@@ -87,7 +85,7 @@ describe('/apis', function () {
                 headers: utils.makeHeaders(devUserId, READ_APIS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(10, jsonBody.apis.length);
                 assert.equal(200, res.statusCode);
                 done();
@@ -100,7 +98,7 @@ describe('/apis', function () {
                 headers: utils.onlyScope(READ_APIS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(5, jsonBody.apis.length);
                 assert.equal(200, res.statusCode);
                 done();
@@ -113,7 +111,7 @@ describe('/apis', function () {
                 headers: utils.makeHeaders(noobUserId, READ_APIS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(5, jsonBody.apis.length);
                 assert.equal(200, res.statusCode);
                 done();
@@ -368,7 +366,7 @@ describe('/apis', function () {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode, 'Body: ' + utils.getText(body));
                 assert.isTrue(res.headers['content-type'].startsWith('application/json'));
-                var swaggerJson = utils.getJson(body);
+                const swaggerJson = utils.getJson(body);
                 // From globals.json
                 assert.equal(swaggerJson.host, 'localhost:8000', 'Mismatched host property');
                 // From globals.json
@@ -469,7 +467,7 @@ describe('/apis', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(0, jsonBody.length);
                 done();
             });
@@ -482,7 +480,7 @@ describe('/apis', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(2, jsonBody.length);
                 done();
             });
@@ -496,7 +494,7 @@ describe('/apis', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.equal(2, jsonBody.length);
                     done();
                 });

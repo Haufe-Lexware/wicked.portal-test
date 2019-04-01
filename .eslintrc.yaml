@@ -22,8 +22,8 @@ rules:
     - always
   no-unused-vars:
     - off
-  # no-unreachable:
-  #   - warn
+  no-unreachable:
+    - warn
   no-var:
     - warn
   no-useless-escape:
@@ -36,3 +36,11 @@ rules:
 globals:
   process: true
   Buffer: true
+  __dirname: true
+  it: true
+  describe: true
+  before: true
+  beforeEach: true
+  after: true
+  afterEach: true
+  slow: true

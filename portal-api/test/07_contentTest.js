@@ -1,22 +1,20 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 const READ_CONTENT_SCOPE = 'read_content';
 const INVALID_SCOPE = 'invalid_content';
 
 describe('/content', function () {
 
-    var devUserId = '';
-    var adminUserId = '';
-    var noobUserId = '';
+    let devUserId = '';
+    let adminUserId = '';
+    let noobUserId = '';
 
     // Let's create some users to play with
     before(function (done) {
@@ -45,10 +43,10 @@ describe('/content', function () {
 
     function hasValidMetaHeader(response) {
         try {
-            var metaInfo64 = response.headers['x-metainfo'];
+            const metaInfo64 = response.headers['x-metainfo'];
             if (!metaInfo64)
                 return false;
-            var metaInfo = JSON.parse(new Buffer(metaInfo64, 'base64'));
+            const metaInfo = JSON.parse(new Buffer(metaInfo64, 'base64'));
             return true;
         } catch (err) {
             throw Error("Could not extract meta information: " + err);
@@ -56,7 +54,7 @@ describe('/content', function () {
     }
 
     function isMarkdown(response) {
-        var contentType = response.headers['content-type'];
+        const contentType = response.headers['content-type'];
         if (!contentType)
             return false;
         return contentType.startsWith('text/markdown');

@@ -1,7 +1,5 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
-
 const assert = require('chai').assert;
 const request = require('request');
 const utils = require('./testUtils');
@@ -15,9 +13,9 @@ const INVALID_SCOPE = 'invalid_templates';
 
 describe('/pools/:poolId/namespaces', () => {
 
-    var devUserId = '';
-    var adminUserId = '';
-    var noobUserId = '';
+    let devUserId = '';
+    let adminUserId = '';
+    let noobUserId = '';
 
     // Let's create some users to play with
     before(function (done) {

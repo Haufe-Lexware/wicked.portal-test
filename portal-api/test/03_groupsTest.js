@@ -1,13 +1,11 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 const READ_GROUPS_SCOPE = 'read_groups';
 
@@ -20,7 +18,7 @@ describe('/groups', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody.groups);
                 assert.equal(4, jsonBody.groups.length);
                 done();
@@ -45,7 +43,7 @@ describe('/groups', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody._links);
                 assert.isOk(jsonBody._links.self);
                 assert.equal(jsonBody._links.self.href, '/groups');

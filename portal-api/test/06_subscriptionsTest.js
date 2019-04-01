@@ -1,14 +1,12 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
+const assert = require('chai').assert;
+const async = require('async');
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var assert = require('chai').assert;
-var async = require('async');
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 
 const READ_SUBS_SCOPE = 'read_subscriptions';
@@ -25,9 +23,9 @@ describe('/applications/<appId>/subscriptions', function () {
 
     this.timeout(5000);
 
-    var devUserId = '';
-    var adminUserId = '';
-    var noobUserId = '';
+    let devUserId = '';
+    let adminUserId = '';
+    let noobUserId = '';
 
     // Let's create some users to play with
     before(function (done) {
@@ -54,8 +52,8 @@ describe('/applications/<appId>/subscriptions', function () {
         });
     });
 
-    var appId = 'myapp';
-    var appName = 'My Application';
+    const appId = 'myapp';
+    const appName = 'My Application';
 
     // Let's create a standard application to play with for each test case
     beforeEach(function (done) {
@@ -72,10 +70,10 @@ describe('/applications/<appId>/subscriptions', function () {
 
     // ------------
 
-    var subsUrl = baseUrl + 'applications/' + appId + '/subscriptions';
-    var publicApi = 'superduper';
-    var privateApi = 'partner';
-    var oauth2Api = 'oauth2-api';
+    const subsUrl = baseUrl + 'applications/' + appId + '/subscriptions';
+    const publicApi = 'superduper';
+    const privateApi = 'partner';
+    const oauth2Api = 'oauth2-api';
 
     describe('POST', function () {
         it('should not be possible to add a subscription with the wrong scope', function (done) {
@@ -318,7 +316,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.isNotOk(jsonBody[0].apikey);
                     assert.isNotOk(jsonBody[0].approved);
                     done();
@@ -334,7 +332,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody[0].apikey, "Admins must get the apikey back, no approval needed.");
                     assert.isOk(jsonBody[0].approved, "Subscriptions must be marked as approved.");
                     done();
@@ -352,7 +350,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.equal(1, jsonBody.length);
                     done();
                 });
@@ -368,7 +366,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(1, jsonBody.length);
                         done();
                     });
@@ -385,7 +383,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(1, jsonBody.length);
                         done();
                     });
@@ -401,7 +399,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.equal(1, jsonBody.length);
                     done();
                 });
@@ -432,7 +430,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(privateApi, jsonBody.api);
                         done();
                     });
@@ -440,7 +438,7 @@ describe('/applications/<appId>/subscriptions', function () {
             });
 
             it('should return the correct apikey for a subscription', function (done) {
-                var APIKEY = 'abcdefghijklmno';
+                const APIKEY = 'abcdefghijklmno';
                 utils.addSubscription(appId, devUserId, privateApi, 'basic', APIKEY, function () {
                     request({
                         url: subsUrl + '/' + privateApi,
@@ -448,7 +446,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(privateApi, jsonBody.api);
                         assert.equal(APIKEY, jsonBody.apikey);
                         done();
@@ -465,7 +463,7 @@ describe('/applications/<appId>/subscriptions', function () {
                         }, function (err, res, body) {
                             assert.isNotOk(err);
                             assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
+                            const jsonBody = utils.getJson(body);
                             assert.equal(privateApi, jsonBody.api);
                             done();
                         });
@@ -482,7 +480,7 @@ describe('/applications/<appId>/subscriptions', function () {
                         }, function (err, res, body) {
                             assert.isNotOk(err);
                             assert.equal(200, res.statusCode);
-                            var jsonBody = utils.getJson(body);
+                            const jsonBody = utils.getJson(body);
                             assert.equal(privateApi, jsonBody.api);
                             done();
                         });
@@ -498,7 +496,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(privateApi, jsonBody.api);
                         done();
                     });
@@ -513,7 +511,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(oauth2Api, jsonBody.api);
                         assert.isDefined(jsonBody.allowedScopesMode, 'allowedScopesMode is not defined');
                         assert.isDefined(jsonBody.allowedScopes, 'allowedScopesMode is not defined');
@@ -543,7 +541,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.isOk(jsonBody._links);
                         assert.isOk(jsonBody._links.self);
                         assert.isOk(jsonBody._links.application);
@@ -656,7 +654,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.equal(1, jsonBody.length);
 
                         utils.deleteSubscription(appId, devUserId, privateApi, function () {
@@ -666,7 +664,7 @@ describe('/applications/<appId>/subscriptions', function () {
                             }, function (err, res, body) {
                                 assert.isNotOk(err);
                                 assert.equal(200, res.statusCode);
-                                var jsonBody = utils.getJson(body);
+                                const jsonBody = utils.getJson(body);
                                 assert.equal(0, jsonBody.length);
                                 done();
                             });
@@ -692,7 +690,7 @@ describe('/applications/<appId>/subscriptions', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(400, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.message, 'API is deprecated. Subscribing not possible.');
                 done();
             });
@@ -707,7 +705,7 @@ describe('/applications/<appId>/subscriptions', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 utils.assertNotScopeReject(res, body);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.message, 'Not Allowed. Only Admins can get subscriptions for an API.');
                 done();
             });
@@ -724,7 +722,7 @@ describe('/applications/<appId>/subscriptions', function () {
                     utils.deleteSubscription(appId, devUserId, 'superduper', function (err) {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
-                        var jsonBody = utils.getJson(body);
+                        const jsonBody = utils.getJson(body);
                         assert.isOk(jsonBody.items);
                         assert.isArray(jsonBody.items);
                         assert.equal(jsonBody.items.length, 1);
@@ -749,7 +747,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.items);
                     assert.isArray(jsonBody.items);
                     assert.equal(0, jsonBody.items.length);
@@ -771,7 +769,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.isOk(jsonBody.items);
                     assert.isArray(jsonBody.items);
                     assert.equal(0, jsonBody.items.length);
@@ -794,7 +792,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.equal(jsonBody.trusted, true);
                     assert.isDefined(jsonBody.allowedScopes, 'allowedScopes must be defined');
                     assert.isDefined(jsonBody.allowedScopesMode, 'allowedScopesMode must be defined');
@@ -816,7 +814,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.equal(jsonBody.trusted, false);
                     assert.equal(jsonBody.allowedScopesMode, 'select');
                     assert.isDefined(jsonBody.allowedScopesMode, 'allowedScopesMode must be defined');
@@ -840,7 +838,7 @@ describe('/applications/<appId>/subscriptions', function () {
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(200, res.statusCode);
-                    var jsonBody = utils.getJson(body);
+                    const jsonBody = utils.getJson(body);
                     assert.equal(jsonBody.trusted, false);
                     assert.equal(jsonBody.allowedScopesMode, 'select');
                     assert.isDefined(jsonBody.allowedScopesMode, 'allowedScopesMode must be defined');

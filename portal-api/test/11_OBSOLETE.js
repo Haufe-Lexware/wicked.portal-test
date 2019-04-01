@@ -1,14 +1,12 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-
-var baseUrl = consts.BASE_URL;
-var AUTH_KEY = 'ThisIsUsedInDeploy';
+const baseUrl = consts.BASE_URL;
+const AUTH_KEY = 'ThisIsUsedInDeploy';
 
 // describe('/deploy', function () {
 //     describe('/export', function () {

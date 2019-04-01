@@ -1,7 +1,5 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
-
 const assert = require('chai').assert;
 const crypto = require('crypto');
 const request = require('request');
@@ -9,10 +7,6 @@ const qs = require('querystring');
 const consts = require('./testConsts');
 
 const utils = {};
-
-// utils.SCOPES = {
-
-// }
 
 utils.isPostgres = function () {
     return process.env.WICKED_STORAGE && process.env.WICKED_STORAGE.toLowerCase() == 'postgres';
