@@ -5,7 +5,9 @@ const crypto = require('crypto');
 const request = require('request');
 const qs = require('querystring');
 const consts = require('./testConsts');
-
+const READ_NS_SCOPE = 'read_namespaces';
+const WRITE_NS_SCOPE = 'write_namespaces';
+const WRITE_RS_SCOPE = 'write_registrations';
 const utils = {};
 
 utils.isPostgres = function () {
@@ -308,6 +310,86 @@ utils.assertNotScopeReject = (res, body) => {
     if (jsonBody && jsonBody.message) {
         assert.isFalse(jsonBody.message.indexOf('Forbidden, missing required scope') >= 0, 'Unexpected error message');
     }
+};
+
+utils.addNamespaceIfNotPresent = (poolId, adminUserId, namespace, callback) => {
+    if (!namespace)
+        return callback();
+    request.get({
+        url: consts.BASE_URL + `pools/${poolId}/namespaces/${namespace}`,
+        headers: utils.makeHeaders(adminUserId, READ_NS_SCOPE)
+    }, (err, res, body) => {
+        assert.isNotOk(err);
+        if (res.statusCode === 404) {
+            request.put({
+                url: consts.BASE_URL + `pools/${poolId}/namespaces/${namespace}`,
+                headers: utils.makeHeaders(adminUserId, WRITE_NS_SCOPE),
+                json: true,
+                body: {
+                    description: `Namespace ${namespace}`
+                }
+            }, (err, res, body) => {
+                assert.isNotOk(err);
+                assert.equal(res.statusCode, 204, 'Create Namespace: Unexpected status code');
+                return callback();
+            });
+        } else {
+            assert.equal(200, res.statusCode);
+            return callback();
+        }
+    });
+};
+
+utils.putRegistration = (poolId, userId, adminUserId, name, namespace, callback) => {
+    if (!callback && typeof (namespace) === 'function')
+        callback = namespace;
+    utils.addNamespaceIfNotPresent(poolId, adminUserId, namespace, () => {
+        request.put({
+            url: consts.BASE_URL + `registrations/pools/${poolId}/users/${userId}`,
+            headers: utils.makeHeaders(userId, WRITE_RS_SCOPE),
+            body: {
+                id: userId,
+                name: name,
+                namespace: namespace
+            },
+            json: true
+        }, (err, res, body) => {
+            assert.isNotOk(err);
+            if (res.statusCode !== 204)
+                console.error(body);
+            assert.equal(res.statusCode, 204);
+            callback();
+        });
+    });
+};
+
+utils.deleteRegistration = (poolId, userId, namespace, accept404, callback) => {
+    // console.log(`deleteRegistration(poolId: ${poolId}, userId: ${userId}, namespace: ${namespace})`);
+    if (typeof (accept404) === 'function' && !callback) {
+        callback = accept404;
+        accept404 = false;
+    }
+    let url = consts.BASE_URL + `registrations/pools/${poolId}/users/${userId}`;
+    if (namespace)
+        url += `?namespace=${namespace}`;
+    request.delete({
+        url: url,
+        headers: utils.makeHeaders(userId, WRITE_RS_SCOPE),
+    }, (err, res, body) => {
+        assert.isNotOk(err);
+        if (!accept404) {
+            const isOk = res.statusCode === 204;
+            if (!isOk)
+                console.error(body);
+            assert.isTrue(isOk, 'Status not equal 204');
+        } else {
+            const isOk = res.statusCode === 204 || res.statusCode === 404;
+            if (!isOk)
+                console.error(body);
+            assert.isTrue(isOk, 'Status not equal to 204 or 404');
+        }
+        callback();
+    });
 };
 
 module.exports = utils;

@@ -8,12 +8,9 @@ const consts = require('./testConsts');
 
 const baseUrl = consts.BASE_URL;
 
-
+const poolId = 'woo-ns';
 const READ_SUBS_SCOPE = 'read_subscriptions';
 const WRITE_SUBS_SCOPE = 'write_subscriptions';
-
-const READ_APPS_SCOPE = 'read_applications';
-const WRITE_APPS_SCOPE = 'write_applications';
 
 const INVALID_SCOPE = 'invalid_applications';
 const READ_USERS_SCOPE = 'read_users';
@@ -26,16 +23,20 @@ describe('/applications/<appId>/subscriptions', function () {
     let devUserId = '';
     let adminUserId = '';
     let noobUserId = '';
+    let approverUserId = '';
 
     // Let's create some users to play with
     before(function (done) {
-        utils.createUserWithRegistration('Dev', 'dev', true, function (id) {
+        utils.createUser('Dev', 'dev', true, function (id) {
             devUserId = id;
-            utils.createUserWithRegistration('Admin', 'admin', true, function (id) {
-                adminUserId = id;
-                utils.createUserWithRegistration('Noob', null, true, function (id) {
-                    noobUserId = id;
-                    done();
+            utils.createUser('Approver', ['approver', 'dev'], true, function (id) {
+                approverUserId = id;
+                utils.createUser('Admin', 'admin', true, function (id) {
+                    adminUserId = id;
+                    utils.createUser('Noob', null, true, function (id) {
+                        noobUserId = id;
+                        done();
+                    });
                 });
             });
         });
@@ -44,9 +45,11 @@ describe('/applications/<appId>/subscriptions', function () {
     // And delete them afterwards    
     after(function (done) {
         utils.deleteUser(noobUserId, function () {
-            utils.deleteUser(adminUserId, function () {
-                utils.deleteUser(devUserId, function () {
-                    done();
+            utils.deleteUser(approverUserId, function () {
+                utils.deleteUser(adminUserId, function () {
+                    utils.deleteUser(devUserId, function () {
+                        done();
+                    });
                 });
             });
         });
@@ -922,7 +925,33 @@ describe('/applications/<appId>/subscriptions', function () {
         });
     });
 
-    describe('GET ?embed=1', function () {
+    function addSomeRegistrations(callback) {
+        utils.putRegistration(poolId, adminUserId, adminUserId, 'Admin User', 'ns1', (err) => {
+            assert.isNotOk(err);
+            utils.putRegistration(poolId, devUserId, adminUserId, 'Dan Developer', 'ns1', (err) => {
+                assert.isNotOk(err);
+                utils.putRegistration(poolId, noobUserId, adminUserId, 'Norah Noob', 'ns2', (err) => {
+                    assert.isNotOk(err);
+                    callback();
+                });
+            });
+        });
+    }
+
+    function deleteSomeRegistrations(callback) {
+        utils.deleteRegistration(poolId, adminUserId, 'ns1', true, (err) => {
+            utils.deleteRegistration(poolId, devUserId, 'ns1', true, (err2) => {
+                utils.deleteRegistration(poolId, noobUserId, 'ns2', true, (err3) => {
+                    assert.isNotOk(err);
+                    assert.isNotOk(err2);
+                    assert.isNotOk(err3);
+                    callback();
+                });
+            });
+        });
+    }
+
+    describe('subscriptions?embed=1', function () {
         const appList = ['abcde-hello', 'fghij-hello', 'klmno-world', 'pqrst-world', 'uvwxyz-world'];
         function makeAppInfo(appId) {
             return {
@@ -932,28 +961,34 @@ describe('/applications/<appId>/subscriptions', function () {
                 mainUrl: `https://${appId}.wicked.com`
             };
         }
+
         before(function (done) {
-            async.each(appList, (appId, callback) => {
-                utils.createApplication(appId, makeAppInfo(appId), devUserId, function () {
-                    utils.addSubscription(appId, devUserId, privateApi, 'unlimited', null, callback);
-                });
-            }, done);
+            addSomeRegistrations(function () {
+                async.each(appList, (appId, callback) => {
+                    utils.createApplication(appId, makeAppInfo(appId), devUserId, function () {
+                        utils.addSubscription(appId, devUserId, publicApi, 'unlimited', null, function () {
+                            utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', callback);
+                        });
+                    });
+                }, done);
+            });
         });
 
         after(function (done) {
-            async.each(appList, (appId, callback) => {
-                utils.deleteSubscription(appId, devUserId, privateApi, function () {
-                    utils.deleteApplication(appId, devUserId, callback);
-                });
-            }, done);
+            deleteSomeRegistrations(function () {
+                async.each(appList, (appId, callback) => {
+                    utils.deleteSubscription(appId, devUserId, publicApi, function () {
+                        utils.deleteApplication(appId, devUserId, callback);
+                    });
+                }, done);
+            });
         });
 
-        it('should, as an admin, be possible to get a list of subscriptions', function (done) {
-            const h = utils.makeHeaders(adminUserId, 'read_subscriptions');
+        it('should be possible to get a list of subscriptions as an admin', function (done) {
             if (utils.isPostgres()) {
                 request.get({
                     url: baseUrl + 'subscriptions?embed=1&no_cache=1',
-                    headers: h
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 200);
@@ -967,7 +1002,7 @@ describe('/applications/<appId>/subscriptions', function () {
             } else {
                 request.get({
                     url: baseUrl + 'subscriptions?embed=1&no_cache=1',
-                    headers: utils.makeHeaders(adminUserId, 'read_subscriptions')
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 501);
@@ -976,11 +1011,11 @@ describe('/applications/<appId>/subscriptions', function () {
             }
         });
 
-        it('should, as an admin, be possible to get a list of subscriptions using offset and count', function (done) {
+        it('should be possible to get a list of subscriptions using offset and count as an admin', function (done) {
             if (utils.isPostgres()) {
                 request.get({
                     url: baseUrl + 'subscriptions?embed=1&offset=0&limit=1&no_cache=1',
-                    headers: utils.makeHeaders(adminUserId, 'read_subscriptions')
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 200);
@@ -993,8 +1028,8 @@ describe('/applications/<appId>/subscriptions', function () {
                 });
             } else {
                 request.get({
-                    url: baseUrl + 'subscriptions?embed=1&no_cache=1',
-                    headers: utils.makeHeaders(adminUserId, 'read_subscriptions')
+                    url: baseUrl + 'subscriptions?embed=1&offset=0&limit=1&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 501);
@@ -1003,11 +1038,11 @@ describe('/applications/<appId>/subscriptions', function () {
             }
         });
 
-        it('should, return the list ordered by application id', function (done) {
+        it('should be possible to return a list of subscriptions ordered by application name as an admin', function (done) {
             if (utils.isPostgres()) {
                 request.get({
-                    url: baseUrl + 'subscriptions?embed=1&order_by=applications_id%20ASC&no_cache=1',
-                    headers: utils.makeHeaders(adminUserId, 'read_subscriptions')
+                    url: baseUrl + 'subscriptions?embed=1&order_by=application_name%20ASC&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 200);
@@ -1020,8 +1055,8 @@ describe('/applications/<appId>/subscriptions', function () {
                 });
             } else {
                 request.get({
-                    url: baseUrl + 'subscriptions?embed=1&no_cache=1',
-                    headers: utils.makeHeaders(adminUserId, 'read_subscriptions')
+                    url: baseUrl + 'subscriptions?embed=1&order_by=application_name%20ASC&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 501);
@@ -1033,7 +1068,7 @@ describe('/applications/<appId>/subscriptions', function () {
         it('should return a 403 if using a non-admin user id', function (done) {
             request({
                 url: baseUrl + 'subscriptions?embed=1&no_cache=1',
-                headers: utils.makeHeaders(devUserId, 'read_subscriptions')
+                headers: utils.makeHeaders(devUserId, READ_SUBS_SCOPE)
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 403);
@@ -1042,11 +1077,11 @@ describe('/applications/<appId>/subscriptions', function () {
             });
         });
 
-        it('should, return the list ordered by application id in descending order', function (done) {
+        it('should be possible return a list of subscriptions ordered by application name in descending order as an admin', function (done) {
             if (utils.isPostgres()) {
                 request.get({
-                    url: baseUrl + 'subscriptions?embed=1&order_by=applications_id%20DESC&no_cache=1',
-                    headers: utils.makeHeaders(adminUserId, 'read_subscriptions')
+                    url: baseUrl + 'subscriptions?embed=1&order_by=application_name%20DESC&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 200);
@@ -1059,8 +1094,8 @@ describe('/applications/<appId>/subscriptions', function () {
                 });
             } else {
                 request.get({
-                    url: baseUrl + 'subscriptions?embed=1&no_cache=1',
-                    headers: utils.makeHeaders(adminUserId, 'read_subscriptions')
+                    url: baseUrl + 'subscriptions?embed=1&order_by=application_name%20DESC&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
                 }, function (err, res, body) {
                     assert.isNotOk(err);
                     assert.equal(res.statusCode, 501);
@@ -1068,6 +1103,220 @@ describe('/applications/<appId>/subscriptions', function () {
                 });
             }
         });
-    });
 
-}); // /applications/<appId>/subscriptions
+        it('should be possible to return a list of subscriptions, filtering it by application name as an admin ', function (done) {
+            if (utils.isPostgres()) {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22application_name%22%3A%20%22uvwxyz%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    const jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody.items);
+                    assert.isArray(jsonBody.items);
+                    assert.equal(jsonBody.items.length, 1);
+                    assert.equal(jsonBody.items[0].application, 'uvwxyz-world');
+                    done();
+                });
+            } else {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22application_name%22%3A%20%22uvwxyz%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 501);
+                    done();
+                });
+            }
+        });
+
+        it('should not be possible to get a subscription list, filtering it by incorrect application name as an admin ', function (done) {
+            if (utils.isPostgres()) {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22application_name%22%3A%20%22invalidappname%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    const jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody.items);
+                    assert.isArray(jsonBody.items);
+                    assert.equal(jsonBody.items.length, 0);
+                    done();
+                });
+            } else {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22application_name%22%3A%20%22invalidappname%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 501);
+                    done();
+                });
+            }
+        });
+
+        it('should be possible to return a list of subscription, filtering it by plan name as an admin', function (done) {
+            if (utils.isPostgres()) {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%plan%22%3A%20%22unlim%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    const jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody.items);
+                    assert.isArray(jsonBody.items);
+                    assert.equal(jsonBody.items.length, 5);
+                    done();
+                });
+            } else {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%plan%22%3A%20%22unlim%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 501);
+                    done();
+                });
+            }
+        });
+
+        it('should not be possible to get a list of subscripitions, filtering it by incorrect plan name as an admin', function (done) {
+            if (utils.isPostgres()) {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22plan%22%3A%20%22invalid%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    const jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody.items);
+                    assert.isArray(jsonBody.items);
+                    assert.equal(jsonBody.items.length, 0);
+                    done();
+                });
+            } else {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22plan%22%3A%20%22invalid%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 501);
+                    done();
+                });
+            }
+        });
+        it('should be possible to return a list of subscriptions, filtering it by api as an admin ', function (done) {
+            if (utils.isPostgres()) {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22api%22%3A%20%22superduper%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    const jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody.items);
+                    assert.isArray(jsonBody.items);
+                    assert.equal(jsonBody.items.length, 5);
+                    done();
+                });
+            } else {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22api%22%3A%20%22superduper%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 501);
+                    done();
+                });
+            }
+        });
+
+        it('should not be possible to get a list of subscriptions, filtering it by incorrect api as an admin', function (done) {
+            if (utils.isPostgres()) {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22api%22%3A%20%22pet%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    const jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody.items);
+                    assert.isArray(jsonBody.items);
+                    assert.equal(jsonBody.items.length, 0);
+                    done();
+                });
+            } else {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&filter=%7B%0A%20%20%22api%22%3A%20%22pet%22%0A%7D&no_cache=1',
+                    headers: utils.makeHeaders(adminUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 501);
+                    done();
+                });
+            }
+        });
+
+        it('should not be possible as an approver, to get a list of subscriptions which does not belong to the same group as approver', function (done) {
+            if (utils.isPostgres()) {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&no_cache=1',
+                    headers: utils.makeHeaders(approverUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 200);
+                    const jsonBody = utils.getJson(body);
+                    assert.isOk(jsonBody.items);
+                    assert.isArray(jsonBody.items);
+                    assert.equal(jsonBody.items.length, 0);
+                    assert.equal(jsonBody.count, 0);
+                    done();
+                });
+            } else {
+                request.get({
+                    url: baseUrl + 'subscriptions?embed=1&no_cache=1',
+                    headers: utils.makeHeaders(approverUserId, READ_SUBS_SCOPE)
+                }, function (err, res, body) {
+                    assert.isNotOk(err);
+                    assert.equal(res.statusCode, 501);
+                    done();
+                });
+            }
+        });
+
+        it('should be possible as an approver, to get a list of subscriptions which does belong to the same group as approver', function (done) {
+            utils.addSubscription(appId, devUserId, privateApi, 'unlimited', null, function () {
+                utils.addOwner(appId, devUserId, 'noob@random.org', 'owner', function () {
+                    if (utils.isPostgres()) {
+                        request.get({
+                            url: baseUrl + 'subscriptions?embed=1&no_cache=1',
+                            headers: utils.makeHeaders(approverUserId, READ_SUBS_SCOPE)
+                        }, function (err, res, body) {
+                            assert.isNotOk(err);
+                            assert.equal(res.statusCode, 200);
+                            const jsonBody = utils.getJson(body);
+                            assert.isOk(jsonBody.items);
+                            assert.isArray(jsonBody.items);
+                            assert.equal(jsonBody.items.length, 1);
+                            assert.equal(jsonBody.count, 1);
+                            done();
+                        });
+                    } else {
+                        request.get({
+                            url: baseUrl + 'subscriptions?embed=1&no_cache=1',
+                            headers: utils.makeHeaders(approverUserId, READ_SUBS_SCOPE)
+                        }, function (err, res, body) {
+                            assert.isNotOk(err);
+                            assert.equal(res.statusCode, 501);
+                            done();
+                        });
+                    }
+                });
+            });
+
+        });
+    });
+}); 
