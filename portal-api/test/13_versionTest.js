@@ -1,18 +1,16 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
+const packageJson = require('../package.json'); 
 
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-var packageJson = require('../package.json'); 
-
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 describe('/confighash', function () {
 
-    var configHash = null;
+    let configHash = null;
 
     it('should be possible to retrieve a config hash', function (done) {
         request.get({
@@ -117,7 +115,7 @@ describe('/confighash', function () {
         }, function (err, res, body) {
             assert.isNotOk(err);
             assert.equal(res.statusCode, 200);
-            var jsonBody = utils.getJson(body);
+            const jsonBody = utils.getJson(body);
             assert.isOk(jsonBody.sessionStore, 'globals.json do not contain a sessionStore property');
             assert.equal(jsonBody.sessionStore.type, 'file', 'default sessionStore.type is not equal "file"');
             done();

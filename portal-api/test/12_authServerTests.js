@@ -1,13 +1,11 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 const READ_AUTH_SERVERS_SCOPE = 'read_auth_servers';
 const INVALID_SCOPE = 'invalid_auth_servers';
@@ -31,7 +29,7 @@ describe('/auth-server', function () {
         }, function (err, res, body) {
             assert.isNotOk(err);
             assert.equal(res.statusCode, 200);
-            var jsonBody = utils.getJson(body);
+            const jsonBody = utils.getJson(body);
             assert.isArray(jsonBody, 'Expected an array of names');
             assert.equal(2, jsonBody.length, 'Expeted 2 auth server configs');
             done();
@@ -57,7 +55,7 @@ describe('/auth-server', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 200);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.name, 'sample-auth');
                 done();
             });
@@ -70,7 +68,7 @@ describe('/auth-server', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 200);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.name, 'sample-auth');
                 assert.isOk(jsonBody.authMethods, 'Missing property authMethods');
                 assert.isOk(jsonBody.config, 'Missing config property');
@@ -89,7 +87,7 @@ describe('/auth-server', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(res.statusCode, 200);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.equal(jsonBody.name, 'sample-auth');
                 assert.isOk(jsonBody.authMethods, 'Missing property authMethods');
                 assert.isOk(jsonBody.config, 'Missing config property');

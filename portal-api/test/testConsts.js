@@ -1,7 +1,5 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
-
 const consts = {};
 
 consts.BASE_URL = 'http://portal-api:3001/';

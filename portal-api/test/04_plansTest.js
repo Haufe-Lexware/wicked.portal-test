@@ -1,13 +1,11 @@
 'use strict';
 
-/* global it, describe, before, beforeEach, after, afterEach, slow */
+const assert = require('chai').assert;
+const request = require('request');
+const utils = require('./testUtils');
+const consts = require('./testConsts');
 
-var assert = require('chai').assert;
-var request = require('request');
-var utils = require('./testUtils');
-var consts = require('./testConsts');
-
-var baseUrl = consts.BASE_URL;
+const baseUrl = consts.BASE_URL;
 
 const READ_PLANS_SCOPE = 'read_plans';
 const INVALID_SCOPE = 'invalid_plans';
@@ -32,7 +30,7 @@ describe('/plans', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody.plans);
                 assert.equal(7, jsonBody.plans.length);
                 done();
@@ -46,11 +44,11 @@ describe('/plans', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody.plans);
-                var foundApiPlanBasic = false;
-                var foundApiPlanUnlimited = false;
-                for (var i = 0; i < jsonBody.plans.length; ++i) {
+                let foundApiPlanBasic = false;
+                let foundApiPlanUnlimited = false;
+                for (let i = 0; i < jsonBody.plans.length; ++i) {
                     if ("__internal_api_basic" == jsonBody.plans[i].id)
                         foundApiPlanBasic = true;
                     if ("__internal_api_unlimited" == jsonBody.plans[i].id)
@@ -80,7 +78,7 @@ describe('/plans', function () {
             }, function (err, res, body) {
                 assert.isNotOk(err);
                 assert.equal(200, res.statusCode);
-                var jsonBody = utils.getJson(body);
+                const jsonBody = utils.getJson(body);
                 assert.isOk(jsonBody._links);
                 assert.isOk(jsonBody._links.self);
                 assert.equal(jsonBody._links.self.href, '/plans');

@@ -50,7 +50,7 @@ function addApiObject(apiName, done) {
             assert.equal(res.statusCode, 204);
             callback(null);
         });
-    }
+    };
 
     request.get({
         url: consts.KONG_ADMIN_URL + 'apis/' + apiName
