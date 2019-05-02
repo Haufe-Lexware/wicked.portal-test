@@ -5114,6 +5114,14 @@
                 "mandatory_scope": false,
                 "token_expiration": 3600
             }
+        },
+        {
+          "id": "multi-route",
+          "name": "multi-route",
+          "desc": "Multi Route API",
+          "auth": "key-auth",
+          "tags": [],
+          "plans": []
         }
     ],
     "_links": {
