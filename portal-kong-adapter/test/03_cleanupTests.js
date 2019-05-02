@@ -68,26 +68,25 @@ function addApiObjects(done) {
     ], done);
 }
 
-describe('With legacy /api objects,', function () {
+// describe('With legacy /api objects,', function () {
 
-    before(addApiObjects);
+//     before(addApiObjects);
 
-    it('should clean up old /api objects at initialization', function (done) {
-        request.post({
-            url: adapterUrl + 'resync'
-        }, function (err, res, body) {
-            assert.isNotOk(err);
-            assert.equal(200, res.statusCode, 'Resync status code not 200');
-            request.get({
-                uri: consts.KONG_ADMIN_URL + 'apis'
-            }, function (err, res, body) {
-                assert.isNotOk(err);
-                const jsonBody = utils.getJson(body);
-                assert.equal(jsonBody.total, 0);
-                assert.isArray(jsonBody.data);
-                assert.equal(jsonBody.data.length, 0);
-                done();
-            });
-        });
-    });
-});
+//     it('should clean up old /api objects at initialization', function (done) {
+//         request.post({
+//             url: adapterUrl + 'resync'
+//         }, function (err, res, body) {
+//             assert.isNotOk(err);
+//             assert.equal(200, res.statusCode, 'Resync status code not 200');
+//             request.get({
+//                 uri: consts.KONG_ADMIN_URL + 'apis'
+//             }, function (err, res, body) {
+//                 assert.isNotOk(err);
+//                 const jsonBody = utils.getJson(body);
+//                 assert.isArray(jsonBody.data);
+//                 assert.equal(jsonBody.data.length, 0);
+//                 done();
+//             });
+//         });
+//     });
+// });

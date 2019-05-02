@@ -62,10 +62,10 @@ describe('With subscriptions,', function () {
                         const kongConsumer = results.getConsumer.body;
                         assert.isOk(kongConsumer);
                         const kongAcls = results.getAcls.body;
-                        assert.isOk(kongAcls.total >= 1, 'consumer must have an ACL group');
+                        assert.isOk(kongAcls.data.length >= 1, 'consumer must have an ACL group');
                         assert.equal(kongAcls.data[0].group, keyAuthApi, 'consumer ACL must match API name');
                         const kongKeyAuth = results.getKeyAuth.body;
-                        assert.isOk(kongKeyAuth.total >= 1, 'consumer must have key-auth setting');
+                        assert.isOk(kongKeyAuth.data.length >= 1, 'consumer must have key-auth setting');
                         assert.equal(kongKeyAuth.data[0].key, subsInfo.apikey, 'API keys must match');
                         done();
                     });
@@ -143,10 +143,10 @@ describe('With subscriptions,', function () {
                 const kongConsumer = results.getConsumer.body;
                 assert.isOk(kongConsumer);
                 const kongAcls = results.getAcls.body;
-                assert.isOk(kongAcls.total >= 1, 'consumer must have an ACL group');
+                assert.isOk(kongAcls.data.length >= 1, 'consumer must have an ACL group');
                 assert.equal(kongAcls.data[0].group, oauth2Api, 'consumer ACL must match API name');
                 const kongOAuth2 = results.getOAuth2.body;
-                assert.isOk(kongOAuth2.total >= 1, 'consumer must have oauth2 setting');
+                assert.isOk(kongOAuth2.data.length >= 1, 'consumer must have oauth2 setting');
                 assert.equal(kongOAuth2.data[0].client_id, subsInfo.clientId, 'client_id must match');
                 assert.equal(kongOAuth2.data[0].client_secret, subsInfo.clientSecret, 'client_secret must match');
                 done();
