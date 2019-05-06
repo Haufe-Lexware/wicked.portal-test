@@ -95,6 +95,14 @@
             "tags": []
         },
         {
+            "name": "Very Un-Restricted",
+            "id": "unrestricted",
+            "auth": "none",
+            "desc": "Lorem ipsum dolormin ibuprofenium paracetamolam innocent in expectam malus.",
+            "tags": [],
+            "plans": []
+        },
+        {
             "name": "Mobile API",
             "id": "mobile",
             "plans": [
