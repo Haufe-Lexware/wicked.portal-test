@@ -111,6 +111,33 @@ describe('After initialization,', function () {
             });
         });
 
+        let unrestrictedId;
+        it('should have a service called unrestricted', function (done) {
+            request.get({
+                url: kongUrl + 'services/unrestricted'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                const jsonBody = utils.getJson(body);
+                unrestrictedId = jsonBody.id;
+                done();
+            });
+        });
+
+        it('should have a route attached to the service unrestricted', function (done) {
+            request.get({
+                url: kongUrl + 'services/unrestricted/routes'
+            }, function (err, res, body) {
+                assert.isNotOk(err);
+                assert.equal(200, res.statusCode);
+                const routeJson = utils.getJson(body);
+                assert.isArray(routeJson.data);
+                assert.isTrue(routeJson.data.length > 0);
+                assert.equal(routeJson.data[0].service.id, unrestrictedId);
+                done();
+            });
+        });
+
         it('should have an API called sample-server-auth (the auth server)', function (done) {
             request.get({
                 url: kongUrl + 'services/sample-server-auth'
