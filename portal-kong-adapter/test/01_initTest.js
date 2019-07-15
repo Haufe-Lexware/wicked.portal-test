@@ -39,6 +39,8 @@ describe('After initialization,', function () {
     });
 
     describe('resync', function () {
+        this.timeout(10000);
+        this.slow(2000);
         it('should not trigger any changing actions to the Kong API', function (done) {
             request.post({
                 url: adapterUrl + 'resync'
