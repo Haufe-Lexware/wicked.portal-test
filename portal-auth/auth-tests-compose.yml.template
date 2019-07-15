@@ -50,7 +50,11 @@ services:
     environment:
     - "POSTGRES_USER=kong"
     - "POSTGRES_PASSWORD=kong"
-
+    command:
+    - "postgres"
+    - "-c"
+    - "max_connections=500"
+    
   kong:
     image: ${DOCKER_PREFIX}kong:${KONG_TAG}
     depends_on:
