@@ -14,6 +14,14 @@ function fat_separator {
     echo "=================================================="
 }
 
+function dump_logs {
+    echo "=-=-=-=-=-=-=-=-=-=-=-="
+    echo "=-=-=-=-=-=-=-=-=-=-=-="
+    cat logs/auth-test-${wickedStorage}${BUILD_ALPINE}.log
+    echo "=-=-=-=-=-=-=-=-=-=-=-="
+    echo "=-=-=-=-=-=-=-=-=-=-=-="
+}
+
 fat_separator
 echo "$0"
 fat_separator
@@ -179,7 +187,13 @@ separator
 docker-compose -p ${PROJECT_NAME} -f portal-auth/auth-tests-compose.yml down -v >> $thisPath/logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log
 
 if [ ! -z "$failedTests" ]; then
+    dump_logs
     exit 1
+fi
+
+if [ -f test_results/KONG_FAILED ]; then
+    echo "ERROR: Some test cases failed."
+    dump_logs
 fi
 
 cp test_results/auth-test.log logs/auth-test-${wickedStorage}${BUILD_ALPINE}-RESULT.log
@@ -195,7 +209,6 @@ docker rmi ${PROJECT_NAME}_auth-test-data
 fat_separator
 
 if [ -f test_results/KONG_FAILED ]; then
-    echo "ERROR: Some test cases failed."
     exit 1
 fi
 
