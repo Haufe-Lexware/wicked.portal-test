@@ -20,8 +20,6 @@ services:
     - WICKED_STORAGE
     - PORTAL_STORAGE_PGHOST=postgres
     - PORTAL_STORAGE_PGPORT=5432
-    # Don't let the portal-api do health tests
-    - PORTAL_API_HEALTH_INTERVAL=0
     image: ${DOCKER_PREFIX}api:${PORTAL_API_TAG}${BUILD_ALPINE}
     volumes_from:
     - "api-test-data"
