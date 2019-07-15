@@ -57,16 +57,16 @@ node('docker') {
     // }
 
     stage('API Tests (postgres)') {
-        // env.BUILD_POSTGRES = '';
-        // env.BUILD_POSTGRES = 'true';
-        // env.BUILD_ALPINE = '';
-        // sh './run-api-tests.sh'
+        env.BUILD_POSTGRES = '';
+        env.BUILD_POSTGRES = 'true';
+        env.BUILD_ALPINE = '';
+        sh './run-api-tests.sh'
     }
 
     stage('API Tests (postgres, alpine)') {
-        // env.BUILD_POSTGRES = 'true';
-        // env.BUILD_ALPINE = '-alpine';
-        // sh './run-api-tests.sh'
+        env.BUILD_POSTGRES = 'true';
+        env.BUILD_ALPINE = '-alpine';
+        sh './run-api-tests.sh'
     }
 
     // stage('Portal Tests') {
@@ -110,15 +110,15 @@ node('docker') {
     // }
 
     stage('Kong Adapter Tests (postgres)') {
-        // env.BUILD_ALPINE = ''
-        // env.BUILD_POSTGRES = 'true'
-        // sh './run-kong-adapter-tests.sh'
+        env.BUILD_ALPINE = ''
+        env.BUILD_POSTGRES = 'true'
+        sh './run-kong-adapter-tests.sh'
     }
 
     stage('Kong Adapter Tests (postgres, alpine)') {
-        // env.BUILD_ALPINE = '-alpine'
-        // env.BUILD_POSTGRES = 'true'
-        // sh './run-kong-adapter-tests.sh'
+        env.BUILD_ALPINE = '-alpine'
+        env.BUILD_POSTGRES = 'true'
+        sh './run-kong-adapter-tests.sh'
     }
 
     // ===========================
