@@ -61,7 +61,7 @@ else
 fi
 export WICKED_STORAGE=${wickedStorage}
 
-rm -f logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+rm -f logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log
 thisPath=`pwd`
 
 export PORTAL_ENV_TAG=${DOCKER_TAG}-onbuild
@@ -70,7 +70,7 @@ export PORTAL_KONG_ADAPTER_TAG=${DOCKER_TAG}
 export PORTAL_AUTH_TAG=${DOCKER_TAG}
 export KONG_TAG=${DOCKER_TAG}
 
-echo "INFO: Docker logs go into logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log."
+echo "INFO: Docker logs go into logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log."
 
 if [ ! -z "$buildLocal" ]; then
 
@@ -78,19 +78,19 @@ if [ ! -z "$buildLocal" ]; then
 
     pushd ../wicked.env > /dev/null
     echo "INFO: Building Environment docker image..."
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log 
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}env:${PORTAL_ENV_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log 
     popd > /dev/null
 
     pushd ../wicked.api > /dev/null
     echo "INFO: Building API docker image..."
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}api:${PORTAL_API_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log
     popd > /dev/null
 
     pushd ../wicked.kong-adapter > /dev/null
     echo "INFO: Building Kong Adapter docker image..."
     perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile${BUILD_ALPINE}
-    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}kong-adapter:${PORTAL_KONG_ADAPTER_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+    docker build -f Dockerfile${BUILD_ALPINE} -t ${DOCKER_PREFIX}kong-adapter:${PORTAL_KONG_ADAPTER_TAG}${BUILD_ALPINE} . >> $thisPath/logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log
     popd > /dev/null
 
     pushd ../wicked.auth > /dev/null
@@ -102,7 +102,7 @@ if [ ! -z "$buildLocal" ]; then
     pushd ../wicked.kong > /dev/null
     echo "INFO: Building Kong docker image..."
     # perl -pe 's;(\\*)(\$([a-zA-Z_][a-zA-Z_0-9]*)|\$\{([a-zA-Z_][a-zA-Z_0-9]*)\})?;substr($1,0,int(length($1)/2)).($2&&length($1)%2?$2:$ENV{$3||$4});eg' Dockerfile.template > Dockerfile
-    docker build -t ${DOCKER_PREFIX}kong:${KONG_TAG} . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+    docker build -t ${DOCKER_PREFIX}kong:${KONG_TAG} . >> $thisPath/logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log
     popd > /dev/null
 
 else
@@ -149,7 +149,7 @@ fi
 
 echo "INFO: Building Test base container..."
 pushd base > /dev/null
-docker build -t ${PROJECT_NAME}_test-base . >> $thisPath/logs/docker-kong-adapter-${wickedStorage}${BUILD_ALPINE}.log
+docker build -t ${PROJECT_NAME}_test-base . >> $thisPath/logs/docker-auth-${wickedStorage}${BUILD_ALPINE}.log
 popd > /dev/null
 
 echo "INFO: Building Test container..."
@@ -185,7 +185,7 @@ fi
 cp test_results/auth-test.log logs/auth-test-${wickedStorage}${BUILD_ALPINE}-RESULT.log
 cat test_results/auth-test.log
 
-echo "INFO: Detailed logs are in logs/kong-adapter-test-${wickedStorage}${BUILD_ALPINE}.log."
+echo "INFO: Detailed logs are in logs/auth-test-${wickedStorage}${BUILD_ALPINE}.log."
 
 echo "INFO: Cleaning up temporary images..."
 separator

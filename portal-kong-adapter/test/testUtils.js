@@ -246,10 +246,9 @@ utils.findWithName = function (someArray, name) {
 };
 
 utils.awaitEmptyQueue = function (queueName, userId, callback) {
-    const maxCount = 40;
+    const maxCount = 80;
     const timeOut = 400;
     const _awaitEmptyQueue = function (tryCount) {
-        // console.log('_awaitEmptyQueue(), try ' + tryCount + ': ' + queueName);
         if (tryCount >= maxCount)
             return callback(new Error('awaitEmptyQueue: Max count of ' + maxCount + ' was reached: ' + tryCount));
         request.get({
@@ -261,7 +260,6 @@ utils.awaitEmptyQueue = function (queueName, userId, callback) {
             if (res.statusCode !== 200)
                 return callback(new Error('awaitEmptyQueue: GET of events for ' + queueName + ' returns status code ' + res.statusCode));
             const queue = utils.getJson(body);
-            //console.log(queue);
             if (queue.length === 0) {
                 if (tryCount > 4)
                     console.log('INFO: awaitEmptyQueue needed ' + tryCount + ' tries.');
