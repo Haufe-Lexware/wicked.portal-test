@@ -1,6 +1,6 @@
 {
   "name": "test-api",
-  "version": "1.0.0-rc.8",
+  "version": "1.0.0-rc.9",
   "description": "Tests for portal-api",
   "main": "index.js",
   "directories": {
