@@ -1318,5 +1318,33 @@ describe('/applications/<appId>/subscriptions', function () {
             });
 
         });
+        it('should be possible to get all subscriptions if user belongs both approver and admin groups ', function (done) {
+              utils.setGroups(noobUserId,  ["admin", "approver"], function() {
+                if (utils.isPostgres()) {
+                    request.get({
+                        url: baseUrl + 'subscriptions?embed=1&no_cache=1',
+                        headers: utils.makeHeaders( noobUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(res.statusCode, 200);
+                        const jsonBody = utils.getJson(body);
+                        assert.isOk(jsonBody.items);
+                        assert.isArray(jsonBody.items);
+                        assert.equal(jsonBody.items.length, 5);
+                        assert.equal(jsonBody.count, 5);
+                        done();
+                    });
+                } else {
+                    request.get({
+                        url: baseUrl + 'subscriptions?embed=1&no_cache=1',
+                        headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
+                    }, function (err, res, body) {
+                        assert.isNotOk(err);
+                        assert.equal(res.statusCode, 501);
+                        done();
+                    });
+                }
+            });
+        });
     });
 }); 
