@@ -1319,11 +1319,11 @@ describe('/applications/<appId>/subscriptions', function () {
 
         });
         it('should be possible to get all subscriptions if user belongs both approver and admin groups ', function (done) {
-              utils.setGroups(noobUserId,  ["admin", "approver"], function() {
+            utils.setGroups(noobUserId, ["admin", "approver"], function () {
                 if (utils.isPostgres()) {
                     request.get({
                         url: baseUrl + 'subscriptions?embed=1&no_cache=1',
-                        headers: utils.makeHeaders( noobUserId, READ_SUBS_SCOPE)
+                        headers: utils.makeHeaders(noobUserId, READ_SUBS_SCOPE)
                     }, function (err, res, body) {
                         assert.isNotOk(err);
                         assert.equal(res.statusCode, 200);
@@ -1347,4 +1347,4 @@ describe('/applications/<appId>/subscriptions', function () {
             });
         });
     });
-}); 
+});
