@@ -42,7 +42,7 @@ describe('/approvals', function () {
                         utils.createUser('Approver', ['approver', 'dev'], true, function (id) {
                             approverUserId = id;
                             utils.createApplication(appId, 'My Application', devUserId, function () {
-                                utils.createApplication(appDescId, appInfo , devUserId, function () {
+                                utils.createApplication(appDescId, appInfo, devUserId, function () {
                                     utils.createApplication(superAppId, 'My Super Application', superDevUserId, done);
                                 });
                             });
@@ -112,8 +112,8 @@ describe('/approvals', function () {
                         assert.isNotOk(err);
                         assert.equal(200, res.statusCode);
                         const jsonBody = utils.getJson(body);
-                        assert.notEqual(null, jsonBody[0].application.description);
                         assert.equal(1, jsonBody.length);
+                        assert.isDefined(jsonBody[0].application.description);
                         done();
                     });
                 });
