@@ -387,22 +387,18 @@ utils.assertIsNotHtml = function (body) {
 };
 
 utils.awaitEmptyAdapterQueue = function (callback) {
-    const maxCount = 40;
-    const timeOut = 250;
+    const maxCount = 80;
+    const timeOut = 400;
     const _awaitEmptyQueue = function (tryCount) {
-        // console.log('_awaitEmptyQueue(), try ' + tryCount);
         if (tryCount >= maxCount)
             return callback(new Error('awaitEmptyQueue: Max count of ' + maxCount + ' was reached: ' + tryCount));
         wicked.getWebhookEvents('kong-adapter', function (err, events) {
             assert.isNotOk(err);
-            // console.log(events);
             if (events.length === 0) {
                 if (tryCount > 7)
                     console.log('INFO: awaitEmptyQueue needed ' + tryCount + ' tries.');
                 return callback(null);
-            } // else {
-            //     console.log('Pending events: ' + events.length);
-            // }
+            }
             setTimeout(_awaitEmptyQueue, timeOut, tryCount + 1);
         });
     };

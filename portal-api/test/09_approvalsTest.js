@@ -22,10 +22,12 @@ describe('/approvals', function () {
     let approverUserId = '';
 
     const appId = 'approval-test';
+    const appDescId = 'approval-description-test';
     const superAppId = 'super-approval-test';
     const publicApi = 'superduper';
     const privateApi = 'partner';
     const veryPrivateApi = 'restricted';
+    const appInfo = { name: 'My Application with description', description: 'Its a description of application' };
 
     // Let's create some users and an application to play with
     before(function (done) {
@@ -40,7 +42,9 @@ describe('/approvals', function () {
                         utils.createUser('Approver', ['approver', 'dev'], true, function (id) {
                             approverUserId = id;
                             utils.createApplication(appId, 'My Application', devUserId, function () {
-                                utils.createApplication(superAppId, 'My Super Application', superDevUserId, done);
+                                utils.createApplication(appDescId, appInfo, devUserId, function () {
+                                    utils.createApplication(superAppId, 'My Super Application', superDevUserId, done);
+                                });
                             });
                         });
                     });
@@ -49,16 +53,18 @@ describe('/approvals', function () {
         });
     });
 
-    // And delete them afterwards    
+    // And delete them afterwards
     after(function (done) {
         utils.deleteApplication(appId, devUserId, function () {
-            utils.deleteApplication(superAppId, superDevUserId, function () {
-                utils.deleteUser(noobUserId, function () {
-                    utils.deleteUser(adminUserId, function () {
-                        utils.deleteUser(devUserId, function () {
-                            utils.deleteUser(superDevUserId, function () {
-                                utils.deleteUser(approverUserId, function () {
-                                    done();
+            utils.deleteApplication(appDescId, devUserId, function () {
+                utils.deleteApplication(superAppId, superDevUserId, function () {
+                    utils.deleteUser(noobUserId, function () {
+                        utils.deleteUser(adminUserId, function () {
+                            utils.deleteUser(devUserId, function () {
+                                utils.deleteUser(superDevUserId, function () {
+                                    utils.deleteUser(approverUserId, function () {
+                                        done();
+                                    });
                                 });
                             });
                         });
@@ -96,7 +102,23 @@ describe('/approvals', function () {
                 });
             });
         });
-
+        it('should be possible to get application description as approver', function(done) {
+            utils.addSubscription(appDescId, devUserId, privateApi, 'unlimited', null, function () {
+                request({
+                    url: baseUrl + 'approvals',
+                    headers: utils.makeHeaders(approverUserId, READ_APPROVALS_SCOPE)
+                }, function (err, res, body) {
+                    utils.deleteSubscription(appDescId, devUserId, privateApi, function () {
+                        assert.isNotOk(err);
+                        assert.equal(200, res.statusCode);
+                        const jsonBody = utils.getJson(body);
+                        assert.equal(1, jsonBody.length);
+                        assert.isDefined(jsonBody[0].application.description);
+                        done();
+                    });
+                });
+            });
+        });
         it('should be possible to retrieve an approval request by id', function (done) {
             utils.addSubscription(appId, devUserId, privateApi, 'unlimited', null, function () {
                 request({

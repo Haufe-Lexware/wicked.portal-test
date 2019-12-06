@@ -45,16 +45,16 @@ node('docker') {
     //     echo 'Currently, the automatic tests are not active.'
     // }
 
-    stage('API Tests') {
-        env.BUILD_ALPINE = '';
-        sh './run-api-tests.sh'
-    }
+    // stage('API Tests') {
+    //     env.BUILD_ALPINE = '';
+    //     sh './run-api-tests.sh'
+    // }
 
-    stage('API Tests (alpine)') {
-        env.BUILD_POSTGRES = '';
-        env.BUILD_ALPINE = '-alpine';
-        sh './run-api-tests.sh'
-    }
+    // stage('API Tests (alpine)') {
+    //     env.BUILD_POSTGRES = '';
+    //     env.BUILD_ALPINE = '-alpine';
+    //     sh './run-api-tests.sh'
+    // }
 
     stage('API Tests (postgres)') {
         env.BUILD_POSTGRES = '';
@@ -97,17 +97,17 @@ node('docker') {
     // //     sh './run-portal-tests.sh'
     // }
 
-    stage('Kong Adapter Tests') {
-        env.BUILD_ALPINE = ''
-        env.BUILD_POSTGRES = ''
-        sh './run-kong-adapter-tests.sh'
-    }
+    // stage('Kong Adapter Tests') {
+    //     env.BUILD_ALPINE = ''
+    //     env.BUILD_POSTGRES = ''
+    //     sh './run-kong-adapter-tests.sh'
+    // }
 
-    stage('Kong Adapter Tests (alpine)') {
-        env.BUILD_ALPINE = '-alpine'
-        env.BUILD_POSTGRES = ''
-        sh './run-kong-adapter-tests.sh'
-    }
+    // stage('Kong Adapter Tests (alpine)') {
+    //     env.BUILD_ALPINE = '-alpine'
+    //     env.BUILD_POSTGRES = ''
+    //     sh './run-kong-adapter-tests.sh'
+    // }
 
     stage('Kong Adapter Tests (postgres)') {
         env.BUILD_ALPINE = ''
@@ -123,17 +123,17 @@ node('docker') {
 
     // ===========================
 
-    stage('Auth Server Tests') {
-        env.BUILD_ALPINE = ''
-        env.BUILD_POSTGRES = ''
-        sh './run-auth-tests.sh'
-    }
+    // stage('Auth Server Tests') {
+    //     env.BUILD_ALPINE = ''
+    //     env.BUILD_POSTGRES = ''
+    //     sh './run-auth-tests.sh'
+    // }
 
-    stage('Auth Server Tests (alpine)') {
-        env.BUILD_ALPINE = '-alpine'
-        env.BUILD_POSTGRES = ''
-        sh './run-auth-tests.sh'
-    }
+    // stage('Auth Server Tests (alpine)') {
+    //     env.BUILD_ALPINE = '-alpine'
+    //     env.BUILD_POSTGRES = ''
+    //     sh './run-auth-tests.sh'
+    // }
 
     stage('Auth Server Tests (postgres)') {
         env.BUILD_ALPINE = ''

@@ -24,6 +24,8 @@ services:
     - PORTAL_STORAGE_PGHOST=postgres
     - PORTAL_STORAGE_PGPORT=5432
     - PORTAL_CONFIG_KEY=c2fcfe392235d6492990b62165462078dee88b96
+    # Override this chatty thing for this test
+    - LOG_LEVEL=info
 
   portal-kong-adapter:
     env_file: ../variables.env
@@ -40,14 +42,19 @@ services:
     - portal-api
     environment:
     - ALLOW_RENDER_JSON=true
-    - "DEBUG=*"
+    - LOG_LEVEL=debug
+    - DEBUG=wicked-sdk
   
   postgres:
     image: postgres:11-alpine
     environment:
     - "POSTGRES_USER=kong"
     - "POSTGRES_PASSWORD=kong"
-
+    command:
+    - "postgres"
+    - "-c"
+    - "max_connections=500"
+    
   kong:
     image: ${DOCKER_PREFIX}kong:${KONG_TAG}
     depends_on:
